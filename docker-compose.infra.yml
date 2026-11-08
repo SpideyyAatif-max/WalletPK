@@ -173,7 +173,7 @@ services:
     networks: [walletpk]
 
   prometheus:
-    image: prom/prometheus:v3.13.5
+    image: prom/prometheus:v3.15.1
     container_name: walletpk-prometheus
     <<: [*restart, *logging]
     command:
