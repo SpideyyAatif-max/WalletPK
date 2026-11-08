@@ -1,5 +1,9 @@
 # WalletPK
 
+[![CI](https://github.com/SpideyyAatif-max/WalletPK/actions/workflows/ci.yml/badge.svg)](https://github.com/SpideyyAatif-max/WalletPK/actions/workflows/ci.yml)
+[![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)](https://dotnet.microsoft.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
 **Event-driven mobile wallet and payments platform built on .NET 10 microservices, with a double-entry ledger, Saga-orchestrated payments, a Transactional Outbox, CQRS, real-time fraud detection and a chaos-testing simulator.**
 
 WalletPK is a distributed mobile wallet and payments platform modelled on JazzCash and Easypaisa. ASP.NET Core (.NET 10) microservices behind a YARP API gateway keep an immutable double-entry ledger in PostgreSQL, so money is never created or lost. Concurrent debits are made safe by Redis distributed locks, optimistic concurrency and database constraints, and idempotency keys stop duplicate requests. Multi-step payments to external banks, billers and telcos run as orchestrated Sagas with Polly retries, circuit breakers and automatic compensating refunds. A Transactional Outbox publishes every ledger change to Kafka, feeding CQRS read models, a real-time fraud engine and SignalR live updates. A Next.js frontend provides a customer wallet, an operations and compliance console, and a Simulation Control Center that drives thousands of virtual users and injects failures to prove correctness under load.
@@ -62,7 +66,10 @@ WalletPK/
 git clone https://github.com/SpideyyAatif-max/WalletPK.git
 cd WalletPK
 dotnet build WalletPK.sln
+dotnet test
 ```
+
+Every push and pull request to `main` runs the same build and tests on GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
 ## Running the Infrastructure
 

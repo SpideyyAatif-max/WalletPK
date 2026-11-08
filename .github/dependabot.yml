@@ -1,0 +1,32 @@
+# Weekly pull requests to keep dependencies current. Related packages are grouped into one PR.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Karachi
+    open-pull-requests-limit: 5
+    groups:
+      opentelemetry:
+        patterns: ["OpenTelemetry*"]
+      serilog:
+        patterns: ["Serilog*"]
+      testing:
+        patterns: ["xunit*", "Shouldly", "Microsoft.AspNetCore.TestHost"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Karachi
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Asia/Karachi
+    open-pull-requests-limit: 5
