@@ -222,7 +222,7 @@ services:
     networks: [walletpk]
 
   seq:
-    image: datalust/seq:2025.2
+    image: datalust/seq:2026.1.17526
     container_name: walletpk-seq
     <<: [*restart, *logging]
     environment:
