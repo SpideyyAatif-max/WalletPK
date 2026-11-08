@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json.Serialization;
 using WalletPK.Common.Results;
 
 namespace WalletPK.Common.Primitives;
@@ -12,6 +13,7 @@ namespace WalletPK.Common.Primitives;
 /// Money may be negative (for example a difference or a reversal). Rules such as
 /// "a wallet balance can never go below zero" are enforced by the ledger, not here.
 /// </remarks>
+[JsonConverter(typeof(MoneyJsonConverter))]
 public readonly struct Money : IEquatable<Money>, IComparable<Money>
 {
     private readonly Currency? _currency;

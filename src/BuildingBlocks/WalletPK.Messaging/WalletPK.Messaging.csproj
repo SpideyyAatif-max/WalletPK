@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Messaging</RootNamespace>
+    <Description>WalletPK messaging contracts: integration events, envelopes, topics, outbox/inbox and handler interfaces. The Kafka transport is implemented in M4.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Common\WalletPK.Common.csproj" />
+  </ItemGroup>
+
+</Project>
