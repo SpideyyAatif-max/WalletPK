@@ -34,12 +34,24 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Common", "src\Buil
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Common.UnitTests", "tests\BuildingBlocks\WalletPK.Common.UnitTests\WalletPK.Common.UnitTests.csproj", "{B0115BC4-BF5C-47CE-A856-10C1380068E1}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Web", "src\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj", "{6F002412-CC98-4C28-842F-3C1BBB586E12}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Web.UnitTests", "tests\BuildingBlocks\WalletPK.Web.UnitTests\WalletPK.Web.UnitTests.csproj", "{0D91D7C4-6D72-4737-A4C5-3C5259593261}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6F002412-CC98-4C28-842F-3C1BBB586E12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F002412-CC98-4C28-842F-3C1BBB586E12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F002412-CC98-4C28-842F-3C1BBB586E12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F002412-CC98-4C28-842F-3C1BBB586E12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0D91D7C4-6D72-4737-A4C5-3C5259593261}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0D91D7C4-6D72-4737-A4C5-3C5259593261}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0D91D7C4-6D72-4737-A4C5-3C5259593261}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0D91D7C4-6D72-4737-A4C5-3C5259593261}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9AAD86A5-6CA4-4AA8-86F0-F8C5F40DA590}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9AAD86A5-6CA4-4AA8-86F0-F8C5F40DA590}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9AAD86A5-6CA4-4AA8-86F0-F8C5F40DA590}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -53,6 +65,8 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{6F002412-CC98-4C28-842F-3C1BBB586E12} = {3341775F-EE6C-4B7B-B43F-8838AA7A92B4}
+		{0D91D7C4-6D72-4737-A4C5-3C5259593261} = {255B20DB-6E50-4A7B-A96B-5E3EEB263C40}
 		{9AAD86A5-6CA4-4AA8-86F0-F8C5F40DA590} = {3341775F-EE6C-4B7B-B43F-8838AA7A92B4}
 		{B0115BC4-BF5C-47CE-A856-10C1380068E1} = {255B20DB-6E50-4A7B-A96B-5E3EEB263C40}
 		{3341775F-EE6C-4B7B-B43F-8838AA7A92B4} = {BDBFD471-61B4-475C-A6DE-09D3CF601A39}

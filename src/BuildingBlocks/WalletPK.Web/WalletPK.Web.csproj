@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Web</RootNamespace>
+    <Description>WalletPK web building blocks: correlation IDs, ProblemDetails errors, global exception handling, health endpoints and the current user.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Common\WalletPK.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Web.UnitTests" />
+  </ItemGroup>
+
+</Project>
