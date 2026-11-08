@@ -197,7 +197,7 @@ services:
     networks: [walletpk]
 
   grafana:
-    image: grafana/grafana:13.1.1
+    image: grafana/grafana:13.3.0
     container_name: walletpk-grafana
     <<: [*restart, *logging]
     depends_on:
