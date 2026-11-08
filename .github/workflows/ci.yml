@@ -50,8 +50,19 @@ jobs:
       - name: Build
         run: dotnet build WalletPK.sln --configuration Release --no-restore
 
-      - name: Test
-        run: dotnet test --solution WalletPK.sln --configuration Release --no-build
+      # One HTML + TRX report per test project, kept as a downloadable artifact of this run.
+      - name: Test (with reports)
+        shell: pwsh
+        run: ./scripts/test.ps1 -Configuration Release -NoBuild
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: TestResults/
+          if-no-files-found: warn
+          retention-days: 30
 
   infrastructure:
     name: Validate infrastructure config

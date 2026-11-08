@@ -21,6 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.env.example = .env.example
 		.github\workflows\ci.yml = .github\workflows\ci.yml
 		.github\dependabot.yml = .github\dependabot.yml
+		scripts\test.ps1 = scripts\test.ps1
 		docker-compose.infra.yml = docker-compose.infra.yml
 		docker-compose.yml = docker-compose.yml
 		Directory.Build.props = Directory.Build.props

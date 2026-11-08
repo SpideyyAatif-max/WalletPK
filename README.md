@@ -71,6 +71,16 @@ dotnet test
 
 Every push and pull request to `main` runs the same build and tests on GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 
+### Test reports
+
+`dotnet test` prints a summary only. For browsable reports, run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\test.ps1
+```
+
+Each run creates `TestResults/<date_time>/` with one HTML report (open in a browser) and one TRX report per test project. Earlier runs are kept for comparison; the folder is git-ignored and safe to delete. On GitHub, every CI run attaches the same reports as the **test-reports** artifact (kept 30 days).
+
 ## Running the Infrastructure
 
 Start Docker Desktop, then from the repository root:
