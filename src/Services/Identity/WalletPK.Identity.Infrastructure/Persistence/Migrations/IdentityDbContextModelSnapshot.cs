@@ -22,6 +22,131 @@ namespace WalletPK.Identity.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("WalletPK.Identity.Domain.Devices.Device", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("CoolingOffUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cooling_off_until");
+
+                    b.Property<string>("InstallationId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("installation_id");
+
+                    b.Property<DateTimeOffset>("LastSeenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_seen_at");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTimeOffset>("TrustedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("trusted_at");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_devices");
+
+                    b.HasIndex("UserId", "InstallationId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_devices_user_installation");
+
+                    b.ToTable("devices", (string)null);
+                });
+
+            modelBuilder.Entity("WalletPK.Identity.Domain.Sessions.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset?>("ConsumedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("consumed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("device_id");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("FamilyId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("family_id");
+
+                    b.Property<DateTimeOffset?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("token_hash");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_refresh_tokens");
+
+                    b.HasIndex("DeviceId")
+                        .HasDatabaseName("ix_refresh_tokens_device_id");
+
+                    b.HasIndex("FamilyId")
+                        .HasDatabaseName("ix_refresh_tokens_family_id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("ux_refresh_tokens_token_hash");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_refresh_tokens_user_id");
+
+                    b.ToTable("refresh_tokens", (string)null);
+                });
+
             modelBuilder.Entity("WalletPK.Identity.Domain.Users.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -32,11 +157,23 @@ namespace WalletPK.Identity.Infrastructure.Persistence.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<int>("FailedMpinAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("failed_mpin_attempts");
+
                     b.Property<string>("KycTier")
                         .IsRequired()
                         .HasMaxLength(4)
                         .HasColumnType("character varying(4)")
                         .HasColumnName("kyc_tier");
+
+                    b.Property<DateTimeOffset?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_at");
+
+                    b.Property<DateTimeOffset?>("LockedUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("locked_until");
 
                     b.Property<string>("MpinHash")
                         .IsRequired()
@@ -49,6 +186,14 @@ namespace WalletPK.Identity.Infrastructure.Persistence.Migrations
                         .HasMaxLength(13)
                         .HasColumnType("character varying(13)")
                         .HasColumnName("phone_number");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("Customer")
+                        .HasColumnName("role");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -74,6 +219,33 @@ namespace WalletPK.Identity.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ux_users_phone_number");
 
                     b.ToTable("users", (string)null);
+                });
+
+            modelBuilder.Entity("WalletPK.Identity.Domain.Devices.Device", b =>
+                {
+                    b.HasOne("WalletPK.Identity.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_devices_users_user_id");
+                });
+
+            modelBuilder.Entity("WalletPK.Identity.Domain.Sessions.RefreshToken", b =>
+                {
+                    b.HasOne("WalletPK.Identity.Domain.Devices.Device", null)
+                        .WithMany()
+                        .HasForeignKey("DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_refresh_tokens_devices_device_id");
+
+                    b.HasOne("WalletPK.Identity.Domain.Users.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_refresh_tokens_users_user_id");
                 });
 #pragma warning restore 612, 618
         }
