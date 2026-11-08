@@ -200,8 +200,8 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M1.5 Correlation ID, request logging, CORS
 
 ### M2 — Identity & KYC (week 2)
-- [ ] M2.1 Domain: User (aggregate, xmin concurrency), PhoneNumber (PK mobile -> E.164), KycTier (L0/L1/L2), MpinPolicy, UserRegistered; Device in M2.4, KycProfile in M2.5
-- [ ] M2.2 Registration: phone -> OTP (HMAC-hashed in Redis, 2 min, 5 attempts, 30 s resend cooldown) -> single-use registration token -> MPIN (Argon2id + pepper) -> user created
+- [x] M2.1 Domain: User (aggregate, xmin concurrency), PhoneNumber (PK mobile -> E.164), KycTier (L0/L1/L2), MpinPolicy, UserRegistered; Device in M2.4, KycProfile in M2.5
+- [x] M2.2 Registration: phone -> OTP (HMAC-hashed in Redis, 2 min, 5 attempts, 30 s resend cooldown) -> single-use registration token -> MPIN (Argon2id + pepper) -> user created
 - [ ] M2.3 MPIN login, JWT, rotating refresh tokens with reuse detection
 - [ ] M2.4 Device binding, step-up OTP, 24-hour cooling-off limit
 - [ ] M2.5 KYC upgrade via mock NADRA; CNIC encrypted (AES-256-GCM)
