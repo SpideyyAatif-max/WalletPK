@@ -5,7 +5,7 @@ namespace WalletPK.Common.Domain;
 /// (for example a Wallet with its holds). It records domain events, which are saved
 /// to the outbox in the same transaction and published afterwards.
 /// </summary>
-public abstract class AggregateRoot<TId> : Entity<TId>
+public abstract class AggregateRoot<TId> : Entity<TId>, IHasDomainEvents
     where TId : struct
 {
     private readonly List<IDomainEvent> _domainEvents = [];

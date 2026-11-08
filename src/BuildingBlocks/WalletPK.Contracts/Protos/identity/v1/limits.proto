@@ -1,0 +1,79 @@
+// Transaction limits, owned by the Identity service and called by the Ledger before every debit.
+// Internal only: served on the Identity service's gRPC port, never through the API gateway.
+// Contract rules: add fields with new numbers; never renumber, rename or reuse a field.
+syntax = "proto3";
+
+package walletpk.identity.v1;
+
+option csharp_namespace = "WalletPK.Contracts.Identity.V1";
+
+service Limits {
+  // Read-only: would this debit fit the user's limits right now? (Used for "you can send up to ...".)
+  rpc CheckLimit (CheckLimitRequest) returns (LimitResponse);
+
+  // Atomically checks AND counts the debit against the daily and monthly limits.
+  // Idempotent per transaction_id: a retry returns the original outcome and counts nothing twice.
+  rpc ReserveLimit (ReserveLimitRequest) returns (LimitResponse);
+
+  // Gives a reservation back when the debit did not go through (Saga compensation).
+  rpc ReleaseLimit (ReleaseLimitRequest) returns (ReleaseLimitResponse);
+}
+
+enum TransactionType {
+  TRANSACTION_TYPE_UNSPECIFIED = 0;
+  TRANSACTION_TYPE_P2P_TRANSFER = 1;
+  TRANSACTION_TYPE_BANK_TRANSFER = 2;
+  TRANSACTION_TYPE_BILL_PAYMENT = 3;
+  TRANSACTION_TYPE_MOBILE_TOPUP = 4;
+  TRANSACTION_TYPE_MERCHANT_PAYMENT = 5;
+  TRANSACTION_TYPE_CASH_OUT = 6;
+}
+
+enum LimitDecision {
+  LIMIT_DECISION_UNSPECIFIED = 0;
+  LIMIT_DECISION_ALLOWED = 1;
+  LIMIT_DECISION_EXCEEDS_PER_TRANSACTION = 2;
+  LIMIT_DECISION_EXCEEDS_DAILY = 3;
+  LIMIT_DECISION_EXCEEDS_MONTHLY = 4;
+  // The device is in its new-device cooling-off period and the amount is above the cooling-off cap.
+  LIMIT_DECISION_COOLING_OFF = 5;
+  // Unknown, frozen or locked account.
+  LIMIT_DECISION_USER_NOT_ALLOWED = 6;
+}
+
+message CheckLimitRequest {
+  string user_id = 1;
+  // Amount in paisa (Rs. 1 = 100 paisa). Must be positive.
+  int64 amount_paisa = 2;
+  TransactionType transaction_type = 3;
+  // Optional: the device the customer is using (from the access token), for the cooling-off rule.
+  string device_id = 4;
+}
+
+message ReserveLimitRequest {
+  // The ledger's transaction ID; makes the call idempotent.
+  string transaction_id = 1;
+  string user_id = 2;
+  int64 amount_paisa = 3;
+  TransactionType transaction_type = 4;
+  string device_id = 5;
+}
+
+message LimitResponse {
+  LimitDecision decision = 1;
+  // Human-readable explanation, safe to show to the customer.
+  string reason = 2;
+  string kyc_tier = 3;
+  int64 per_transaction_limit_paisa = 4;
+  int64 daily_remaining_paisa = 5;
+  int64 monthly_remaining_paisa = 6;
+}
+
+message ReleaseLimitRequest {
+  string transaction_id = 1;
+}
+
+message ReleaseLimitResponse {
+  // False when there was nothing to release (unknown, already released or expired).
+  bool released = 1;
+}

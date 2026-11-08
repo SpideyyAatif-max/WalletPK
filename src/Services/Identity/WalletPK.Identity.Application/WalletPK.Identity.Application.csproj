@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WalletPK.Identity.Domain\WalletPK.Identity.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Contracts\WalletPK.Contracts.csproj" />
   </ItemGroup>
 
   <ItemGroup>

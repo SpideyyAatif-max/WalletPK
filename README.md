@@ -124,7 +124,7 @@ Calls to a service that is not running yet return `503`; protected routes withou
 | Service | Local port (`dotnet run`) | Gateway path |
 | --- | --- | --- |
 | API Gateway | 5000 | `/` |
-| Identity & KYC | 5101 | `/api/identity/*` |
+| Identity & KYC | 5101 (gRPC: 5201, internal only) | `/api/identity/*` |
 | Wallet & Ledger | 5102 | `/api/wallets/*` |
 | Payments | 5103 | `/api/payments/*`, `/webhooks/raast/*` |
 | Bill Payment | 5104 | `/api/bills/*`, `/webhooks/billers/*` |

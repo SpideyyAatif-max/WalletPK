@@ -124,4 +124,31 @@ public sealed class User : AggregateRoot<UserId>
         LastLoginAt = now;
         UpdatedAt = now;
     }
+
+    /// <summary>
+    /// Whether money may leave this account now. Frozen accounts never; a temporarily locked account
+    /// (someone was guessing the MPIN) not until the lockout ends.
+    /// </summary>
+    public bool CanTransact(DateTimeOffset now) =>
+        Status switch
+        {
+            UserStatus.Active => true,
+            UserStatus.Locked => LockedUntil is not { } until || until <= now,
+            _ => false,
+        };
+
+    /// <summary>Raises the KYC tier after verification. Tiers only go up; asking for the same or a lower tier fails.</summary>
+    public Result UpgradeKycTier(KycTier newTier, DateTimeOffset now)
+    {
+        if (newTier <= KycTier)
+        {
+            return UserErrors.AlreadyAtTier(KycTier);
+        }
+
+        var previous = KycTier;
+        KycTier = newTier;
+        UpdatedAt = now;
+        Raise(new KycUpgraded(Id, previous, newTier, now));
+        return Result.Success();
+    }
 }

@@ -58,11 +58,15 @@ services:
       ConnectionStrings__Redis: redis:6379,password=${REDIS_PASSWORD:-walletpk_dev},abortConnect=false
       # Dev signing key, created on first start; /tmp because the container runs as a non-root user
       Jwt__SigningKeyPath: /tmp/walletpk-keys/identity-signing-key.pem
+      # REST on 8080 (via the gateway), internal gRPC on 8081 (HTTP/2 only, called by other services)
+      Kestrel__Endpoints__Http__Url: http://+:8080
+      Kestrel__Endpoints__Grpc__Url: http://+:8081
       Observability__SeqUrl: http://seq:5341
       Observability__OtlpTracesEndpoint: http://jaeger:4317
       Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
     ports:
       - "${IDENTITY_PORT:-5101}:8080"
+      - "${IDENTITY_GRPC_PORT:-5201}:8081"
     depends_on:
       postgres:
         condition: service_healthy

@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Contracts</RootNamespace>
+    <Description>Public contracts between WalletPK services: integration events (Kafka) and gRPC services (.proto). Changing a contract can break other services, so only add fields; never rename or remove them.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <!-- Compiles the .proto files into C# at build time; not shipped. -->
+    <PackageReference Include="Grpc.Tools">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Both: the server base class (Identity hosts it) and the client (the Ledger calls it). -->
+    <Protobuf Include="Protos\identity\v1\limits.proto" ProtoRoot="Protos" GrpcServices="Both" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Messaging\WalletPK.Messaging.csproj" />
+  </ItemGroup>
+
+</Project>

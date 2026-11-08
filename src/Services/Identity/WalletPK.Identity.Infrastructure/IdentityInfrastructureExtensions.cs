@@ -9,13 +9,19 @@ using StackExchange.Redis;
 using WalletPK.Identity.Application.Abstractions;
 using WalletPK.Identity.Application.Account;
 using WalletPK.Identity.Application.Authentication;
+using WalletPK.Identity.Application.Events;
+using WalletPK.Identity.Application.Kyc;
+using WalletPK.Identity.Application.Limits;
 using WalletPK.Identity.Application.Otp;
 using WalletPK.Identity.Application.Registration;
 using WalletPK.Identity.Infrastructure.Health;
+using WalletPK.Identity.Infrastructure.Nadra;
 using WalletPK.Identity.Infrastructure.Persistence;
+using WalletPK.Identity.Infrastructure.Persistence.Outbox;
 using WalletPK.Identity.Infrastructure.Redis;
 using WalletPK.Identity.Infrastructure.Security;
 using WalletPK.Identity.Infrastructure.Sms;
+using WalletPK.Messaging.Serialization;
 using WalletPK.Web.Health;
 using WalletPK.Web.Identity;
 
@@ -63,23 +69,44 @@ public static class IdentityInfrastructureExtensions
                 "Jwt:SigningKeyPath is required (or Jwt:CreateSigningKeyIfMissing for development).")
             .ValidateOnStart();
 
+        services.AddOptions<LimitsOptions>()
+            .BindConfiguration(LimitsOptions.SectionName)
+            .Validate(options => options.IsValid(), "Limits: each tier needs PerTransaction <= Daily <= Monthly, and higher tiers may not be lower.")
+            .ValidateOnStart();
+
+        services.AddOptions<EncryptionOptions>()
+            .BindConfiguration(EncryptionOptions.SectionName)
+            .Validate(options => options.HasValidKeys(), "Encryption:Keys must hold Base64 32-byte keys and include Encryption:ActiveKeyId.")
+            .Validate(options => options.HasValidBlindIndexKey(), "Encryption:BlindIndexKey must be Base64 of at least 32 bytes.")
+            .ValidateOnStart();
+
         // Application classes take plain option objects (they do not depend on Microsoft.Extensions.Options).
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<OtpOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<MpinHashingOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<RegistrationOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<AuthOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<JwtSigningOptions>>().Value);
+        services.AddSingleton(provider => provider.GetRequiredService<IOptions<LimitsOptions>>().Value);
+        services.AddSingleton(provider => provider.GetRequiredService<IOptions<EncryptionOptions>>().Value);
+
+        // ---- Integration events: the contracts this service publishes, and the outbox writer ----
+        services.AddSingleton(new IntegrationEventRegistry()
+            .RegisterFromAssembly(typeof(WalletPK.Contracts.Identity.UserRegistered).Assembly, IdentityIntegrationEvents.ContractsNamespace));
+        services.AddSingleton<JsonEventSerializer>();
+        services.AddSingleton<DomainEventOutboxInterceptor>();
 
         // ---- PostgreSQL (EF Core) ----
         services.AddDbContext<IdentityDbContext>((provider, options) => options
             .UseNpgsql(
                 RequiredConnectionString(provider, DatabaseConnectionName),
                 npgsql => npgsql.MigrationsHistoryTable("ef_migrations_history"))
-            .UseSnakeCaseNamingConvention());
+            .UseSnakeCaseNamingConvention()
+            .AddInterceptors(provider.GetRequiredService<DomainEventOutboxInterceptor>()));
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<IdentityDbContext>());
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IDeviceRepository, DeviceRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IKycProfileRepository, KycProfileRepository>();
 
         // ---- Redis ----
         services.AddSingleton<IConnectionMultiplexer>(provider =>
@@ -87,12 +114,16 @@ public static class IdentityInfrastructureExtensions
         services.AddSingleton<IOtpStore, RedisOtpStore>();
         services.AddSingleton<IRegistrationTokenStore, RedisRegistrationTokenStore>();
         services.AddSingleton<IDeviceChallengeStore, RedisDeviceChallengeStore>();
+        services.AddSingleton<ILimitUsageStore, RedisLimitUsageStore>();
 
         // ---- Security and messaging ----
         services.AddSingleton<IMpinHasher, Argon2MpinHasher>();
         services.AddSingleton<SigningKeyProvider>();
         services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
         services.AddSingleton<ISmsSender, LoggingSmsSender>();
+        services.AddSingleton<IFieldEncryptor, AesGcmFieldEncryptor>();
+        services.AddSingleton<IBlindIndex, HmacBlindIndex>();
+        services.AddSingleton<INadraClient, SimulatedNadraClient>();
         services.TryAddSingleton(TimeProvider.System);
 
         // ---- Use cases ----
@@ -108,6 +139,9 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<GetProfileHandler>();
         services.AddScoped<ListDevicesHandler>();
         services.AddScoped<RevokeDeviceHandler>();
+        services.AddScoped<SubmitKycHandler>();
+        services.AddScoped<GetKycStatusHandler>();
+        services.AddScoped<LimitService>();
 
         services.AddIdentityTokenValidation();
 

@@ -8,4 +8,7 @@ public static class UserErrors
 
     public static Error Frozen { get; } =
         Error.Forbidden("identity.account_frozen", "This account is on hold. Please contact WalletPK support.");
+
+    public static Error AlreadyAtTier(KycTier tier) =>
+        Error.Conflict("kyc.already_verified", $"This account is already verified at level {tier}.");
 }

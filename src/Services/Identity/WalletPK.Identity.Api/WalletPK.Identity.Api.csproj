@@ -15,6 +15,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Hosts the internal gRPC services (limits); the .proto contracts live in WalletPK.Contracts. -->
+    <PackageReference Include="Grpc.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\WalletPK.Identity.Infrastructure\WalletPK.Identity.Infrastructure.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Observability\WalletPK.Observability.csproj" />

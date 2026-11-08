@@ -50,6 +50,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Messaging", "src\B
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Messaging.UnitTests", "tests\BuildingBlocks\WalletPK.Messaging.UnitTests\WalletPK.Messaging.UnitTests.csproj", "{FDBAF3DB-7257-4B7E-B511-19D231A5B64F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Contracts", "src\BuildingBlocks\WalletPK.Contracts\WalletPK.Contracts.csproj", "{1A49B6E7-4148-4979-AF94-80E8F01EF541}"
+EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Gateway", "src\Gateway\WalletPK.Gateway\WalletPK.Gateway.csproj", "{5C379C6C-4FF2-40AE-9B12-FC71B4F69374}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Gateway.IntegrationTests", "tests\Gateway\WalletPK.Gateway.IntegrationTests\WalletPK.Gateway.IntegrationTests.csproj", "{B42A2FDD-A006-4C48-9CAC-2A11AB333D4A}"
@@ -76,6 +78,10 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1A49B6E7-4148-4979-AF94-80E8F01EF541}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A49B6E7-4148-4979-AF94-80E8F01EF541}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A49B6E7-4148-4979-AF94-80E8F01EF541}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A49B6E7-4148-4979-AF94-80E8F01EF541}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9C883D06-5075-4ABE-B78B-D030690D2464}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9C883D06-5075-4ABE-B78B-D030690D2464}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9C883D06-5075-4ABE-B78B-D030690D2464}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -145,6 +151,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{1A49B6E7-4148-4979-AF94-80E8F01EF541} = {3341775F-EE6C-4B7B-B43F-8838AA7A92B4}
 		{876A05D1-4E33-4E73-AE2B-8ADD64EDF667} = {6B0982E2-7759-4F12-9744-4B92BA0C9CE9}
 		{FE4D1C8F-3E85-4226-93B5-4884F634D5B7} = {255B20DB-6E50-4A7B-A96B-5E3EEB263C40}
 		{9C883D06-5075-4ABE-B78B-D030690D2464} = {876A05D1-4E33-4E73-AE2B-8ADD64EDF667}

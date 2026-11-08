@@ -17,7 +17,8 @@ WORKDIR /app
 COPY --from=build /app .
 
 ENV ASPNETCORE_HTTP_PORTS=8080
-EXPOSE 8080
+# 8080: REST (through the gateway). 8081: internal gRPC (HTTP/2), see docker-compose.yml.
+EXPOSE 8080 8081
 
 USER $APP_UID
 ENTRYPOINT ["dotnet", "WalletPK.Identity.Api.dll"]
