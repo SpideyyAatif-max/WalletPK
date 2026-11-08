@@ -188,7 +188,7 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M0.2 Infrastructure compose: Postgres 17, Redis 7, Kafka (KRaft) + Kafka UI, Jaeger, Prometheus, Grafana, Seq
 - [x] M0.3 WalletPK.Common: Money (paisa as long), Result<T>, domain errors, TimeProvider + Pakistan business dates, strongly-typed UUIDv7 IDs, Entity/AggregateRoot/DomainEvent
 - [x] M0.4 WalletPK.Web: correlation ID (middleware + outgoing HttpClient handler), ProblemDetails from Result/Error, global exception handler, /health/live + /health/ready, ICurrentUser from token claims (JWT bearer validation itself lands with M1.2/M2.3)
-- [ ] M0.5 WalletPK.Observability: AddWalletPkObservability() = Serilog (console + Seq, correlation-ID enricher, per-request summary) + OpenTelemetry traces (Jaeger, OTLP gRPC) and metrics (Prometheus, OTLP HTTP); WalletPK.* ActivitySource/Meter convention
+- [x] M0.5 WalletPK.Observability: AddWalletPkObservability() = Serilog (console + Seq, correlation-ID enricher, per-request summary) + OpenTelemetry traces (Jaeger, OTLP gRPC) and metrics (Prometheus, OTLP HTTP); WalletPK.* ActivitySource/Meter convention
 - [ ] M0.6 WalletPK.Messaging skeleton: IOutbox, IInbox, Kafka abstractions
 - [ ] M0.7 CI pipeline (GitHub Actions)
 
