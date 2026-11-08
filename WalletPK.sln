@@ -38,12 +38,24 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Web", "src\Buildin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Web.UnitTests", "tests\BuildingBlocks\WalletPK.Web.UnitTests\WalletPK.Web.UnitTests.csproj", "{0D91D7C4-6D72-4737-A4C5-3C5259593261}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Observability", "src\BuildingBlocks\WalletPK.Observability\WalletPK.Observability.csproj", "{2D2D95B9-91DC-4C42-8BBB-ED1CC14B11AA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Observability.UnitTests", "tests\BuildingBlocks\WalletPK.Observability.UnitTests\WalletPK.Observability.UnitTests.csproj", "{38A299B1-F888-4D58-B757-3409895A89ED}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2D2D95B9-91DC-4C42-8BBB-ED1CC14B11AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2D2D95B9-91DC-4C42-8BBB-ED1CC14B11AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2D2D95B9-91DC-4C42-8BBB-ED1CC14B11AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2D2D95B9-91DC-4C42-8BBB-ED1CC14B11AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38A299B1-F888-4D58-B757-3409895A89ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38A299B1-F888-4D58-B757-3409895A89ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38A299B1-F888-4D58-B757-3409895A89ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38A299B1-F888-4D58-B757-3409895A89ED}.Release|Any CPU.Build.0 = Release|Any CPU
 		{6F002412-CC98-4C28-842F-3C1BBB586E12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6F002412-CC98-4C28-842F-3C1BBB586E12}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6F002412-CC98-4C28-842F-3C1BBB586E12}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -65,6 +77,8 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{2D2D95B9-91DC-4C42-8BBB-ED1CC14B11AA} = {3341775F-EE6C-4B7B-B43F-8838AA7A92B4}
+		{38A299B1-F888-4D58-B757-3409895A89ED} = {255B20DB-6E50-4A7B-A96B-5E3EEB263C40}
 		{6F002412-CC98-4C28-842F-3C1BBB586E12} = {3341775F-EE6C-4B7B-B43F-8838AA7A92B4}
 		{0D91D7C4-6D72-4737-A4C5-3C5259593261} = {255B20DB-6E50-4A7B-A96B-5E3EEB263C40}
 		{9AAD86A5-6CA4-4AA8-86F0-F8C5F40DA590} = {3341775F-EE6C-4B7B-B43F-8838AA7A92B4}
