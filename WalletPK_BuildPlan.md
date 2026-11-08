@@ -184,7 +184,7 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 ## 6. Full Module and Submodule Checklist
 
 ### M0 — Foundation & BuildingBlocks (week 1)
-- [ ] M0.1 Solution scaffold: .sln, Directory.Build.props, central package versions, .editorconfig, .gitignore
+- [x] M0.1 Solution scaffold: .sln, Directory.Build.props, central package versions, .editorconfig, .gitignore
 - [ ] M0.2 Infrastructure compose: Postgres 17, Redis 7, Kafka (KRaft) + Kafka UI, Jaeger, Prometheus, Grafana, Seq
 - [ ] M0.3 WalletPK.Common: Money (paisa as long), Result<T>, domain errors, IClock, strongly-typed IDs
 - [ ] M0.4 WalletPK.Web: correlation ID, problem details, exception handler, JWT helpers, health checks

@@ -1,0 +1,33 @@
+<Project>
+  <!--
+    Shared build settings inherited by every C# project in WalletPK.
+    Change a setting here once instead of in every .csproj.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Code quality: warnings fail the build, analyzers and .editorconfig style rules run on build -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- NuGet vulnerability audit stays a warning so a new advisory never blocks a build -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Default</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <Deterministic>true</Deterministic>
+    <InvariantGlobalization>false</InvariantGlobalization>
+
+    <Product>WalletPK</Product>
+    <Company>WalletPK</Company>
+    <Authors>Aatif</Authors>
+    <Copyright>Copyright (c) 2026 WalletPK</Copyright>
+  </PropertyGroup>
+
+  <!-- Reproducible builds on the CI server -->
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,55 @@
+# ---- .NET build output ----
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+artifacts/
+*.user
+*.suo
+*.userprefs
+*.rsuser
+.vs/
+*.nupkg
+*.snupkg
+TestResults/
+coverage*/
+*.coverage
+*.trx
+
+# ---- IDEs ----
+.idea/
+*.swp
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# ---- Node / Next.js ----
+node_modules/
+.next/
+out/
+.turbo/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
+
+# ---- Secrets and local config (never commit) ----
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+*.pfx
+*.key
+secrets.json
+
+# ---- Docker volumes and local data ----
+.data/
+docker-volumes/
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+desktop.ini

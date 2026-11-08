@@ -1,0 +1,11 @@
+<Project>
+  <!-- Inherit the root settings, then mark every project under tests/ as a non-shipping test project -->
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <!-- Test method names like Transfer_Should_Fail_When_Balance_Is_Low are allowed -->
+    <NoWarn>$(NoWarn);CA1707</NoWarn>
+  </PropertyGroup>
+</Project>

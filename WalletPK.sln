@@ -1,0 +1,46 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{BDBFD471-61B4-475C-A6DE-09D3CF601A39}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "BuildingBlocks", "BuildingBlocks", "{3341775F-EE6C-4B7B-B43F-8838AA7A92B4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Gateway", "Gateway", "{4A72FF50-0C7A-4C13-B195-794422FF7313}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Services", "Services", "{6B0982E2-7759-4F12-9744-4B92BA0C9CE9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MockProviders", "MockProviders", "{C008B887-BB4D-4DAD-8B44-1CFC2B762E8D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{255B20DB-6E50-4A7B-A96B-5E3EEB263C40}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{42288516-BDD0-480A-B1F0-F30B8BD6D593}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+		global.json = global.json
+		nuget.config = nuget.config
+		README.md = README.md
+		WalletPK_BuildPlan.md = WalletPK_BuildPlan.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{3341775F-EE6C-4B7B-B43F-8838AA7A92B4} = {BDBFD471-61B4-475C-A6DE-09D3CF601A39}
+		{4A72FF50-0C7A-4C13-B195-794422FF7313} = {BDBFD471-61B4-475C-A6DE-09D3CF601A39}
+		{6B0982E2-7759-4F12-9744-4B92BA0C9CE9} = {BDBFD471-61B4-475C-A6DE-09D3CF601A39}
+		{C008B887-BB4D-4DAD-8B44-1CFC2B762E8D} = {BDBFD471-61B4-475C-A6DE-09D3CF601A39}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C96C9CB1-8115-474C-8411-41C3C9C00A15}
+	EndGlobalSection
+EndGlobal

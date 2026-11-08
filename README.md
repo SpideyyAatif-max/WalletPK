@@ -1,0 +1,75 @@
+# WalletPK
+
+**Event-driven mobile wallet and payments platform built on .NET 10 microservices, with a double-entry ledger, Saga-orchestrated payments, a Transactional Outbox, CQRS, real-time fraud detection and a chaos-testing simulator.**
+
+WalletPK is a distributed mobile wallet and payments platform modelled on JazzCash and Easypaisa. ASP.NET Core (.NET 10) microservices behind a YARP API gateway keep an immutable double-entry ledger in PostgreSQL, so money is never created or lost. Concurrent debits are made safe by Redis distributed locks, optimistic concurrency and database constraints, and idempotency keys stop duplicate requests. Multi-step payments to external banks, billers and telcos run as orchestrated Sagas with Polly retries, circuit breakers and automatic compensating refunds. A Transactional Outbox publishes every ledger change to Kafka, feeding CQRS read models, a real-time fraud engine and SignalR live updates. A Next.js frontend provides a customer wallet, an operations and compliance console, and a Simulation Control Center that drives thousands of virtual users and injects failures to prove correctness under load.
+
+> **Status:** under active development. Progress is tracked module by module in [`WalletPK_BuildPlan.md`](WalletPK_BuildPlan.md).
+
+---
+
+## Features
+
+- **Payments:** wallet-to-wallet transfers, Raast bank transfers, utility bill payments, mobile top-ups, merchant QR payments, agent cash-in / cash-out
+- **Ledger integrity:** append-only double-entry ledger, holds, idempotency keys, hash-chained audit log, invariant checks
+- **Resilience:** orchestrated Sagas with compensation, retries, circuit breakers, dead-letter queues, reconciliation
+- **Security:** OTP + MPIN, rotating refresh tokens, device binding, tiered KYC limits, field-level encryption, real-time fraud rules
+- **Simulation:** up to 10,000 virtual users, runtime fault injection and eight real-world scenarios with automatic pass/fail checks
+
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Backend services | ASP.NET Core (.NET 10), gRPC, Clean Architecture |
+| API gateway | YARP |
+| Database | PostgreSQL 17, EF Core (writes), Dapper (reads) |
+| Cache and locks | Redis 7 |
+| Event streaming | Apache Kafka (KRaft) |
+| Sagas and resilience | MassTransit, Polly |
+| Real-time | SignalR |
+| Frontend | Next.js, TypeScript, Tailwind CSS, shadcn/ui |
+| Observability | OpenTelemetry, Jaeger, Prometheus, Grafana, Seq |
+| Testing | xUnit, FsCheck, Testcontainers, k6 |
+| Runtime | Docker Compose |
+
+## Repository Layout
+
+```text
+WalletPK/
+├── WalletPK.sln
+├── src/
+│   ├── BuildingBlocks/   # shared libraries: common types, messaging, web, observability, contracts
+│   ├── Gateway/          # YARP API gateway
+│   ├── Services/         # Identity, Ledger, Payments, Bills, TopupMerchant, Agents, Fraud, Notifications, Reconciliation, Simulation
+│   └── MockProviders/    # simulated Raast, banks, billers, telcos and NADRA
+├── web/                  # Next.js app: /wallet, /ops, /sim
+├── tests/                # unit, integration, architecture and contract tests
+├── load/                 # k6 load-test scripts
+├── ops/                  # Prometheus and Grafana configuration
+└── docs/                 # architecture decisions, API docs, diagrams
+```
+
+## Prerequisites
+
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Node.js](https://nodejs.org/) LTS (22 or newer)
+- Git
+
+## Getting Started
+
+```bash
+git clone https://github.com/SpideyyAatif-max/WalletPK.git
+cd WalletPK
+dotnet build WalletPK.sln
+```
+
+Running the infrastructure and services with Docker Compose is added in module M0.2.
+
+## Project Conventions
+
+- **Build settings** shared by every project live in `Directory.Build.props` (.NET 10, nullable, warnings as errors).
+- **Package versions** are declared once in `Directory.Packages.props` (Central Package Management); projects reference packages without versions.
+- **Code style** is defined in `.editorconfig` and enforced on build.
+- **Money** is always stored as integer paisa (`long`), never as floating point.
+- **Commits** are one per build-plan submodule, prefixed with its ID (for example `M0.1: solution scaffold`).

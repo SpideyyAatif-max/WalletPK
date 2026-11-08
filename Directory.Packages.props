@@ -1,0 +1,26 @@
+<Project>
+  <!--
+    Central Package Management: every NuGet package version used anywhere in WalletPK is declared here, once.
+    Projects reference packages WITHOUT a version: <PackageReference Include="Npgsql" />
+    Versions are added module by module as each package is first needed.
+  -->
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup Label="ASP.NET Core and EF Core">
+  </ItemGroup>
+
+  <ItemGroup Label="Data, cache and messaging">
+  </ItemGroup>
+
+  <ItemGroup Label="Resilience and Sagas">
+  </ItemGroup>
+
+  <ItemGroup Label="Observability">
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+  </ItemGroup>
+</Project>
