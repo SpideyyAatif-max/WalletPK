@@ -88,6 +88,7 @@ public class ResultTests
         Error.BusinessRule("c", "m").Type.ShouldBe(ErrorType.BusinessRule);
         Error.Unavailable("c", "m").Type.ShouldBe(ErrorType.Unavailable);
         Error.Failure("c", "m").Type.ShouldBe(ErrorType.Failure);
+        Error.TooManyRequests("c", "m").Type.ShouldBe(ErrorType.TooManyRequests);
     }
 
     [Fact]

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Identity.Application</RootNamespace>
+    <Description>Identity use cases (registration, OTP, login) written against ports; no EF Core, Redis or ASP.NET dependencies.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Identity.Domain\WalletPK.Identity.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Identity.UnitTests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Identity.Domain</RootNamespace>
+    <Description>Identity domain: users, phone numbers, MPIN rules and KYC tiers. No infrastructure dependencies.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Common\WalletPK.Common.csproj" />
+  </ItemGroup>
+
+</Project>

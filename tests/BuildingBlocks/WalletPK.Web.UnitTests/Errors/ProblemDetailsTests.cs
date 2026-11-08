@@ -40,6 +40,7 @@ public class ProblemDetailsTests
     [InlineData(nameof(ErrorType.Conflict), HttpStatusCode.Conflict)]
     [InlineData(nameof(ErrorType.BusinessRule), HttpStatusCode.UnprocessableEntity)]
     [InlineData(nameof(ErrorType.Unavailable), HttpStatusCode.ServiceUnavailable)]
+    [InlineData(nameof(ErrorType.TooManyRequests), HttpStatusCode.TooManyRequests)]
     [InlineData(nameof(ErrorType.Failure), HttpStatusCode.InternalServerError)]
     public async Task Each_error_type_maps_to_its_http_status(string type, HttpStatusCode expected)
     {

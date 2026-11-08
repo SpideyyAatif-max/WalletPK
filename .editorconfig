@@ -80,3 +80,7 @@ dotnet_naming_style.pascal.capitalization = pascal_case
 dotnet_diagnostic.CA1848.severity = suggestion  # LoggerMessage delegates: adopted where hot paths need it
 dotnet_diagnostic.CA2007.severity = none        # ConfigureAwait not needed in ASP.NET Core
 dotnet_diagnostic.CA1062.severity = none        # nullable reference types already cover argument null checks
+
+# EF Core migrations are generated code: analyzers and style rules do not apply.
+[**/Migrations/*.cs]
+generated_code = true

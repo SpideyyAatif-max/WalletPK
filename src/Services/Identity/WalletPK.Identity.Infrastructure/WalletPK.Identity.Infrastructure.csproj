@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Identity.Infrastructure</RootNamespace>
+    <Description>Identity adapters: PostgreSQL via EF Core, Redis for OTPs and tokens, Argon2id hashing, SMS sending.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+    <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Konscious.Security.Cryptography.Argon2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Identity.Application\WalletPK.Identity.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Identity.UnitTests" />
+  </ItemGroup>
+
+</Project>

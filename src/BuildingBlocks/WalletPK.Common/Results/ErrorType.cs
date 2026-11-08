@@ -2,7 +2,7 @@ namespace WalletPK.Common.Results;
 
 /// <summary>
 /// The category of a failure. The API layer maps each category to an HTTP status
-/// (Validation = 400, NotFound = 404, Conflict = 409, BusinessRule = 422, ...).
+/// (Validation = 400, NotFound = 404, Conflict = 409, BusinessRule = 422, TooManyRequests = 429, ...).
 /// </summary>
 public enum ErrorType
 {
@@ -29,4 +29,7 @@ public enum ErrorType
 
     /// <summary>A dependency (bank, biller, database) is temporarily unavailable.</summary>
     Unavailable,
+
+    /// <summary>Too many attempts or requests in a short time (for example OTP retries).</summary>
+    TooManyRequests,
 }

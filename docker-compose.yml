@@ -35,6 +35,7 @@ services:
       Observability__OtlpTracesEndpoint: http://jaeger:4317
       Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
       Jwt__Authority: http://identity:8080/
+      ReverseProxy__Clusters__identity__Destinations__d1__Address: http://identity:8080/
     ports:
       - "${GATEWAY_PORT:-5000}:8080"
     depends_on:
@@ -42,3 +43,26 @@ services:
         condition: service_started
       jaeger:
         condition: service_started
+
+  identity:
+    <<: *dotnet-service
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: src/Services/Identity/WalletPK.Identity.Api/Dockerfile
+    image: walletpk/identity:dev
+    container_name: walletpk-identity
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__IdentityDb: Host=postgres;Port=5432;Database=walletpk_identity;Username=${POSTGRES_USER:-walletpk};Password=${POSTGRES_PASSWORD:-walletpk_dev}
+      ConnectionStrings__Redis: redis:6379,password=${REDIS_PASSWORD:-walletpk_dev},abortConnect=false
+      Observability__SeqUrl: http://seq:5341
+      Observability__OtlpTracesEndpoint: http://jaeger:4317
+      Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
+    ports:
+      - "${IDENTITY_PORT:-5101}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

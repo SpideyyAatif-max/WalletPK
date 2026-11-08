@@ -47,5 +47,7 @@ public sealed record Error
 
     public static Error Unavailable(string code, string message) => new(code, message, ErrorType.Unavailable);
 
+    public static Error TooManyRequests(string code, string message) => new(code, message, ErrorType.TooManyRequests);
+
     public override string ToString() => $"{Type}: {Code} - {Message}";
 }

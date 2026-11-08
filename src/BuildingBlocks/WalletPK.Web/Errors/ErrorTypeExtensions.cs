@@ -15,6 +15,7 @@ public static class ErrorTypeExtensions
         ErrorType.Conflict => StatusCodes.Status409Conflict,
         ErrorType.BusinessRule => StatusCodes.Status422UnprocessableEntity,
         ErrorType.Unavailable => StatusCodes.Status503ServiceUnavailable,
+        ErrorType.TooManyRequests => StatusCodes.Status429TooManyRequests,
         _ => StatusCodes.Status500InternalServerError,
     };
 
@@ -27,6 +28,7 @@ public static class ErrorTypeExtensions
         ErrorType.Conflict => "Conflict with the current state",
         ErrorType.BusinessRule => "Business rule violated",
         ErrorType.Unavailable => "Service temporarily unavailable",
+        ErrorType.TooManyRequests => "Too many attempts",
         _ => "An unexpected error occurred",
     };
 }
