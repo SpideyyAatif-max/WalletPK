@@ -14,6 +14,8 @@ public sealed record CompleteRegistrationCommand(string? RegistrationToken, stri
 
 /// <summary>Response to step 1.</summary>
 /// <param name="PhoneNumber">Masked, for example "+92300*****67".</param>
+/// <param name="ExpiresInSeconds">How long the code that was sent stays valid.</param>
+/// <param name="ResendAfterSeconds">How long until a new code may be requested.</param>
 public sealed record OtpChallenge(string PhoneNumber, int ExpiresInSeconds, int ResendAfterSeconds);
 
 /// <summary>Response to step 2: proof the phone was verified, required for step 3.</summary>
