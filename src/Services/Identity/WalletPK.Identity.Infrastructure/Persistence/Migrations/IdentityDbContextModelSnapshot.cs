@@ -82,6 +82,66 @@ namespace WalletPK.Identity.Infrastructure.Persistence.Migrations
                     b.ToTable("devices", (string)null);
                 });
 
+            modelBuilder.Entity("WalletPK.Identity.Domain.Kyc.KycProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("CnicCiphertext")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("cnic_ciphertext");
+
+                    b.Property<string>("CnicLookupHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("cnic_lookup_hash");
+
+                    b.Property<string>("CnicMasked")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)")
+                        .HasColumnName("cnic_masked");
+
+                    b.Property<DateOnly>("DateOfBirth")
+                        .HasColumnType("date")
+                        .HasColumnName("date_of_birth");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("full_name");
+
+                    b.Property<string>("VerificationReference")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("verification_reference");
+
+                    b.Property<DateTimeOffset>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("verified_at");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_kyc_profiles");
+
+                    b.HasIndex("CnicLookupHash")
+                        .IsUnique()
+                        .HasDatabaseName("ux_kyc_profiles_cnic_lookup_hash");
+
+                    b.ToTable("kyc_profiles", (string)null);
+                });
+
             modelBuilder.Entity("WalletPK.Identity.Domain.Sessions.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -221,6 +281,80 @@ namespace WalletPK.Identity.Infrastructure.Persistence.Migrations
                     b.ToTable("users", (string)null);
                 });
 
+            modelBuilder.Entity("WalletPK.Identity.Infrastructure.Persistence.Outbox.OutboxMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("CausationId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("causation_id");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("event_type");
+
+                    b.Property<int>("EventVersion")
+                        .HasColumnType("integer")
+                        .HasColumnName("event_version");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<string>("PartitionKey")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("partition_key");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<int>("PublishAttempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("publish_attempts");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("Topic")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("topic");
+
+                    b.HasKey("Id")
+                        .HasName("pk_outbox_messages");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("ix_outbox_messages_unpublished")
+                        .HasFilter("published_at IS NULL");
+
+                    b.ToTable("outbox_messages", (string)null);
+                });
+
             modelBuilder.Entity("WalletPK.Identity.Domain.Devices.Device", b =>
                 {
                     b.HasOne("WalletPK.Identity.Domain.Users.User", null)
@@ -229,6 +363,16 @@ namespace WalletPK.Identity.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_devices_users_user_id");
+                });
+
+            modelBuilder.Entity("WalletPK.Identity.Domain.Kyc.KycProfile", b =>
+                {
+                    b.HasOne("WalletPK.Identity.Domain.Users.User", null)
+                        .WithOne()
+                        .HasForeignKey("WalletPK.Identity.Domain.Kyc.KycProfile", "Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_kyc_profiles_users_user_id");
                 });
 
             modelBuilder.Entity("WalletPK.Identity.Domain.Sessions.RefreshToken", b =>
