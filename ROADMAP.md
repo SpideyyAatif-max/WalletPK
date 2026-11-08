@@ -1,4 +1,4 @@
-# WalletPK — Build Plan
+# WalletPK — Roadmap & Build Plan
 
 Distributed mobile wallet and payments platform (JazzCash / Easypaisa style).
 Backend-first, with a full frontend for the wallet, operations console and simulation control center.
@@ -360,4 +360,4 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 1. Code is written into this folder, one submodule at a time.
 2. Build and tests run before it is marked done.
 3. One git commit per submodule with a clear message.
-4. The checkbox in this file is ticked.
+4. The checkbox in this file (ROADMAP.md) is ticked.
