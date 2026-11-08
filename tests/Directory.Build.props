@@ -5,7 +5,10 @@
   <PropertyGroup>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
-    <!-- Test method names like Transfer_Should_Fail_When_Balance_Is_Low are allowed -->
-    <NoWarn>$(NoWarn);CA1707</NoWarn>
+    <!-- xUnit v3 test projects are self-hosting executables (Microsoft Testing Platform) -->
+    <OutputType>Exe</OutputType>
+    <!-- CA1707: test names like Transfer_fails_when_balance_is_low are allowed.
+         CA1515: xUnit requires public test classes. -->
+    <NoWarn>$(NoWarn);CA1707;CA1515</NoWarn>
   </PropertyGroup>
 </Project>

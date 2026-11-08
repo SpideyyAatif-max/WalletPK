@@ -30,15 +30,31 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		LICENSE = LICENSE
 	EndProjectSection
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Common", "src\BuildingBlocks\WalletPK.Common\WalletPK.Common.csproj", "{9AAD86A5-6CA4-4AA8-86F0-F8C5F40DA590}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Common.UnitTests", "tests\BuildingBlocks\WalletPK.Common.UnitTests\WalletPK.Common.UnitTests.csproj", "{B0115BC4-BF5C-47CE-A856-10C1380068E1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9AAD86A5-6CA4-4AA8-86F0-F8C5F40DA590}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AAD86A5-6CA4-4AA8-86F0-F8C5F40DA590}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AAD86A5-6CA4-4AA8-86F0-F8C5F40DA590}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AAD86A5-6CA4-4AA8-86F0-F8C5F40DA590}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0115BC4-BF5C-47CE-A856-10C1380068E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0115BC4-BF5C-47CE-A856-10C1380068E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0115BC4-BF5C-47CE-A856-10C1380068E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0115BC4-BF5C-47CE-A856-10C1380068E1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{9AAD86A5-6CA4-4AA8-86F0-F8C5F40DA590} = {3341775F-EE6C-4B7B-B43F-8838AA7A92B4}
+		{B0115BC4-BF5C-47CE-A856-10C1380068E1} = {255B20DB-6E50-4A7B-A96B-5E3EEB263C40}
 		{3341775F-EE6C-4B7B-B43F-8838AA7A92B4} = {BDBFD471-61B4-475C-A6DE-09D3CF601A39}
 		{4A72FF50-0C7A-4C13-B195-794422FF7313} = {BDBFD471-61B4-475C-A6DE-09D3CF601A39}
 		{6B0982E2-7759-4F12-9744-4B92BA0C9CE9} = {BDBFD471-61B4-475C-A6DE-09D3CF601A39}

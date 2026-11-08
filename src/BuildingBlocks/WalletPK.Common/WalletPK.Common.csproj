@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Common</RootNamespace>
+    <Description>WalletPK shared kernel: money, results and errors, strongly-typed identifiers, time and domain base types.</Description>
+  </PropertyGroup>
+
+</Project>
