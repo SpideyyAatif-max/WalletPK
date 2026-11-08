@@ -1,0 +1,10 @@
+# =====================================================================
+# WalletPK: full stack entry point.
+#   docker compose up -d
+# Today it starts the infrastructure; application services are added
+# here module by module (gateway in M1, identity in M2, ...).
+# =====================================================================
+include:
+  - docker-compose.infra.yml
+
+services: {}

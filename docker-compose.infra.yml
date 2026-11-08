@@ -1,0 +1,250 @@
+# =====================================================================
+# WalletPK local infrastructure
+#
+#   docker compose -f docker-compose.infra.yml up -d      # start
+#   docker compose -f docker-compose.infra.yml ps         # health
+#   docker compose -f docker-compose.infra.yml down       # stop (data kept)
+#   docker compose -f docker-compose.infra.yml down -v    # stop + wipe data
+#
+# Host ports can be changed in a local .env file (see .env.example).
+# =====================================================================
+name: walletpk
+
+x-restart: &restart
+  restart: unless-stopped
+
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  # ------------------------------------------------------------------
+  # PostgreSQL: source of truth. One database per service (see ops/postgres/init).
+  # ------------------------------------------------------------------
+  postgres:
+    image: postgres:17-alpine
+    container_name: walletpk-postgres
+    <<: [*restart, *logging]
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-walletpk}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-walletpk_dev}
+      POSTGRES_DB: walletpk
+      TZ: Asia/Karachi
+    command:
+      - postgres
+      - -c
+      - max_connections=300
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - shared_preload_libraries=pg_stat_statements
+      - -c
+      - log_min_duration_statement=500
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./ops/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d walletpk"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks: [walletpk]
+
+  # ------------------------------------------------------------------
+  # Redis: wallet locks, idempotency cache, OTPs, rate limits, fraud features, SignalR backplane.
+  # noeviction: a lock or idempotency key must never be silently evicted.
+  # ------------------------------------------------------------------
+  redis:
+    image: redis:7.4-alpine
+    container_name: walletpk-redis
+    <<: [*restart, *logging]
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --requirepass
+      - ${REDIS_PASSWORD:-walletpk_dev}
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - noeviction
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD:-walletpk_dev}\" --no-auth-warning ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-walletpk_dev}
+    networks: [walletpk]
+
+  # ------------------------------------------------------------------
+  # Kafka (KRaft, single node acting as broker + controller).
+  # Listeners:
+  #   INTERNAL  kafka:9092      -> containers on the walletpk network
+  #   EXTERNAL  localhost:9094  -> services running on your PC (dotnet run)
+  # ------------------------------------------------------------------
+  kafka:
+    image: apache/kafka:4.3.0
+    container_name: walletpk-kafka
+    <<: [*restart, *logging]
+    environment:
+      CLUSTER_ID: "U9WvA_v9TuqdWFKkMWX2mA"
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:9094,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:${KAFKA_EXTERNAL_PORT:-9094}
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 6
+      # Topics are created explicitly by kafka-init, never by accident
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_HEAP_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "${KAFKA_EXTERNAL_PORT:-9094}:9094"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 30s
+    networks: [walletpk]
+
+  # One-shot job: creates the WalletPK topics, then exits.
+  kafka-init:
+    image: apache/kafka:4.3.0
+    container_name: walletpk-kafka-init
+    depends_on:
+      kafka:
+        condition: service_healthy
+    volumes:
+      - ./ops/kafka/create-topics.sh:/create-topics.sh:ro
+    entrypoint: ["/bin/bash", "/create-topics.sh"]
+    environment:
+      BOOTSTRAP: kafka:9092
+    restart: "no"
+    networks: [walletpk]
+
+  kafka-ui:
+    image: kafbat/kafka-ui:v1.5.0
+    container_name: walletpk-kafka-ui
+    <<: [*restart, *logging]
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: walletpk-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      DYNAMIC_CONFIG_ENABLED: "true"
+    ports:
+      - "${KAFKA_UI_PORT:-8085}:8080"
+    networks: [walletpk]
+
+  # ------------------------------------------------------------------
+  # Observability
+  # ------------------------------------------------------------------
+  jaeger:
+    image: jaegertracing/jaeger:2.20.0
+    container_name: walletpk-jaeger
+    <<: [*restart, *logging]
+    ports:
+      - "${JAEGER_UI_PORT:-16686}:16686"   # UI
+      - "${OTLP_GRPC_PORT:-4317}:4317"     # OTLP gRPC (services send traces here)
+      - "${OTLP_HTTP_PORT:-4318}:4318"     # OTLP HTTP
+    networks: [walletpk]
+
+  prometheus:
+    image: prom/prometheus:v3.13.5
+    container_name: walletpk-prometheus
+    <<: [*restart, *logging]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=7d
+      - --web.enable-otlp-receiver
+      - --web.enable-lifecycle
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./ops/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/-/ready > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [walletpk]
+
+  grafana:
+    image: grafana/grafana:13.1.1
+    container_name: walletpk-grafana
+    <<: [*restart, *logging]
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-walletpk_dev}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    volumes:
+      - ./ops/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./ops/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health > /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [walletpk]
+
+  seq:
+    image: datalust/seq:2025.2
+    container_name: walletpk-seq
+    <<: [*restart, *logging]
+    environment:
+      ACCEPT_EULA: "Y"
+      # Local development only: no login. Never use this setting outside your PC.
+      SEQ_FIRSTRUN_NOAUTHENTICATION: "True"
+    ports:
+      - "${SEQ_UI_PORT:-8081}:80"        # UI and API
+      - "${SEQ_INGEST_PORT:-5341}:5341"  # log ingestion (Serilog, OTLP logs)
+    volumes:
+      - seq-data:/data
+    mem_limit: 1g
+    networks: [walletpk]
+
+networks:
+  walletpk:
+    name: walletpk
+
+volumes:
+  postgres-data:
+  redis-data:
+  kafka-data:
+  prometheus-data:
+  grafana-data:
+  seq-data:

@@ -1,0 +1,19 @@
+# Prometheus configuration for WalletPK (local).
+# Services also push metrics over OTLP to http://localhost:9090/api/v1/otlp (enabled with --web.enable-otlp-receiver).
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    environment: local
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # WalletPK services expose /metrics. While developing they run on your PC,
+  # reachable from this container as host.docker.internal. Targets are added module by module.
+  - job_name: walletpk-services
+    metrics_path: /metrics
+    static_configs:
+      - targets: []

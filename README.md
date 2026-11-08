@@ -64,7 +64,32 @@ cd WalletPK
 dotnet build WalletPK.sln
 ```
 
-Running the infrastructure and services with Docker Compose is added in module M0.2.
+## Running the Infrastructure
+
+Start Docker Desktop, then from the repository root:
+
+```bash
+docker compose up -d        # starts all infrastructure containers
+docker compose ps           # every service should show "healthy" (kafka-init exits after creating topics)
+```
+
+| Component | URL / connection | Credentials (local only) |
+| --- | --- | --- |
+| PostgreSQL | `localhost:5432` (one database per service, e.g. `walletpk_ledger`) | `walletpk` / `walletpk_dev` |
+| Redis | `localhost:6379` | password `walletpk_dev` |
+| Kafka | `localhost:9094` (from your PC), `kafka:9092` (from containers) | — |
+| Kafka UI | http://localhost:8085 | — |
+| Jaeger (traces) | http://localhost:16686 · OTLP `localhost:4317` (gRPC) / `4318` (HTTP) | — |
+| Prometheus | http://localhost:9090 | — |
+| Grafana | http://localhost:3001 | `admin` / `walletpk_dev` |
+| Seq (logs) | http://localhost:8081 · ingestion `localhost:5341` | — |
+
+Port already in use on your PC? Copy `.env.example` to `.env` and change the port.
+
+```bash
+docker compose down         # stop (data is kept in Docker volumes)
+docker compose down -v      # stop and delete all data (fresh start)
+```
 
 ## Project Conventions
 

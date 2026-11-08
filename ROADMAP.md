@@ -26,7 +26,7 @@ By the end of M4 a full working slice exists: sign up -> wallet -> transfer -> l
 | --- | --- | --- | --- |
 | ASP.NET Core (.NET 10) | Every backend service | M0 | All modules |
 | YARP | API gateway, the single entry point | M1 | — |
-| PostgreSQL | Source of truth; one schema per service in one server (saves RAM) | M0 (container), M2 (first tables) | M3 ledger, M6–M9 Saga state, M12 recon |
+| PostgreSQL | Source of truth; one database per service on one server (isolation without extra RAM) | M0 (container), M2 (first tables) | M3 ledger, M6–M9 Saga state, M12 recon |
 | EF Core | Writes: migrations, transactions, row-version concurrency | M2 | M3 onwards |
 | Dapper | Fast reads from read models | M4 | M10, M12, ops dashboards |
 | Redis | Short-lived, fast state (see 2.1) | M1 | M2, M3, M10, M11 |
@@ -185,7 +185,7 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 
 ### M0 — Foundation & BuildingBlocks (week 1)
 - [x] M0.1 Solution scaffold: .sln, Directory.Build.props, central package versions, .editorconfig, .gitignore
-- [ ] M0.2 Infrastructure compose: Postgres 17, Redis 7, Kafka (KRaft) + Kafka UI, Jaeger, Prometheus, Grafana, Seq
+- [x] M0.2 Infrastructure compose: Postgres 17, Redis 7, Kafka (KRaft) + Kafka UI, Jaeger, Prometheus, Grafana, Seq
 - [ ] M0.3 WalletPK.Common: Money (paisa as long), Result<T>, domain errors, IClock, strongly-typed IDs
 - [ ] M0.4 WalletPK.Web: correlation ID, problem details, exception handler, JWT helpers, health checks
 - [ ] M0.5 WalletPK.Observability: OpenTelemetry + Serilog in one call
