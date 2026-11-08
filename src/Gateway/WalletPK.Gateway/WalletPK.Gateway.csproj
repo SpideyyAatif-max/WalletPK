@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Gateway</RootNamespace>
+    <Description>WalletPK API Gateway: the single entry point. Routes requests to services (YARP), validates access tokens, rate-limits, verifies webhook signatures and applies CORS.</Description>
+    <UserSecretsId>walletpk-gateway</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Yarp.ReverseProxy" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj" />
+    <ProjectReference Include="..\..\BuildingBlocks\WalletPK.Observability\WalletPK.Observability.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Gateway.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

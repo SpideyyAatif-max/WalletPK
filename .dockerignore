@@ -1,0 +1,19 @@
+# Keep Docker build contexts small and free of local artifacts and secrets.
+**/bin/
+**/obj/
+**/TestResults/
+**/node_modules/
+**/.next/
+.git/
+.github/
+.vs/
+.vscode/
+.idea/
+docs/
+load/
+web/
+tests/
+*.md
+!README.md
+.env
+.env.*

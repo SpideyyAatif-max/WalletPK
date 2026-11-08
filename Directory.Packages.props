@@ -10,6 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup Label="ASP.NET Core and EF Core">
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
+    <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
   </ItemGroup>
 
   <ItemGroup Label="Data, cache and messaging">
@@ -35,5 +37,6 @@
     <PackageVersion Include="xunit.v3" Version="4.0.2" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.14" />
   </ItemGroup>
 </Project>

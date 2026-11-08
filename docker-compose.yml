@@ -1,10 +1,44 @@
 # =====================================================================
 # WalletPK: full stack entry point.
-#   docker compose up -d
-# Today it starts the infrastructure; application services are added
-# here module by module (gateway in M1, identity in M2, ...).
+#
+#   docker compose up -d                    # infrastructure only (Postgres, Redis, Kafka, ...)
+#   docker compose --profile apps up -d     # infrastructure + WalletPK services in containers
+#
+# While developing you normally run services with `dotnet run` and only the
+# infrastructure in Docker. Services are added here module by module.
 # =====================================================================
 include:
   - docker-compose.infra.yml
 
-services: {}
+x-dotnet-service: &dotnet-service
+  restart: unless-stopped
+  networks: [walletpk]
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  gateway:
+    <<: *dotnet-service
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: src/Gateway/WalletPK.Gateway/Dockerfile
+    image: walletpk/gateway:dev
+    container_name: walletpk-gateway
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Observability__WriteToConsole: "true"
+      Observability__SeqUrl: http://seq:5341
+      Observability__OtlpTracesEndpoint: http://jaeger:4317
+      Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
+      Jwt__Authority: http://identity:8080/
+    ports:
+      - "${GATEWAY_PORT:-5000}:8080"
+    depends_on:
+      seq:
+        condition: service_started
+      jaeger:
+        condition: service_started

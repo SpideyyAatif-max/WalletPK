@@ -98,6 +98,35 @@ docker compose down         # stop (data is kept in Docker volumes)
 docker compose down -v      # stop and delete all data (fresh start)
 ```
 
+## Running the API Gateway
+
+With the infrastructure running (`docker compose up -d`):
+
+```bash
+dotnet run --project src/Gateway/WalletPK.Gateway
+```
+
+Open http://localhost:5000 to see every route. Requests appear in Seq (http://localhost:8081) and traces in Jaeger (http://localhost:16686, service `gateway`).
+Calls to a service that is not running yet return `503`; protected routes without a token return `401`.
+
+## Service Ports
+
+| Service | Local port (`dotnet run`) | Gateway path |
+| --- | --- | --- |
+| API Gateway | 5000 | `/` |
+| Identity & KYC | 5101 | `/api/identity/*` |
+| Wallet & Ledger | 5102 | `/api/wallets/*` |
+| Payments | 5103 | `/api/payments/*`, `/webhooks/raast/*` |
+| Bill Payment | 5104 | `/api/bills/*`, `/webhooks/billers/*` |
+| Top-up & Merchant | 5105 | `/api/topups/*`, `/api/merchants/*` |
+| Agent Network | 5106 | `/api/agents/*` |
+| Fraud & Risk | 5107 | `/api/fraud/*` (staff only) |
+| Notifications | 5108 | `/api/notifications/*`, `/hubs/*` |
+| Reconciliation | 5109 | `/api/reconciliation/*` (staff only) |
+| Simulation | 5110 | `/api/simulation/*` (staff only) |
+| Mock Providers | 5200 | not exposed through the gateway |
+| Web app (Next.js) | 3000 | |
+
 ## Project Conventions
 
 - **Build settings** shared by every project live in `Directory.Build.props` (.NET 10, nullable, warnings as errors).
