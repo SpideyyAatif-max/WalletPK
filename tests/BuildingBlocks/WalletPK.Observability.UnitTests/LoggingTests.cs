@@ -6,6 +6,7 @@ using WalletPK.Web.Correlation;
 
 namespace WalletPK.Observability.UnitTests;
 
+[Collection(SerilogCollection.Name)]
 public class LoggingTests
 {
     private const string TransferTemplate = "Transfer requested for {Amount}";

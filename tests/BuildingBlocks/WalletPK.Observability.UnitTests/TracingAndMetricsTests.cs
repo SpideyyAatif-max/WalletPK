@@ -9,6 +9,7 @@ using WalletPK.Observability.UnitTests.Infrastructure;
 
 namespace WalletPK.Observability.UnitTests;
 
+[Collection(SerilogCollection.Name)]
 public class TracingAndMetricsTests
 {
     private static readonly ActivitySource _ledgerSource = new(WalletPkTelemetry.NameFor("Ledger"));
