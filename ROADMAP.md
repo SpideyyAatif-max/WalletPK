@@ -193,11 +193,11 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M0.7 CI pipeline (GitHub Actions): restore (NuGet cache), Release build with warnings as errors, all tests, Docker Compose + script validation; Dependabot weekly updates; README badge
 
 ### M1 — API Gateway (week 1)
-- [ ] M1.1 YARP route table and cluster health checks
-- [ ] M1.2 JWT validation at the edge; forward user, device and KYC tier
-- [ ] M1.3 Token-bucket rate limiting per user, device, IP
-- [ ] M1.4 HMAC SHA-256 webhook validation with replay window
-- [ ] M1.5 Correlation ID, request logging, CORS
+- [x] M1.1 YARP route table and cluster health checks
+- [x] M1.2 JWT validation at the edge; forward user, device and KYC tier
+- [x] M1.3 Token-bucket rate limiting per user, device, IP
+- [x] M1.4 HMAC SHA-256 webhook validation with replay window
+- [x] M1.5 Correlation ID, request logging, CORS
 
 ### M2 — Identity & KYC (week 2)
 - [ ] M2.1 Domain: User, Device, KycProfile, KycTier (L0/L1/L2)
