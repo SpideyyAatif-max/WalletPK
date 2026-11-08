@@ -56,6 +56,8 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__IdentityDb: Host=postgres;Port=5432;Database=walletpk_identity;Username=${POSTGRES_USER:-walletpk};Password=${POSTGRES_PASSWORD:-walletpk_dev}
       ConnectionStrings__Redis: redis:6379,password=${REDIS_PASSWORD:-walletpk_dev},abortConnect=false
+      # Dev signing key, created on first start; /tmp because the container runs as a non-root user
+      Jwt__SigningKeyPath: /tmp/walletpk-keys/identity-signing-key.pem
       Observability__SeqUrl: http://seq:5341
       Observability__OtlpTracesEndpoint: http://jaeger:4317
       Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics

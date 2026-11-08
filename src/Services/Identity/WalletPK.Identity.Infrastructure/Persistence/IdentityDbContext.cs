@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using WalletPK.Identity.Application.Abstractions;
+using WalletPK.Identity.Domain.Devices;
+using WalletPK.Identity.Domain.Sessions;
 using WalletPK.Identity.Domain.Users;
 
 namespace WalletPK.Identity.Infrastructure.Persistence;
@@ -10,14 +12,25 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
 {
     public DbSet<User> Users => Set<User>();
 
+    public DbSet<Device> Devices => Set<Device>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
     async Task IUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
     {
         try
         {
             await SaveChangesAsync(cancellationToken);
         }
+        catch (DbUpdateConcurrencyException exception)
+        {
+            // The row's xmin changed since it was read: another request saved first.
+            ChangeTracker.Clear();
+            throw new ConcurrencyConflictException("The data was changed by another request.", exception);
+        }
         catch (DbUpdateException exception) when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } postgres)
         {
+            ChangeTracker.Clear();
             throw new UniqueConstraintViolationException($"Unique constraint '{postgres.ConstraintName}' was violated.", exception)
             {
                 ConstraintName = postgres.ConstraintName,

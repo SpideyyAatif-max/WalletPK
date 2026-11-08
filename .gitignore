@@ -43,6 +43,8 @@ next-env.d.ts
 appsettings.*.local.json
 *.pfx
 *.key
+*.pem
+.keys/
 secrets.json
 
 # ---- Docker volumes and local data ----

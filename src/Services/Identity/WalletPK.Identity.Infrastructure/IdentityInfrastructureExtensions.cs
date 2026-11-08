@@ -1,10 +1,14 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
 using WalletPK.Identity.Application.Abstractions;
+using WalletPK.Identity.Application.Account;
+using WalletPK.Identity.Application.Authentication;
 using WalletPK.Identity.Application.Otp;
 using WalletPK.Identity.Application.Registration;
 using WalletPK.Identity.Infrastructure.Health;
@@ -13,6 +17,7 @@ using WalletPK.Identity.Infrastructure.Redis;
 using WalletPK.Identity.Infrastructure.Security;
 using WalletPK.Identity.Infrastructure.Sms;
 using WalletPK.Web.Health;
+using WalletPK.Web.Identity;
 
 namespace WalletPK.Identity.Infrastructure;
 
@@ -43,10 +48,27 @@ public static class IdentityInfrastructureExtensions
 
         services.AddOptions<RegistrationOptions>().BindConfiguration(RegistrationOptions.SectionName);
 
+        services.AddOptions<AuthOptions>()
+            .BindConfiguration(AuthOptions.SectionName)
+            .Validate(options => options.AccessTokenMinutes is >= 1 and <= 60, "Auth:AccessTokenMinutes must be between 1 and 60.")
+            .Validate(options => options.RefreshTokenDays >= 1, "Auth:RefreshTokenDays must be at least 1.")
+            .Validate(options => options.MaxFailedMpinAttempts >= 1, "Auth:MaxFailedMpinAttempts must be at least 1.")
+            .ValidateOnStart();
+
+        services.AddOptions<JwtSigningOptions>()
+            .BindConfiguration(JwtSigningOptions.SectionName)
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer) && !string.IsNullOrWhiteSpace(options.Audience), "Jwt:Issuer and Jwt:Audience are required.")
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.SigningKeyPath) || options.CreateSigningKeyIfMissing,
+                "Jwt:SigningKeyPath is required (or Jwt:CreateSigningKeyIfMissing for development).")
+            .ValidateOnStart();
+
         // Application classes take plain option objects (they do not depend on Microsoft.Extensions.Options).
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<OtpOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<MpinHashingOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<RegistrationOptions>>().Value);
+        services.AddSingleton(provider => provider.GetRequiredService<IOptions<AuthOptions>>().Value);
+        services.AddSingleton(provider => provider.GetRequiredService<IOptions<JwtSigningOptions>>().Value);
 
         // ---- PostgreSQL (EF Core) ----
         services.AddDbContext<IdentityDbContext>((provider, options) => options
@@ -56,15 +78,20 @@ public static class IdentityInfrastructureExtensions
             .UseSnakeCaseNamingConvention());
         services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<IdentityDbContext>());
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IDeviceRepository, DeviceRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         // ---- Redis ----
         services.AddSingleton<IConnectionMultiplexer>(provider =>
             ConnectionMultiplexer.Connect(RequiredConnectionString(provider, RedisConnectionName)));
         services.AddSingleton<IOtpStore, RedisOtpStore>();
         services.AddSingleton<IRegistrationTokenStore, RedisRegistrationTokenStore>();
+        services.AddSingleton<IDeviceChallengeStore, RedisDeviceChallengeStore>();
 
         // ---- Security and messaging ----
         services.AddSingleton<IMpinHasher, Argon2MpinHasher>();
+        services.AddSingleton<SigningKeyProvider>();
+        services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
         services.AddSingleton<ISmsSender, LoggingSmsSender>();
         services.TryAddSingleton(TimeProvider.System);
 
@@ -73,6 +100,16 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<StartRegistrationHandler>();
         services.AddScoped<VerifyRegistrationOtpHandler>();
         services.AddScoped<CompleteRegistrationHandler>();
+        services.AddScoped<SessionIssuer>();
+        services.AddScoped<LoginHandler>();
+        services.AddScoped<VerifyDeviceHandler>();
+        services.AddScoped<RefreshSessionHandler>();
+        services.AddScoped<LogoutHandler>();
+        services.AddScoped<GetProfileHandler>();
+        services.AddScoped<ListDevicesHandler>();
+        services.AddScoped<RevokeDeviceHandler>();
+
+        services.AddIdentityTokenValidation();
 
         // ---- Readiness: the service is ready only when its database and Redis are reachable ----
         services.AddHealthChecks()
@@ -80,6 +117,38 @@ public static class IdentityInfrastructureExtensions
             .AddCheck<RedisHealthCheck>("redis", tags: [HealthCheckTags.Ready]);
 
         return services;
+    }
+
+    /// <summary>
+    /// The Identity service checks its own access tokens on /me and /devices (defence in depth: the
+    /// gateway has already checked them). It uses its own public key directly, so no discovery call.
+    /// </summary>
+    private static void AddIdentityTokenValidation(this IServiceCollection services)
+    {
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
+
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<SigningKeyProvider, JwtSigningOptions>((options, keys, jwt) =>
+            {
+                options.MapInboundClaims = false;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = jwt.Issuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwt.Audience,
+                    ValidateLifetime = true,
+                    RequireExpirationTime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKeys = keys.ValidationKeys,
+                    ValidAlgorithms = [SecurityAlgorithms.RsaSha256],
+                    ClockSkew = TimeSpan.FromSeconds(30),
+                    NameClaimType = WalletPkClaimTypes.Subject,
+                    RoleClaimType = WalletPkClaimTypes.Role,
+                };
+            });
+
+        services.AddAuthorization();
     }
 
     private static string RequiredConnectionString(IServiceProvider provider, string name)

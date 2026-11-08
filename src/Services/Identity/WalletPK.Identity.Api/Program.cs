@@ -15,10 +15,15 @@ var app = builder.Build();
 
 app.UseWalletPkWeb();
 app.UseWalletPkObservability();
+app.UseAuthentication();
+app.UseAuthorization();
 
 await app.MigrateDatabaseIfConfiguredAsync();
 
+app.MapDiscoveryEndpoints();
 app.MapRegistrationEndpoints();
+app.MapAuthEndpoints();
+app.MapAccountEndpoints();
 
 await app.RunAsync();
 

@@ -30,6 +30,18 @@ internal sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(user => user.MpinHash).HasMaxLength(256).IsRequired();
         builder.Property(user => user.Status).HasConversion<string>().HasMaxLength(16);
         builder.Property(user => user.KycTier).HasConversion<string>().HasMaxLength(4);
+
+        // Rows created before roles existed become customers. The sentinel is a value that never
+        // occurs, so EF always writes the role explicitly instead of relying on the default.
+        builder.Property(user => user.Role)
+            .HasConversion<string>()
+            .HasMaxLength(16)
+            .HasDefaultValue(UserRole.Customer)
+            .HasSentinel((UserRole)(-1));
+
+        builder.Property(user => user.FailedMpinAttempts);
+        builder.Property(user => user.LockedUntil);
+        builder.Property(user => user.LastLoginAt);
         builder.Property(user => user.CreatedAt);
         builder.Property(user => user.UpdatedAt);
 

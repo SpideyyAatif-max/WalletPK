@@ -1,5 +1,7 @@
+using System.Globalization;
 using WalletPK.Common.Domain;
 using WalletPK.Common.Identifiers;
+using WalletPK.Common.Results;
 
 namespace WalletPK.Identity.Domain.Users;
 
@@ -16,6 +18,7 @@ public sealed class User : AggregateRoot<UserId>
         MpinHash = mpinHash;
         Status = UserStatus.Active;
         KycTier = KycTier.L0;
+        Role = UserRole.Customer;
         CreatedAt = now;
         UpdatedAt = now;
     }
@@ -34,6 +37,16 @@ public sealed class User : AggregateRoot<UserId>
 
     public KycTier KycTier { get; private set; }
 
+    public UserRole Role { get; private set; }
+
+    /// <summary>Wrong MPINs in a row since the last successful login or lockout.</summary>
+    public int FailedMpinAttempts { get; private set; }
+
+    /// <summary>When a temporary lockout ends; null when the account is not locked.</summary>
+    public DateTimeOffset? LockedUntil { get; private set; }
+
+    public DateTimeOffset? LastLoginAt { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
@@ -50,5 +63,65 @@ public sealed class User : AggregateRoot<UserId>
         var user = new User(UserId.New(), phoneNumber, mpinHash, now);
         user.Raise(new UserRegistered(user.Id, phoneNumber.Value, now));
         return user;
+    }
+
+    /// <summary>
+    /// Checks whether the user may attempt to log in now. A lockout that has run out is lifted here,
+    /// so no background job is needed to unlock accounts.
+    /// </summary>
+    public Result EnsureCanLogIn(DateTimeOffset now)
+    {
+        if (Status == UserStatus.Frozen)
+        {
+            return UserErrors.Frozen;
+        }
+
+        if (Status == UserStatus.Locked)
+        {
+            if (LockedUntil is { } until && until > now)
+            {
+                var minutes = Math.Max(1, (int)Math.Ceiling((until - now).TotalMinutes));
+                return Error.Forbidden(
+                    UserErrors.LockedCode,
+                    string.Create(CultureInfo.InvariantCulture, $"Too many incorrect MPINs. Try again in {minutes} minute(s)."));
+            }
+
+            Status = UserStatus.Active;
+            LockedUntil = null;
+            FailedMpinAttempts = 0;
+            UpdatedAt = now;
+        }
+
+        return Result.Success();
+    }
+
+    /// <summary>
+    /// Counts a wrong MPIN. When the limit is reached the account is locked for <paramref name="lockoutDuration"/>
+    /// and the method returns true.
+    /// </summary>
+    public bool RecordFailedMpin(DateTimeOffset now, int maxAttempts, TimeSpan lockoutDuration)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(maxAttempts, 1);
+
+        FailedMpinAttempts++;
+        UpdatedAt = now;
+
+        if (FailedMpinAttempts < maxAttempts)
+        {
+            return false;
+        }
+
+        Status = UserStatus.Locked;
+        LockedUntil = now + lockoutDuration;
+        FailedMpinAttempts = 0;
+        Raise(new UserLockedOut(Id, now, LockedUntil.Value));
+        return true;
+    }
+
+    public void RecordSuccessfulLogin(DateTimeOffset now)
+    {
+        FailedMpinAttempts = 0;
+        LastLoginAt = now;
+        UpdatedAt = now;
     }
 }

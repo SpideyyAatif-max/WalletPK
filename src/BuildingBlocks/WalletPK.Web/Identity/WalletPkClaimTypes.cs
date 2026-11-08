@@ -1,6 +1,6 @@
 namespace WalletPK.Web.Identity;
 
-/// <summary>Claim names inside WalletPK access tokens (issued by the Identity service in M2).</summary>
+/// <summary>Claim names inside WalletPK access tokens (issued by the Identity service).</summary>
 public static class WalletPkClaimTypes
 {
     /// <summary>The user ID (standard JWT "sub" claim).</summary>
@@ -14,4 +14,10 @@ public static class WalletPkClaimTypes
 
     /// <summary>Role: customer, merchant, agent, ops, compliance, finance or admin.</summary>
     public const string Role = "role";
+
+    /// <summary>
+    /// Present only while the device is in its new-device cooling-off period: the Unix time (seconds)
+    /// when it ends. Services limit high-risk actions (large transfers) until then.
+    /// </summary>
+    public const string CoolingOffUntil = "cooling_off_until";
 }

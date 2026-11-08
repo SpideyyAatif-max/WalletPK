@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using StackExchange.Redis;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
 using WalletPK.Identity.Application.Abstractions;
@@ -13,7 +14,8 @@ namespace WalletPK.Identity.IntegrationTests.Infrastructure;
 /// <summary>
 /// Runs the real Identity API against real PostgreSQL and Redis, each in a throwaway Docker
 /// container started for the test run (Testcontainers). The database is migrated on startup,
-/// exactly as in development. SMS messages are captured so tests can read the OTP.
+/// exactly as in development. SMS messages are captured so tests can read the OTP, and tokens
+/// are signed with a temporary in-memory key.
 /// </summary>
 public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
@@ -37,6 +39,11 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
         await _redis.DisposeAsync();
     }
 
+    /// <summary>Ends the 30-second resend cooldown early, so a test can request a second OTP for the same number.</summary>
+    public Task ClearOtpCooldownAsync(OtpPurpose purpose, string e164PhoneNumber) =>
+        Services.GetRequiredService<IConnectionMultiplexer>().GetDatabase()
+            .KeyDeleteAsync($"identity:otp-cooldown:{purpose.ToString().ToUpperInvariant()}:{e164PhoneNumber}");
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -47,6 +54,7 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
             ["ConnectionStrings:IdentityDb"] = _postgres.GetConnectionString(),
             ["ConnectionStrings:Redis"] = _redis.GetConnectionString(),
             ["Database:MigrateOnStartup"] = "true",
+            ["Jwt:SigningKeyPath"] = string.Empty,
             ["Observability:WriteToConsole"] = "false",
             ["Observability:WriteToSeq"] = "false",
             ["Observability:ExportTraces"] = "false",
