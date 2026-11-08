@@ -204,9 +204,9 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M2.2 Registration: phone -> OTP (HMAC-hashed in Redis, 2 min, 5 attempts, 30 s resend cooldown) -> single-use registration token -> MPIN (Argon2id + pepper) -> user created
 - [x] M2.3 MPIN login (5 wrong -> 30 min lockout), RS256 JWT (15 min; sub, device_id, kyc_tier, role) + /.well-known JWKS, rotating refresh tokens (SHA-256 stored) with family revocation on reuse, logout
 - [x] M2.4 Device binding: new device -> OTP step-up -> trusted; 24-hour cooling-off for any device after the first (cooling_off_until claim); /me, /devices, revoke device
-- [ ] M2.5 KYC upgrade via mock NADRA; CNIC encrypted (AES-256-GCM)
-- [ ] M2.6 gRPC CheckLimit used by the ledger
-- [ ] M2.7 Events: UserRegistered, DeviceBound, KycUpgraded
+- [x] M2.5 KYC L0 -> L1: CNIC + name + DOB (18+) -> simulated NADRA (real mock in M5.5); CNIC stored AES-256-GCM (bound to user, key rotation) + HMAC blind index (one CNIC, one wallet)
+- [x] M2.6 Tier limits (per txn / daily / monthly / max balance, 5k cap while cooling off); Redis Lua reserve/release (atomic, idempotent); gRPC CheckLimit/ReserveLimit/ReleaseLimit (internal port 5201) + GET /limits
+- [x] M2.7 Events identity.user_registered / device_bound / kyc_upgraded written to outbox_messages in the same transaction (EF SaveChanges interceptor); WalletPK.Contracts building block
 
 ### M3 — Wallet & Ledger Core (weeks 3–4)
 - [ ] M3.1 Schema: accounts, journal_transactions, journal_entries, holds, idempotency_keys, outbox_events, audit_log
