@@ -186,7 +186,7 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 ### M0 — Foundation & BuildingBlocks (week 1)
 - [x] M0.1 Solution scaffold: .sln, Directory.Build.props, central package versions, .editorconfig, .gitignore
 - [x] M0.2 Infrastructure compose: Postgres 17, Redis 7, Kafka (KRaft) + Kafka UI, Jaeger, Prometheus, Grafana, Seq
-- [ ] M0.3 WalletPK.Common: Money (paisa as long), Result<T>, domain errors, TimeProvider + Pakistan business dates, strongly-typed UUIDv7 IDs, Entity/AggregateRoot/DomainEvent
+- [x] M0.3 WalletPK.Common: Money (paisa as long), Result<T>, domain errors, TimeProvider + Pakistan business dates, strongly-typed UUIDv7 IDs, Entity/AggregateRoot/DomainEvent
 - [ ] M0.4 WalletPK.Web: correlation ID, problem details, exception handler, JWT helpers, health checks
 - [ ] M0.5 WalletPK.Observability: OpenTelemetry + Serilog in one call
 - [ ] M0.6 WalletPK.Messaging skeleton: IOutbox, IInbox, Kafka abstractions
