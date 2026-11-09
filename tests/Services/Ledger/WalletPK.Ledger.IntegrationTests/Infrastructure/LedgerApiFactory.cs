@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.JsonWebTokens;
+using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using Testcontainers.PostgreSql;
@@ -134,9 +135,13 @@ public sealed class LedgerApiFactory : WebApplicationFactory<Program>, IAsyncLif
             services.PostConfigure<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme, options =>
             {
                 // Use the test key directly instead of downloading keys from the Identity service.
+                // The static manager matters: without it every request first tries to download the keys
+                // from the (absent) Identity service and only then falls back to the test key. On Windows a
+                // refused connection takes ~2 s per address (IPv6 + IPv4), so each request cost ~4 s.
                 var configuration = new OpenIdConnectConfiguration { Issuer = "walletpk-identity" };
                 configuration.SigningKeys.Add(SigningKey);
                 options.Configuration = configuration;
+                options.ConfigurationManager = new StaticConfigurationManager<OpenIdConnectConfiguration>(configuration);
                 options.TokenValidationParameters.IssuerSigningKey = SigningKey;
             });
         });
