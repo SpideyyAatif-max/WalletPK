@@ -164,7 +164,8 @@ WalletPK/
 │   │   ├── WalletPK.Messaging/     # Outbox, Inbox, Kafka producer/consumer
 │   │   ├── WalletPK.Web/           # idempotency, correlation ID, problem details, auth
 │   │   ├── WalletPK.Observability/ # OpenTelemetry + Serilog setup
-│   │   └── WalletPK.Contracts/     # event and gRPC contracts (.proto)
+│   │   ├── WalletPK.Contracts/     # event and gRPC contracts (.proto)
+│   │   └── WalletPK.Persistence/   # shared EF Core outbox (table + interceptor)
 │   ├── Gateway/WalletPK.Gateway/
 │   ├── Services/
 │   │   ├── Identity/   Ledger/   Payments/   Bills/   TopupMerchant/
@@ -209,10 +210,10 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M2.7 Events identity.user_registered / device_bound / kyc_upgraded written to outbox_messages in the same transaction (EF SaveChanges interceptor); WalletPK.Contracts building block
 
 ### M3 — Wallet & Ledger Core (weeks 3–4)
-- [ ] M3.1 Schema: accounts, journal_transactions, journal_entries, holds, idempotency_keys, outbox_events, audit_log
-- [ ] M3.2 Database guards: balanced-journal trigger, non-negative check, no UPDATE/DELETE on entries
-- [ ] M3.3 Chart of accounts incl. sharded hot system accounts
-- [ ] M3.4 Posting engine: entries + balances + outbox in one transaction
+- [x] M3.1 Schema: accounts, journal_transactions, journal_entries, outbox_messages (InitialLedger); holds, idempotency_keys and audit_log arrive with M3.5, M3.7 and M3.10
+- [x] M3.2 Database guards: deferred balanced-journal constraint triggers, available >= 0 check constraint, append-only triggers (no UPDATE/DELETE/TRUNCATE on journals)
+- [x] M3.3 Chart of accounts: BANK_FLOAT (4 shards), FEE_INCOME (8), TAX_PAYABLE (4), BILLER_SETTLEMENT (4), SUSPENSE (1); fixed IDs, seeded by the migration
+- [x] M3.4 Posting engine: all-or-nothing double entry, balance-after per entry, journal + balances + ledger.journal_posted outbox in one transaction, idempotent per transaction ID
 - [ ] M3.5 Holds: place, capture, release, expiry sweeper
 - [ ] M3.6 Concurrency: Redis lock (SETNX + TTL + fencing token) + row version
 - [ ] M3.7 Idempotency-Key middleware (Redis + Postgres)
