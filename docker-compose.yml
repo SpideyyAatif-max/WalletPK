@@ -36,6 +36,7 @@ services:
       Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
       Jwt__Authority: http://identity:8080/
       ReverseProxy__Clusters__identity__Destinations__d1__Address: http://identity:8080/
+      ReverseProxy__Clusters__ledger__Destinations__d1__Address: http://ledger:8080/
     ports:
       - "${GATEWAY_PORT:-5000}:8080"
     depends_on:
@@ -71,4 +72,24 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+
+  ledger:
+    <<: *dotnet-service
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: src/Services/Ledger/WalletPK.Ledger.Api/Dockerfile
+    image: walletpk/ledger:dev
+    container_name: walletpk-ledger
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__LedgerDb: Host=postgres;Port=5432;Database=walletpk_ledger;Username=${POSTGRES_USER:-walletpk};Password=${POSTGRES_PASSWORD:-walletpk_dev}
+      Observability__SeqUrl: http://seq:5341
+      Observability__OtlpTracesEndpoint: http://jaeger:4317
+      Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
+    ports:
+      - "${LEDGER_PORT:-5102}:8080"
+    depends_on:
+      postgres:
         condition: service_healthy

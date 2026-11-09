@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Ledger.Application</RootNamespace>
+    <Description>Ledger use cases (posting journals, wallets, holds) written against ports; no EF Core, Redis or ASP.NET dependencies.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Ledger.Domain\WalletPK.Ledger.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Contracts\WalletPK.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Ledger.UnitTests" />
+  </ItemGroup>
+
+</Project>
