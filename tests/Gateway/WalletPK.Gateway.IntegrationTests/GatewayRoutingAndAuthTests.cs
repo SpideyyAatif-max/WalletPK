@@ -27,7 +27,7 @@ public class GatewayRoutingAndAuthTests(GatewayFactory factory) : IClassFixture<
         var info = await client.GetFromJsonAsync<JsonElement>(new Uri("/", UriKind.Relative), Cancel);
 
         info.GetProperty("service").GetString().ShouldBe("WalletPK API Gateway");
-        info.GetProperty("routes").GetArrayLength().ShouldBe(15);
+        info.GetProperty("routes").GetArrayLength().ShouldBe(16);
     }
 
     [Fact]
@@ -159,6 +159,21 @@ public class GatewayRoutingAndAuthTests(GatewayFactory factory) : IClassFixture<
         using var response = await client.GetAsync(new Uri("/api/fraud/alerts", UriKind.Relative), Cancel);
 
         response.StatusCode.ShouldBe(expected);
+    }
+
+    [Theory]
+    [InlineData("customer", HttpStatusCode.Forbidden)]
+    [InlineData("finance", HttpStatusCode.OK)]
+    [InlineData("admin", HttpStatusCode.OK)]
+    public async Task Ledger_checks_are_for_staff_while_wallets_are_for_everyone(string role, HttpStatusCode expected)
+    {
+        using var client = ClientWithToken(factory.CreateToken("user-1", role: role));
+
+        using var invariants = await client.GetAsync(new Uri("/api/ledger/invariants", UriKind.Relative), Cancel);
+        using var wallet = await client.GetAsync(new Uri("/api/wallets/me", UriKind.Relative), Cancel);
+
+        invariants.StatusCode.ShouldBe(expected);
+        wallet.StatusCode.ShouldBe(HttpStatusCode.OK);
     }
 
     [Fact]

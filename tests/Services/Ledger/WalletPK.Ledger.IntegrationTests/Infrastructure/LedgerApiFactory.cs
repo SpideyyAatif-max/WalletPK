@@ -65,7 +65,7 @@ public sealed class LedgerApiFactory : WebApplicationFactory<Program>, IAsyncLif
     }
 
     /// <summary>An access token like the Identity service issues. Valid around both the real time and the test clock.</summary>
-    public string CreateToken(UserId userId, string? phoneNumber, string deviceId = "0193f1c4-0000-7000-8000-000000000001")
+    public string CreateToken(UserId userId, string? phoneNumber, string role = "customer", string deviceId = "0193f1c4-0000-7000-8000-000000000001")
     {
         var now = DateTime.UtcNow;
         var clock = Clock.GetUtcNow().UtcDateTime;
@@ -74,7 +74,7 @@ public sealed class LedgerApiFactory : WebApplicationFactory<Program>, IAsyncLif
             ["sub"] = userId.ToString(),
             ["device_id"] = deviceId,
             ["kyc_tier"] = "L1",
-            ["role"] = "customer",
+            ["role"] = role,
         };
         if (phoneNumber is not null)
         {
@@ -94,10 +94,10 @@ public sealed class LedgerApiFactory : WebApplicationFactory<Program>, IAsyncLif
     }
 
     /// <summary>An HTTP client signed in as <paramref name="userId"/>.</summary>
-    public HttpClient CreateClientFor(UserId userId, string? phoneNumber)
+    public HttpClient CreateClientFor(UserId userId, string? phoneNumber, string role = "customer")
     {
         var client = CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateToken(userId, phoneNumber));
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateToken(userId, phoneNumber, role));
         return client;
     }
 
@@ -113,6 +113,10 @@ public sealed class LedgerApiFactory : WebApplicationFactory<Program>, IAsyncLif
             ["Database:MigrateOnStartup"] = "true",
             ["Ledger:Maintenance:Enabled"] = "false",
             ["Ledger:Locks:WaitMilliseconds"] = "15000",
+
+            // Tests seal the audit chain and run the invariant checks themselves, when they want to.
+            ["Ledger:Audit:SealingEnabled"] = "false",
+            ["Ledger:Invariants:Enabled"] = "false",
             ["Observability:WriteToConsole"] = "false",
             ["Observability:WriteToSeq"] = "false",
             ["Observability:ExportTraces"] = "false",

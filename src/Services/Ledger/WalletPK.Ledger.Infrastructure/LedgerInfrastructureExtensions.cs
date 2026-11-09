@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,9 +10,12 @@ using WalletPK.Ledger.Application.Concurrency;
 using WalletPK.Ledger.Application.Events;
 using WalletPK.Ledger.Application.Fees;
 using WalletPK.Ledger.Application.Holds;
+using WalletPK.Ledger.Application.Invariants;
 using WalletPK.Ledger.Application.Posting;
 using WalletPK.Ledger.Application.Wallets;
+using WalletPK.Ledger.Infrastructure.Audit;
 using WalletPK.Ledger.Infrastructure.Idempotency;
+using WalletPK.Ledger.Infrastructure.Invariants;
 using WalletPK.Ledger.Infrastructure.Limits;
 using WalletPK.Ledger.Infrastructure.Maintenance;
 using WalletPK.Ledger.Infrastructure.Persistence;
@@ -57,6 +61,16 @@ public static class LedgerInfrastructureExtensions
             .BindConfiguration(IdentityGrpcOptions.SectionName)
             .Validate(options => options.Address is { IsAbsoluteUri: true } && options.TimeoutMilliseconds >= 100, "Services:IdentityGrpc: Address must be an absolute URI and TimeoutMilliseconds >= 100.")
             .ValidateOnStart();
+        services.AddOptions<AuditOptions>()
+            .BindConfiguration(AuditOptions.SectionName)
+            .Validate(options => options.SealIntervalMilliseconds >= 100 && options.BatchSize >= 1 && options.MaxUnsealedAgeSeconds >= 10, "Ledger:Audit: SealIntervalMilliseconds >= 100, BatchSize >= 1, MaxUnsealedAgeSeconds >= 10.")
+            .ValidateOnStart();
+        services.AddOptions<InvariantOptions>()
+            .BindConfiguration(InvariantOptions.SectionName)
+            .Validate(options => options.IntervalMinutes >= 1, "Ledger:Invariants: IntervalMinutes >= 1.")
+            .ValidateOnStart();
+        services.AddSingleton(provider => provider.GetRequiredService<IOptions<AuditOptions>>().Value);
+        services.AddSingleton(provider => provider.GetRequiredService<IOptions<InvariantOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<WalletLockOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<FeeOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<IdentityGrpcOptions>>().Value);
@@ -69,13 +83,22 @@ public static class LedgerInfrastructureExtensions
         services.AddSingleton<JsonEventSerializer>();
         services.AddDomainEventOutbox<LedgerIntegrationEventMapper>(() => CorrelationContext.Current);
 
+        // ---- Audit log: a row for every money-relevant change, in the same transaction (M3.10) ----
+        services.AddHttpContextAccessor();
+        services.AddSingleton(provider => new LedgerAuditInterceptor(
+            provider.GetRequiredService<TimeProvider>(),
+            provider.GetRequiredService<IHttpContextAccessor>(),
+            () => CorrelationContext.Current));
+
         // ---- PostgreSQL (EF Core) ----
         services.AddDbContext<LedgerDbContext>((provider, options) => options
             .UseNpgsql(
                 RequiredConnectionString(provider, DatabaseConnectionName),
                 npgsql => npgsql.MigrationsHistoryTable("ef_migrations_history"))
             .UseSnakeCaseNamingConvention()
-            .AddInterceptors(provider.GetRequiredService<DomainEventOutboxInterceptor>()));
+            .AddInterceptors(
+                provider.GetRequiredService<DomainEventOutboxInterceptor>(),
+                provider.GetRequiredService<LedgerAuditInterceptor>()));
         services.AddScoped<ILedgerUnitOfWork>(provider => provider.GetRequiredService<LedgerDbContext>());
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IJournalRepository, JournalRepository>();
@@ -100,8 +123,17 @@ public static class LedgerInfrastructureExtensions
         services.AddSingleton<FeeEngine>();
         services.AddScoped<WalletService>();
 
-        // ---- Background: hold expiry sweeper and idempotency cleanup ----
+        // ---- Audit chain and invariants (M3.10, M3.11) ----
+        services.AddScoped<AuditSealer>();
+        services.AddScoped<AuditChainVerifier>();
+        services.AddScoped<ILedgerInvariantChecker, LedgerInvariantChecker>();
+        services.AddMetrics();
+        services.AddSingleton<LedgerMetrics>();
+
+        // ---- Background: hold expiry sweeper, idempotency cleanup, audit sealer, invariant monitor ----
         services.AddHostedService<LedgerMaintenanceService>();
+        services.AddHostedService<AuditSealerService>();
+        services.AddHostedService<InvariantMonitorService>();
 
         // ---- Readiness: ready only when the database is reachable ----
         services.AddHealthChecks()

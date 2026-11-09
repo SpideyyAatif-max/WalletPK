@@ -13,10 +13,10 @@ internal sealed class AccountRepository(LedgerDbContext dbContext) : IAccountRep
         dbContext.Accounts.FirstOrDefaultAsync(account => account.Id == id, cancellationToken);
 
     public Task<Account?> GetWalletByOwnerAsync(UserId ownerId, AccountType type, CancellationToken cancellationToken) =>
-        dbContext.Accounts.FirstOrDefaultAsync(account => account.OwnerId == ownerId && account.Type == type, cancellationToken);
+        dbContext.Accounts.AsNoTracking().FirstOrDefaultAsync(account => account.OwnerId == ownerId && account.Type == type, cancellationToken);
 
     public Task<Account?> GetWalletByAliasAsync(string alias, CancellationToken cancellationToken) =>
-        dbContext.Accounts.FirstOrDefaultAsync(account => account.Alias == alias, cancellationToken);
+        dbContext.Accounts.AsNoTracking().FirstOrDefaultAsync(account => account.Alias == alias, cancellationToken);
 
     public async Task<IReadOnlyList<Account>> GetManyAsync(IReadOnlyCollection<AccountId> ids, CancellationToken cancellationToken) =>
         await dbContext.Accounts.Where(account => ids.Contains(account.Id)).ToListAsync(cancellationToken);
@@ -38,6 +38,9 @@ internal sealed class HoldRepository(LedgerDbContext dbContext) : IHoldRepositor
 {
     public Task<Hold?> GetAsync(HoldId id, CancellationToken cancellationToken) =>
         dbContext.Holds.FirstOrDefaultAsync(hold => hold.Id == id, cancellationToken);
+
+    public Task<Hold?> PeekAsync(HoldId id, CancellationToken cancellationToken) =>
+        dbContext.Holds.AsNoTracking().FirstOrDefaultAsync(hold => hold.Id == id, cancellationToken);
 
     public async Task<IReadOnlyList<HoldId>> ListExpiredAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken) =>
         await dbContext.Holds

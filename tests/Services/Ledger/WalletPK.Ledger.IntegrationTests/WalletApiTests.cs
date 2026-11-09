@@ -1,16 +1,15 @@
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using WalletPK.Common.Identifiers;
 using WalletPK.Common.Primitives;
-using WalletPK.Ledger.Application.Posting;
 using WalletPK.Ledger.Application.Wallets;
 using WalletPK.Ledger.Domain.Accounts;
 using WalletPK.Ledger.Domain.Journals;
 using WalletPK.Ledger.Infrastructure.Persistence;
 using WalletPK.Ledger.IntegrationTests.Infrastructure;
+using static WalletPK.Ledger.IntegrationTests.Infrastructure.LedgerTestKit;
 
 namespace WalletPK.Ledger.IntegrationTests;
 
@@ -18,67 +17,11 @@ namespace WalletPK.Ledger.IntegrationTests;
 [Collection(LedgerCollection.Name)]
 public class WalletApiTests(LedgerApiFactory factory)
 {
-    private static CancellationToken Cancel => TestContext.Current.CancellationToken;
+    private Task<Customer> CustomerAsync(decimal rupees = 0) => factory.CustomerAsync(rupees);
 
-    private sealed record Customer(UserId Id, string Phone, AccountId WalletId, HttpClient Client);
+    private static Task<HttpResponseMessage> SendAsync(Customer from, string? to, long amountPaisa, string? key) => from.SendAsync(to, amountPaisa, key);
 
-    private static string NewPhone() => $"+923{Random.Shared.Next(0, 1_000_000_000):D9}";
-
-    private static string NewKey() => Guid.NewGuid().ToString("N");
-
-    /// <summary>Signs up a customer, opens their wallet over the API and cashes in <paramref name="rupees"/>.</summary>
-    private async Task<Customer> CustomerAsync(decimal rupees = 0)
-    {
-        var userId = UserId.New();
-        var phone = NewPhone();
-        var client = factory.CreateClientFor(userId, phone);
-
-        using var opened = await client.PostAsync(new Uri("/api/wallets", UriKind.Relative), null, Cancel);
-        opened.StatusCode.ShouldBe(HttpStatusCode.Created);
-        var walletId = AccountId.Parse((await JsonAsync(opened)).GetProperty("walletId").GetString()!, null);
-
-        if (rupees > 0)
-        {
-            await using var scope = factory.Services.CreateAsyncScope();
-            var funded = await scope.ServiceProvider.GetRequiredService<PostingService>().PostAsync(
-                new PostJournalCommand(TransactionId.New(), JournalType.CashIn, "Cash-in at agent", null,
-                [
-                    PostingLine.Debit(AccountRef.System(ChartOfAccounts.BankFloat), Money.FromRupees(rupees)),
-                    PostingLine.Credit(AccountRef.Account(walletId), Money.FromRupees(rupees)),
-                ]),
-                Cancel);
-            funded.IsSuccess.ShouldBeTrue();
-        }
-
-        return new Customer(userId, phone, walletId, client);
-    }
-
-    private static async Task<JsonElement> JsonAsync(HttpResponseMessage response) =>
-        (await response.Content.ReadFromJsonAsync<JsonElement>(Cancel)).Clone();
-
-    private static long Paisa(JsonElement element, string property) => element.GetProperty(property).GetProperty("minorUnits").GetInt64();
-
-    private static async Task<HttpResponseMessage> SendAsync(Customer from, string? to, long amountPaisa, string? key)
-    {
-        using var request = new HttpRequestMessage(HttpMethod.Post, "/api/wallets/transfers")
-        {
-            Content = JsonContent.Create(new { toWalletNumber = to, amountPaisa }),
-        };
-        if (key is not null)
-        {
-            request.Headers.Add("Idempotency-Key", key);
-        }
-
-        return await from.Client.SendAsync(request, Cancel);
-    }
-
-    private async Task<long> BalanceAsync(AccountId id)
-    {
-        await using var scope = factory.Services.CreateAsyncScope();
-        var account = await scope.ServiceProvider.GetRequiredService<LedgerDbContext>().Accounts.AsNoTracking()
-            .SingleAsync(candidate => candidate.Id == id, Cancel);
-        return account.Balance;
-    }
+    private Task<long> BalanceAsync(AccountId id) => factory.BalanceAsync(id);
 
     private static async Task<JsonElement> ShouldBeProblemAsync(HttpResponseMessage response, HttpStatusCode status, string code)
     {

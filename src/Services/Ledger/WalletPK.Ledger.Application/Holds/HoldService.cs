@@ -108,7 +108,8 @@ public sealed class HoldService(
             return PostedJournal.From(existing, alreadyPosted: true);
         }
 
-        var hold = await holds.GetAsync(command.HoldId, cancellationToken);
+        // Only to find the wallet to lock; the hold is read again (fresh) under the lock.
+        var hold = await holds.PeekAsync(command.HoldId, cancellationToken);
         if (hold is null)
         {
             return LedgerErrors.HoldNotFound;
@@ -201,7 +202,8 @@ public sealed class HoldService(
 
     private async Task<Result<HoldView>> CloseAsync(HoldId holdId, bool expire, CancellationToken cancellationToken)
     {
-        var hold = await holds.GetAsync(holdId, cancellationToken);
+        // Only to find the wallet to lock; the hold is read again (fresh) under the lock.
+        var hold = await holds.PeekAsync(holdId, cancellationToken);
         if (hold is null)
         {
             return LedgerErrors.HoldNotFound;

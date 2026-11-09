@@ -4,6 +4,7 @@ using WalletPK.Ledger.Application.Abstractions;
 using WalletPK.Ledger.Domain.Accounts;
 using WalletPK.Ledger.Domain.Holds;
 using WalletPK.Ledger.Domain.Journals;
+using WalletPK.Ledger.Infrastructure.Audit;
 using WalletPK.Ledger.Infrastructure.Idempotency;
 using WalletPK.Persistence.Outbox;
 
@@ -21,6 +22,9 @@ public sealed class LedgerDbContext(DbContextOptions<LedgerDbContext> options) :
     public DbSet<Hold> Holds => Set<Hold>();
 
     public DbSet<IdempotencyRecord> IdempotencyKeys => Set<IdempotencyRecord>();
+
+    /// <summary>Tamper-evident history of every money-relevant change (M3.10).</summary>
+    public DbSet<AuditRecord> AuditLog => Set<AuditRecord>();
 
     /// <summary>Integration events waiting for the relay (M4.1).</summary>
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();

@@ -703,6 +703,96 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("WalletPK.Ledger.Infrastructure.Audit.AuditRecord", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("actor");
+
+                    b.Property<long?>("ChainSequence")
+                        .HasColumnType("bigint")
+                        .HasColumnName("chain_sequence");
+
+                    b.Property<string>("CorrelationId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("event_type");
+
+                    b.Property<string>("Hash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("hash")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("payload");
+
+                    b.Property<string>("PreviousHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("character(64)")
+                        .HasColumnName("previous_hash")
+                        .IsFixedLength();
+
+                    b.Property<DateTimeOffset?>("SealedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sealed_at");
+
+                    b.Property<string>("SubjectId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("subject_id");
+
+                    b.Property<string>("SubjectType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("subject_type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_audit_log");
+
+                    b.HasIndex("ChainSequence")
+                        .IsUnique()
+                        .HasDatabaseName("ux_audit_log_chain_sequence")
+                        .HasFilter("chain_sequence IS NOT NULL");
+
+                    b.HasIndex("SubjectType", "SubjectId")
+                        .HasDatabaseName("ix_audit_log_subject");
+
+                    b.HasIndex(new[] { "Id" }, "ix_audit_log_unsealed")
+                        .HasDatabaseName("ix_audit_log_unsealed")
+                        .HasFilter("hash IS NULL");
+
+                    b.ToTable("audit_log", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_audit_log_chain_sequence_positive", "chain_sequence IS NULL OR chain_sequence > 0");
+
+                            t.HasCheckConstraint("ck_audit_log_sealed_consistently", "(chain_sequence IS NULL AND previous_hash IS NULL AND hash IS NULL AND sealed_at IS NULL) OR (chain_sequence IS NOT NULL AND previous_hash IS NOT NULL AND hash IS NOT NULL AND sealed_at IS NOT NULL)");
+                        });
+                });
+
             modelBuilder.Entity("WalletPK.Ledger.Infrastructure.Idempotency.IdempotencyRecord", b =>
                 {
                     b.Property<string>("Key")

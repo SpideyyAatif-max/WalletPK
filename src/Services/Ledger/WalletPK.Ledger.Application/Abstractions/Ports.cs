@@ -10,10 +10,13 @@ public interface IAccountRepository
 {
     Task<Account?> GetByIdAsync(AccountId id, CancellationToken cancellationToken);
 
-    /// <summary>The user's wallet of the given type, or null.</summary>
+    /// <summary>
+    /// The user's wallet of the given type, or null. A read-only snapshot (not tracked): use it to find
+    /// the wallet, then change it only through a use case that re-reads it under the wallet lock.
+    /// </summary>
     Task<Account?> GetWalletByOwnerAsync(UserId ownerId, AccountType type, CancellationToken cancellationToken);
 
-    /// <summary>The wallet with this number (E.164), or null.</summary>
+    /// <summary>The wallet with this number (E.164), or null. A read-only snapshot, like <see cref="GetWalletByOwnerAsync"/>.</summary>
     Task<Account?> GetWalletByAliasAsync(string alias, CancellationToken cancellationToken);
 
     /// <summary>Loads several accounts in one query (tracked, so posting can update them).</summary>
@@ -32,7 +35,14 @@ public interface IJournalRepository
 
 public interface IHoldRepository
 {
+    /// <summary>Loads the hold to change it. Call only while holding its wallet's lock.</summary>
     Task<Hold?> GetAsync(HoldId id, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// A read-only snapshot (not tracked), to find out which wallet to lock. Never change it: a tracked
+    /// copy read before the lock would hide changes another request made while we waited for the lock.
+    /// </summary>
+    Task<Hold?> PeekAsync(HoldId id, CancellationToken cancellationToken);
 
     /// <summary>IDs of active holds whose time ran out, oldest first.</summary>
     Task<IReadOnlyList<HoldId>> ListExpiredAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken);

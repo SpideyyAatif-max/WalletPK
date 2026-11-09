@@ -36,3 +36,30 @@ public sealed class MaintenanceOptions
     /// <summary>Most expired holds released per run.</summary>
     public int HoldBatchSize { get; set; } = 200;
 }
+
+/// <summary>Audit chain settings, from "Ledger:Audit".</summary>
+public sealed class AuditOptions
+{
+    public const string SectionName = "Ledger:Audit";
+
+    /// <summary>Run the background sealer (tests switch it off and seal on demand).</summary>
+    public bool SealingEnabled { get; set; } = true;
+
+    public int SealIntervalMilliseconds { get; set; } = 2_000;
+
+    public int BatchSize { get; set; } = 500;
+
+    /// <summary>An audit row still unsealed after this long fails the invariant check (the sealer is stuck).</summary>
+    public int MaxUnsealedAgeSeconds { get; set; } = 300;
+}
+
+/// <summary>Invariant checker settings, from "Ledger:Invariants".</summary>
+public sealed class InvariantOptions
+{
+    public const string SectionName = "Ledger:Invariants";
+
+    /// <summary>Run the checks on a schedule (the endpoint works either way).</summary>
+    public bool Enabled { get; set; } = true;
+
+    public int IntervalMinutes { get; set; } = 15;
+}

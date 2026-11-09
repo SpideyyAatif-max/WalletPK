@@ -13,11 +13,7 @@ public static class GatewayAuthenticationExtensions
     {
         services.AddWalletPkJwtBearer();
 
-        services.AddAuthorizationBuilder()
-            .AddPolicy(GatewayPolicies.Authenticated, policy => policy.RequireAuthenticatedUser())
-            .AddPolicy(GatewayPolicies.Operations, policy => policy
-                .RequireAuthenticatedUser()
-                .RequireClaim(GatewayPolicies.RoleClaim, GatewayPolicies.OperationsRoles));
+        services.AddAuthorizationBuilder().AddWalletPkPolicies();
 
         return services;
     }

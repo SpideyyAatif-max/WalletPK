@@ -3,7 +3,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Sql;
 /// <summary>
 /// PostgreSQL triggers that enforce the ledger's core rules inside the database itself (M3.2), so they
 /// hold even if the application has a bug, two services write at once, or someone runs SQL by hand.
-/// Installed by the InitialLedger migration (fencing: AddHoldsLocksIdempotency).
+/// Installed by the InitialLedger migration (fencing: AddHoldsLocksIdempotency; audit log: AddAuditChain).
 /// <list type="number">
 /// <item><b>Balanced journals:</b> at COMMIT, every journal must have at least two entries, its debits
 /// must equal its credits, and the header amount must equal the debits. Deferred constraint triggers run
@@ -116,6 +116,79 @@ public static class LedgerDatabaseGuards
     public const string UninstallFencing = """
         DROP TRIGGER IF EXISTS trg_accounts_lock_token_monotonic ON accounts;
         DROP FUNCTION IF EXISTS ledger_trg_lock_token_monotonic();
+        """;
+
+    /// <summary>
+    /// M3.10: the audit log is append-only. The one change ever allowed is sealing: setting the chain
+    /// columns of a row that has none yet, with every content column unchanged. A sealed row can never
+    /// change again, and no row can be deleted or truncated.
+    /// </summary>
+    public const string InstallAudit = """
+        CREATE OR REPLACE FUNCTION ledger_trg_audit_log_guard() RETURNS trigger
+        LANGUAGE plpgsql AS $$
+        BEGIN
+            IF TG_OP = 'UPDATE'
+               AND OLD.hash IS NULL AND NEW.hash IS NOT NULL
+               AND NEW.id = OLD.id
+               AND NEW.occurred_at = OLD.occurred_at
+               AND NEW.event_type = OLD.event_type
+               AND NEW.subject_type = OLD.subject_type
+               AND NEW.subject_id = OLD.subject_id
+               AND NEW.actor = OLD.actor
+               AND NEW.correlation_id IS NOT DISTINCT FROM OLD.correlation_id
+               AND NEW.payload = OLD.payload THEN
+                RETURN NEW;
+            END IF;
+
+            RAISE EXCEPTION 'audit_log is append-only: % is not allowed (only sealing an unsealed row is)', TG_OP
+                USING ERRCODE = 'restrict_violation';
+        END;
+        $$;
+
+        CREATE TRIGGER trg_audit_log_guard
+            BEFORE UPDATE OR DELETE ON audit_log
+            FOR EACH ROW EXECUTE FUNCTION ledger_trg_audit_log_guard();
+
+        CREATE TRIGGER trg_audit_log_no_truncate
+            BEFORE TRUNCATE ON audit_log
+            FOR EACH STATEMENT EXECUTE FUNCTION ledger_trg_append_only();
+        """;
+
+    public const string UninstallAudit = """
+        DROP TRIGGER IF EXISTS trg_audit_log_no_truncate ON audit_log;
+        DROP TRIGGER IF EXISTS trg_audit_log_guard ON audit_log;
+        DROP FUNCTION IF EXISTS ledger_trg_audit_log_guard();
+        """;
+
+    /// <summary>
+    /// Journals posted before the audit log existed get a "journal.posted" row each (actor
+    /// "system:backfill"), in posting order, so every journal is audited and the sealer chains them first.
+    /// </summary>
+    public const string BackfillAudit = """
+        INSERT INTO audit_log (occurred_at, event_type, subject_type, subject_id, actor, correlation_id, payload)
+        SELECT j.posted_at,
+               'journal.posted',
+               'journal',
+               j.id::text,
+               'system:backfill',
+               NULL,
+               json_build_object(
+                   'type', j.type,
+                   'description', j.description,
+                   'reference', j.reference,
+                   'amount', j.amount,
+                   'currency', j.currency,
+                   'postedAt', j.posted_at,
+                   'entries', (SELECT json_agg(json_build_object(
+                                       'line', e.line_number,
+                                       'accountId', e.account_id,
+                                       'direction', e.direction,
+                                       'amount', e.amount,
+                                       'balanceAfter', e.balance_after) ORDER BY e.line_number)
+                                 FROM journal_entries e
+                                WHERE e.transaction_id = j.id))::text
+          FROM journal_transactions j
+         ORDER BY j.posted_at, j.id;
         """;
 
     public const string Uninstall = """

@@ -15,7 +15,7 @@ builder.Services.AddLedgerServices();
 
 // Every wallet call needs a valid access token, checked here as well as at the gateway (defence in depth).
 builder.Services.AddWalletPkJwtBearer();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorizationBuilder().AddWalletPkPolicies();
 
 var app = builder.Build();
 
@@ -31,6 +31,7 @@ app.UseWalletPkIdempotency();
 await app.MigrateDatabaseIfConfiguredAsync();
 
 app.MapWalletEndpoints();
+app.MapLedgerOperationsEndpoints();
 
 await app.RunAsync();
 

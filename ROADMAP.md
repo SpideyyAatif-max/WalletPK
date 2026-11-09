@@ -214,11 +214,11 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M3.2 Database guards: deferred balanced-journal constraint triggers, available >= 0 check constraint, append-only triggers (no UPDATE/DELETE/TRUNCATE on journals)
 - [x] M3.3 Chart of accounts: BANK_FLOAT (4 shards), FEE_INCOME (8), TAX_PAYABLE (4), BILLER_SETTLEMENT (4), SUSPENSE (1); fixed IDs, seeded by the migration
 - [x] M3.4 Posting engine: all-or-nothing double entry, balance-after per entry, journal + balances + ledger.journal_posted outbox in one transaction, idempotent per transaction ID
-- [ ] M3.5 Holds: place, capture, release, expiry sweeper
-- [ ] M3.6 Concurrency: Redis lock (SETNX + TTL + fencing token) + row version
-- [ ] M3.7 Idempotency-Key middleware (Redis + Postgres)
-- [ ] M3.8 Wallet APIs: create, balance, P2P, history
-- [ ] M3.9 Fee engine
+- [x] M3.5 Holds: place, capture (partial or full), release, expiry sweeper (background service)
+- [x] M3.6 Concurrency: Redis lock (SET NX PX + INCR fencing token, compare-and-delete release) + row version + monotonic lock_token trigger; sorted lock order, 3 retries
+- [x] M3.7 Idempotency-Key middleware (Redis fast path + Postgres record; replays the first response, 409 while in progress)
+- [x] M3.8 Wallet APIs: create, balance, P2P (limits reserved at Identity over gRPC, released on failure), history (keyset paging)
+- [x] M3.9 Fee engine: configurable bands (flat + percent, min/max), 16% tax on the fee, FEE_INCOME / TAX_PAYABLE shards
 - [ ] M3.10 Hash-chained audit log
 - [ ] M3.11 Invariant checker (debits = credits, no negatives)
 - [ ] M3.12 Property-based and 50-parallel-debit race tests
