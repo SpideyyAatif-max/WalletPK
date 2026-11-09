@@ -32,7 +32,7 @@
   <ItemGroup Label="gRPC">
     <!-- grpc-dotnet packages share one version; Grpc.AspNetCore 2.84 needs Google.Protobuf >= 3.35.1 -->
     <PackageVersion Include="Grpc.AspNetCore" Version="2.84.0" />
-    <PackageVersion Include="Grpc.Net.Client" Version="2.84.0" />
+    <PackageVersion Include="Grpc.Net.Client" Version="2.85.0" />
     <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.84.0" />
     <PackageVersion Include="Grpc.Tools" Version="2.84.0" />
     <PackageVersion Include="Google.Protobuf" Version="3.36.2" />
