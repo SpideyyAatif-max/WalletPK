@@ -39,6 +39,7 @@ internal sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(account => account.OwnerId)
             .HasConversion(id => id!.Value.Value, value => new UserId(value));
 
+        builder.Property(account => account.Alias).HasMaxLength(13);
         builder.Property(account => account.SystemCode).HasMaxLength(40);
         builder.Property(account => account.ShardIndex);
         builder.Property(account => account.Currency).HasMaxLength(3).IsFixedLength().IsRequired();
@@ -57,6 +58,11 @@ internal sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
             .IsUnique()
             .HasFilter("owner_id IS NOT NULL")
             .HasDatabaseName("ux_accounts_owner_type");
+        // Wallet numbers are unique: "send to 0300 1234567" must find exactly one wallet.
+        builder.HasIndex(account => account.Alias)
+            .IsUnique()
+            .HasFilter("alias IS NOT NULL")
+            .HasDatabaseName("ux_accounts_alias");
         builder.HasIndex(account => new { account.SystemCode, account.ShardIndex })
             .IsUnique()
             .HasFilter("system_code IS NOT NULL")

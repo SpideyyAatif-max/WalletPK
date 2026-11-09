@@ -15,6 +15,9 @@ public static class WalletPkClaimTypes
     /// <summary>Role: customer, merchant, agent, ops, compliance, finance or admin.</summary>
     public const string Role = "role";
 
+    /// <summary>The user's mobile number in E.164 (standard OpenID Connect claim); it is also their wallet number.</summary>
+    public const string PhoneNumber = "phone_number";
+
     /// <summary>
     /// Present only while the device is in its new-device cooling-off period: the Unix time (seconds)
     /// when it ends. Services limit high-risk actions (large transfers) until then.

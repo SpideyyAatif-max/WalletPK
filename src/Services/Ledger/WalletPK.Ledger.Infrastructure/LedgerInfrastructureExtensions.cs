@@ -7,9 +7,12 @@ using StackExchange.Redis;
 using WalletPK.Ledger.Application.Abstractions;
 using WalletPK.Ledger.Application.Concurrency;
 using WalletPK.Ledger.Application.Events;
+using WalletPK.Ledger.Application.Fees;
 using WalletPK.Ledger.Application.Holds;
 using WalletPK.Ledger.Application.Posting;
+using WalletPK.Ledger.Application.Wallets;
 using WalletPK.Ledger.Infrastructure.Idempotency;
+using WalletPK.Ledger.Infrastructure.Limits;
 using WalletPK.Ledger.Infrastructure.Maintenance;
 using WalletPK.Ledger.Infrastructure.Persistence;
 using WalletPK.Ledger.Infrastructure.Redis;
@@ -46,7 +49,17 @@ public static class LedgerInfrastructureExtensions
             .BindConfiguration(MaintenanceOptions.SectionName)
             .Validate(options => options.IntervalSeconds >= 1 && options.HoldBatchSize >= 1, "Ledger:Maintenance: IntervalSeconds >= 1, HoldBatchSize >= 1.")
             .ValidateOnStart();
+        services.AddOptions<FeeOptions>()
+            .BindConfiguration(FeeOptions.SectionName)
+            .Validate(options => options.IsValid(), "Fees: bands must be ordered by UpToRupees, only the last may be open-ended, values must not be negative, and each schedule must name a JournalType.")
+            .ValidateOnStart();
+        services.AddOptions<IdentityGrpcOptions>()
+            .BindConfiguration(IdentityGrpcOptions.SectionName)
+            .Validate(options => options.Address is { IsAbsoluteUri: true } && options.TimeoutMilliseconds >= 100, "Services:IdentityGrpc: Address must be an absolute URI and TimeoutMilliseconds >= 100.")
+            .ValidateOnStart();
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<WalletLockOptions>>().Value);
+        services.AddSingleton(provider => provider.GetRequiredService<IOptions<FeeOptions>>().Value);
+        services.AddSingleton(provider => provider.GetRequiredService<IOptions<IdentityGrpcOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<IdempotencyOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<MaintenanceOptions>>().Value);
 
@@ -67,6 +80,7 @@ public static class LedgerInfrastructureExtensions
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IJournalRepository, JournalRepository>();
         services.AddScoped<IHoldRepository, HoldRepository>();
+        services.AddScoped<ILedgerQueries, LedgerQueries>();
 
         // ---- Redis: wallet locks and the idempotency fast path ----
         services.AddSingleton<IConnectionMultiplexer>(provider =>
@@ -74,10 +88,17 @@ public static class LedgerInfrastructureExtensions
         services.AddSingleton<IAccountLockService, RedisAccountLockService>();
         services.AddScoped<IIdempotencyStore, LedgerIdempotencyStore>();
 
+        // ---- Identity's limits API (gRPC, internal port) ----
+        services.AddGrpcClient<WalletPK.Contracts.Identity.V1.Limits.LimitsClient>((provider, options) =>
+            options.Address = provider.GetRequiredService<IdentityGrpcOptions>().Address);
+        services.AddScoped<ILimitsGateway, IdentityLimitsGateway>();
+
         // ---- Use cases ----
         services.AddSingleton<WalletConcurrency>();
         services.AddScoped<PostingService>();
         services.AddScoped<HoldService>();
+        services.AddSingleton<FeeEngine>();
+        services.AddScoped<WalletService>();
 
         // ---- Background: hold expiry sweeper and idempotency cleanup ----
         services.AddHostedService<LedgerMaintenanceService>();

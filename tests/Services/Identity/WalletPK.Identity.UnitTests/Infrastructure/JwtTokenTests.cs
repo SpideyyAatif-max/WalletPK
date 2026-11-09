@@ -38,7 +38,7 @@ public class JwtTokenTests
         var userId = UserId.New();
         var deviceId = DeviceId.New();
 
-        var issued = issuer.Issue(new AccessTokenClaims(userId, deviceId, KycTier.L1, UserRole.Customer, null), _now);
+        var issued = issuer.Issue(new AccessTokenClaims(userId, deviceId, KycTier.L1, UserRole.Customer, null, "+923001234567"), _now);
         var result = await new JsonWebTokenHandler().ValidateTokenAsync(issued.Token, ValidationFor(keys));
 
         result.IsValid.ShouldBeTrue(result.Exception?.Message);
@@ -49,6 +49,7 @@ public class JwtTokenTests
         token.GetClaim("device_id").Value.ShouldBe(deviceId.ToString());
         token.GetClaim("kyc_tier").Value.ShouldBe("L1");
         token.GetClaim("role").Value.ShouldBe("customer");
+        token.GetClaim("phone_number").Value.ShouldBe("+923001234567");
         token.Id.ShouldNotBeNullOrEmpty();
         token.TryGetClaim("cooling_off_until", out _).ShouldBeFalse();
         token.ValidTo.ShouldBe(_now.AddMinutes(15).UtcDateTime);

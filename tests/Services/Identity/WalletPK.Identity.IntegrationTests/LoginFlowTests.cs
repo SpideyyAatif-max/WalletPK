@@ -256,5 +256,8 @@ public class LoginFlowTests(IdentityApiFactory factory)
         result.Claims["sub"].ShouldBe(tokens.GetProperty("userId").GetString());
         result.Claims["device_id"].ShouldBe(tokens.GetProperty("deviceId").GetString());
         result.Claims["kyc_tier"].ShouldBe("L0");
+
+        // The Ledger numbers the wallet with this (M3.8), so it is always E.164.
+        result.Claims["phone_number"].ShouldBe(ToE164(number));
     }
 }

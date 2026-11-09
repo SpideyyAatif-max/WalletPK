@@ -1,7 +1,7 @@
-namespace WalletPK.Gateway.Authentication;
+namespace WalletPK.Web.Authentication;
 
 /// <summary>
-/// How the gateway validates access tokens issued by the Identity service (M2).
+/// How WalletPK services (the gateway and every API) validate access tokens issued by the Identity service.
 /// Signing keys are discovered from <c>{Authority}/.well-known/openid-configuration</c>, so the
 /// gateway never holds a signing secret and keys can rotate without redeploying it.
 /// </summary>

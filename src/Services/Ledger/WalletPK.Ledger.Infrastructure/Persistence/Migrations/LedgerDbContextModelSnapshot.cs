@@ -28,6 +28,11 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("Alias")
+                        .HasMaxLength(13)
+                        .HasColumnType("character varying(13)")
+                        .HasColumnName("alias");
+
                     b.Property<bool>("AllowNegative")
                         .HasColumnType("boolean")
                         .HasColumnName("allow_negative");
@@ -104,6 +109,11 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_accounts");
+
+                    b.HasIndex("Alias")
+                        .IsUnique()
+                        .HasDatabaseName("ux_accounts_alias")
+                        .HasFilter("alias IS NOT NULL");
 
                     b.HasIndex("OwnerId", "Type")
                         .IsUnique()

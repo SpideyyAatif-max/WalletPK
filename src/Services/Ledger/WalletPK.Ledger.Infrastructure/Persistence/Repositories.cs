@@ -12,6 +12,12 @@ internal sealed class AccountRepository(LedgerDbContext dbContext) : IAccountRep
     public Task<Account?> GetByIdAsync(AccountId id, CancellationToken cancellationToken) =>
         dbContext.Accounts.FirstOrDefaultAsync(account => account.Id == id, cancellationToken);
 
+    public Task<Account?> GetWalletByOwnerAsync(UserId ownerId, AccountType type, CancellationToken cancellationToken) =>
+        dbContext.Accounts.FirstOrDefaultAsync(account => account.OwnerId == ownerId && account.Type == type, cancellationToken);
+
+    public Task<Account?> GetWalletByAliasAsync(string alias, CancellationToken cancellationToken) =>
+        dbContext.Accounts.FirstOrDefaultAsync(account => account.Alias == alias, cancellationToken);
+
     public async Task<IReadOnlyList<Account>> GetManyAsync(IReadOnlyCollection<AccountId> ids, CancellationToken cancellationToken) =>
         await dbContext.Accounts.Where(account => ids.Contains(account.Id)).ToListAsync(cancellationToken);
 

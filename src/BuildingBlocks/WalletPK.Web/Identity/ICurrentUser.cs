@@ -14,6 +14,9 @@ public interface ICurrentUser
 
     string? KycTier { get; }
 
+    /// <summary>Mobile number in E.164 (+923001234567), from the access token.</summary>
+    string? PhoneNumber { get; }
+
     bool IsInRole(string role);
 
     /// <summary>The user's ID; throws if the request is anonymous (use only on endpoints that require login).</summary>

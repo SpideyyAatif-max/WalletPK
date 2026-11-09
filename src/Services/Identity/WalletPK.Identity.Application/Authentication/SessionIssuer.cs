@@ -25,7 +25,7 @@ public sealed class SessionIssuer(IAccessTokenIssuer accessTokens, IRefreshToken
         ArgumentNullException.ThrowIfNull(device);
 
         var coolingOffUntil = device.ActiveCoolingOffUntil(now);
-        var access = accessTokens.Issue(new AccessTokenClaims(user.Id, device.Id, user.KycTier, user.Role, coolingOffUntil), now);
+        var access = accessTokens.Issue(new AccessTokenClaims(user.Id, device.Id, user.KycTier, user.Role, coolingOffUntil, user.PhoneNumber.Value), now);
 
         var secret = RefreshTokenSecret.Generate();
         refreshTokens.Add(RefreshToken.Issue(user.Id, device.Id, familyId, RefreshTokenSecret.Hash(secret), now, options.RefreshTokenLifetime));

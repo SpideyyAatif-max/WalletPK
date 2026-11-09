@@ -1,7 +1,9 @@
 using WalletPK.Ledger.Api;
+using WalletPK.Ledger.Api.Endpoints;
 using WalletPK.Ledger.Infrastructure;
 using WalletPK.Observability;
 using WalletPK.Web;
+using WalletPK.Web.Authentication;
 using WalletPK.Web.Idempotency;
 
 // WalletPK Wallet & Ledger service.
@@ -11,17 +13,24 @@ builder.AddWalletPkObservability("ledger");
 builder.Services.AddWalletPkWeb();
 builder.Services.AddLedgerServices();
 
+// Every wallet call needs a valid access token, checked here as well as at the gateway (defence in depth).
+builder.Services.AddWalletPkJwtBearer();
+builder.Services.AddAuthorization();
+
 var app = builder.Build();
 
 app.UseWalletPkWeb();
 app.UseWalletPkObservability();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Replays the first response for a repeated Idempotency-Key on endpoints marked RequireIdempotencyKey() (M3.7).
 app.UseWalletPkIdempotency();
 
 await app.MigrateDatabaseIfConfiguredAsync();
 
-// Wallet endpoints (balance, transfers, history) arrive in M3.8.
+app.MapWalletEndpoints();
 
 await app.RunAsync();
 

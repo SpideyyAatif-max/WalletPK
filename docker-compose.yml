@@ -86,6 +86,9 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__LedgerDb: Host=postgres;Port=5432;Database=walletpk_ledger;Username=${POSTGRES_USER:-walletpk};Password=${POSTGRES_PASSWORD:-walletpk_dev}
       ConnectionStrings__Redis: redis:6379,password=${REDIS_PASSWORD:-walletpk_dev},abortConnect=false
+      # Access tokens are validated with Identity's published keys; limits are checked over Identity's gRPC port.
+      Jwt__Authority: http://identity:8080/
+      Services__IdentityGrpc__Address: http://identity:8081
       Observability__SeqUrl: http://seq:5341
       Observability__OtlpTracesEndpoint: http://jaeger:4317
       Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
@@ -96,3 +99,5 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      identity:
+        condition: service_started

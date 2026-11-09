@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>WalletPK.Ledger.Infrastructure</RootNamespace>
-    <Description>Ledger adapters: PostgreSQL via EF Core (with database-level guards), the outbox, Redis wallet locks, idempotency store, hold expiry sweeper.</Description>
+    <Description>Ledger adapters: PostgreSQL via EF Core (with database-level guards), the outbox, Redis wallet locks, idempotency store, hold expiry sweeper, the Identity limits gRPC client.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,6 +16,7 @@
     <PackageReference Include="EFCore.NamingConventions" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
     <PackageReference Include="StackExchange.Redis" />
+    <PackageReference Include="Grpc.Net.ClientFactory" />
   </ItemGroup>
 
   <ItemGroup>

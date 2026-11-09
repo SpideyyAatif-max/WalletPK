@@ -52,6 +52,12 @@ public sealed class Account : AggregateRoot<AccountId>
     /// <summary>The user who owns a wallet; null for system accounts.</summary>
     public UserId? OwnerId { get; private set; }
 
+    /// <summary>
+    /// The wallet number customers send money to: the owner's mobile number in E.164 (+923001234567).
+    /// Null for system accounts.
+    /// </summary>
+    public string? Alias { get; private set; }
+
     /// <summary>For system accounts, the chart-of-accounts code (for example "FEE_INCOME"); null for wallets.</summary>
     public string? SystemCode { get; private set; }
 
@@ -95,7 +101,7 @@ public sealed class Account : AggregateRoot<AccountId>
     public bool IsWallet => Type != AccountType.System;
 
     /// <summary>Opens a wallet. Wallets are credit-normal (WalletPK owes the holder that money) and can never go negative.</summary>
-    public static Account OpenWallet(UserId ownerId, AccountType type, string name, DateTimeOffset now)
+    public static Account OpenWallet(UserId ownerId, AccountType type, string name, DateTimeOffset now, string? alias = null)
     {
         if (type == AccountType.System)
         {
@@ -103,7 +109,10 @@ public sealed class Account : AggregateRoot<AccountId>
         }
 
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        return new Account(AccountId.New(), type, name, NormalBalance.Credit, allowNegative: false, ownerId, null, 0, now);
+        return new Account(AccountId.New(), type, name, NormalBalance.Credit, allowNegative: false, ownerId, null, 0, now)
+        {
+            Alias = string.IsNullOrWhiteSpace(alias) ? null : alias,
+        };
     }
 
     /// <summary>Creates one shard of a system account from its chart-of-accounts definition.</summary>

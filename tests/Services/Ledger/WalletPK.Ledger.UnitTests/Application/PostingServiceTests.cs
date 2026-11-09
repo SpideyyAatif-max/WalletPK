@@ -255,6 +255,12 @@ public class PostingServiceTests
         public Task<Account?> GetByIdAsync(AccountId id, CancellationToken cancellationToken) =>
             Task.FromResult(Accounts.FirstOrDefault(account => account.Id == id));
 
+        public Task<Account?> GetWalletByOwnerAsync(UserId ownerId, AccountType type, CancellationToken cancellationToken) =>
+            Task.FromResult(Accounts.FirstOrDefault(account => account.OwnerId == ownerId && account.Type == type));
+
+        public Task<Account?> GetWalletByAliasAsync(string alias, CancellationToken cancellationToken) =>
+            Task.FromResult(Accounts.FirstOrDefault(account => account.Alias == alias));
+
         public Task<IReadOnlyList<Account>> GetManyAsync(IReadOnlyCollection<AccountId> ids, CancellationToken cancellationToken) =>
             Task.FromResult<IReadOnlyList<Account>>([.. Accounts.Where(account => ids.Contains(account.Id))]);
 

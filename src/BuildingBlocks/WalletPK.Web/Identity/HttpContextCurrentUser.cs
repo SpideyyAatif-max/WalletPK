@@ -33,6 +33,9 @@ public sealed class HttpContextCurrentUser(IHttpContextAccessor httpContextAcces
     public string? KycTier =>
         TryGetAuthenticatedPrincipal(out var principal) ? principal.FindFirstValue(WalletPkClaimTypes.KycTier) : null;
 
+    public string? PhoneNumber =>
+        TryGetAuthenticatedPrincipal(out var principal) ? principal.FindFirstValue(WalletPkClaimTypes.PhoneNumber) : null;
+
     public bool IsInRole(string role)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(role);

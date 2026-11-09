@@ -11,7 +11,7 @@ namespace WalletPK.Identity.Infrastructure.Security;
 /// Issues RS256-signed JWT access tokens, for example:
 /// <code>
 /// { "iss": "walletpk-identity", "aud": "walletpk-api", "sub": "0193…", "device_id": "0193…",
-///   "kyc_tier": "L0", "role": "customer", "jti": "…", "iat": …, "nbf": …, "exp": … }
+///   "kyc_tier": "L0", "role": "customer", "phone_number": "+923001234567", "jti": "…", "iat": …, "nbf": …, "exp": … }
 /// </code>
 /// </summary>
 internal sealed class JwtAccessTokenIssuer(SigningKeyProvider keys, JwtSigningOptions jwt, AuthOptions auth) : IAccessTokenIssuer
@@ -31,6 +31,11 @@ internal sealed class JwtAccessTokenIssuer(SigningKeyProvider keys, JwtSigningOp
             [WalletPkClaimTypes.KycTier] = claims.KycTier.ToString(),
             [WalletPkClaimTypes.Role] = claims.Role.ToClaimValue(),
         };
+
+        if (claims.PhoneNumber is { Length: > 0 } phoneNumber)
+        {
+            payload[WalletPkClaimTypes.PhoneNumber] = phoneNumber;
+        }
 
         if (claims.CoolingOffUntil is { } coolingOffUntil)
         {
