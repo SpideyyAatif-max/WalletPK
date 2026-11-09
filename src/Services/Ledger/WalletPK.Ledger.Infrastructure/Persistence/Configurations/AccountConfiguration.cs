@@ -50,6 +50,7 @@ internal sealed class AccountConfiguration : IEntityTypeConfiguration<Account>
         builder.Property(account => account.CreatedAt);
         builder.Property(account => account.UpdatedAt);
         builder.Property(account => account.Version).IsRowVersion();
+        builder.Property(account => account.LockToken);
 
         // One wallet of each type per user; each system account shard exists once.
         builder.HasIndex(account => new { account.OwnerId, account.Type })

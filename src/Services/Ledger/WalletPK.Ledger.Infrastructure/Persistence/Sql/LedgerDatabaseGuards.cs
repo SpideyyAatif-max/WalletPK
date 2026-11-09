@@ -3,7 +3,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Sql;
 /// <summary>
 /// PostgreSQL triggers that enforce the ledger's core rules inside the database itself (M3.2), so they
 /// hold even if the application has a bug, two services write at once, or someone runs SQL by hand.
-/// Installed by the InitialLedger migration.
+/// Installed by the InitialLedger migration (fencing: AddHoldsLocksIdempotency).
 /// <list type="number">
 /// <item><b>Balanced journals:</b> at COMMIT, every journal must have at least two entries, its debits
 /// must equal its credits, and the header amount must equal the debits. Deferred constraint triggers run
@@ -90,6 +90,32 @@ public static class LedgerDatabaseGuards
         CREATE TRIGGER trg_journal_transactions_no_truncate
             BEFORE TRUNCATE ON journal_transactions
             FOR EACH STATEMENT EXECUTE FUNCTION ledger_trg_append_only();
+        """;
+
+    /// <summary>
+    /// M3.6: an account's lock_token (the fencing token of the last wallet lock that wrote to it) may only
+    /// grow. A server whose Redis lock expired carries an older token and is refused by the database itself.
+    /// </summary>
+    public const string InstallFencing = """
+        CREATE OR REPLACE FUNCTION ledger_trg_lock_token_monotonic() RETURNS trigger
+        LANGUAGE plpgsql AS $$
+        BEGIN
+            IF NEW.lock_token < OLD.lock_token THEN
+                RAISE EXCEPTION 'Stale wallet lock on account %: fencing token % is older than %', OLD.id, NEW.lock_token, OLD.lock_token
+                    USING ERRCODE = 'check_violation';
+            END IF;
+            RETURN NEW;
+        END;
+        $$;
+
+        CREATE TRIGGER trg_accounts_lock_token_monotonic
+            BEFORE UPDATE OF lock_token ON accounts
+            FOR EACH ROW EXECUTE FUNCTION ledger_trg_lock_token_monotonic();
+        """;
+
+    public const string UninstallFencing = """
+        DROP TRIGGER IF EXISTS trg_accounts_lock_token_monotonic ON accounts;
+        DROP FUNCTION IF EXISTS ledger_trg_lock_token_monotonic();
         """;
 
     public const string Uninstall = """

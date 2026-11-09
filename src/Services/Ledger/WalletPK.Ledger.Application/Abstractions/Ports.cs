@@ -1,5 +1,6 @@
 using WalletPK.Common.Identifiers;
 using WalletPK.Ledger.Domain.Accounts;
+using WalletPK.Ledger.Domain.Holds;
 using WalletPK.Ledger.Domain.Journals;
 
 namespace WalletPK.Ledger.Application.Abstractions;
@@ -20,6 +21,38 @@ public interface IJournalRepository
     Task<JournalTransaction?> GetAsync(TransactionId id, CancellationToken cancellationToken);
 
     void Add(JournalTransaction journal);
+}
+
+public interface IHoldRepository
+{
+    Task<Hold?> GetAsync(HoldId id, CancellationToken cancellationToken);
+
+    /// <summary>IDs of active holds whose time ran out, oldest first.</summary>
+    Task<IReadOnlyList<HoldId>> ListExpiredAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken);
+
+    void Add(Hold hold);
+}
+
+/// <summary>
+/// Exclusive locks on wallets (Redis in production), so two payments from the same wallet never run at
+/// the same time on different servers. Each lock comes with a <b>fencing token</b>: a number that only
+/// ever grows. The token is written with the payment, and the account refuses a token older than the
+/// last one it saw, so a server whose lock silently expired (a long pause) cannot write afterwards.
+/// </summary>
+public interface IAccountLockService
+{
+    /// <summary>
+    /// Locks all the given accounts (in a fixed order, so two callers can never deadlock), waiting a
+    /// short time if they are busy. Returns null if they stay busy.
+    /// </summary>
+    Task<IAccountLockLease?> TryAcquireAsync(IReadOnlyCollection<AccountId> accountIds, CancellationToken cancellationToken);
+}
+
+/// <summary>Held locks; disposing releases them.</summary>
+public interface IAccountLockLease : IAsyncDisposable
+{
+    /// <summary>The fencing token of each locked account.</summary>
+    IReadOnlyDictionary<AccountId, long> FencingTokens { get; }
 }
 
 /// <summary>Commits one use case's changes (accounts, journal, entries, outbox) in a single database transaction.</summary>

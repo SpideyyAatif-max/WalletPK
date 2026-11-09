@@ -51,6 +51,10 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("held");
 
+                    b.Property<long>("LockToken")
+                        .HasColumnType("bigint")
+                        .HasColumnName("lock_token");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -129,6 +133,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Bank float (shard 0)",
                             NormalBalance = "Debit",
                             ShardIndex = 0,
@@ -146,6 +151,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Bank float (shard 1)",
                             NormalBalance = "Debit",
                             ShardIndex = 1,
@@ -163,6 +169,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Bank float (shard 2)",
                             NormalBalance = "Debit",
                             ShardIndex = 2,
@@ -180,6 +187,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Bank float (shard 3)",
                             NormalBalance = "Debit",
                             ShardIndex = 3,
@@ -197,6 +205,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Fee income (shard 0)",
                             NormalBalance = "Credit",
                             ShardIndex = 0,
@@ -214,6 +223,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Fee income (shard 1)",
                             NormalBalance = "Credit",
                             ShardIndex = 1,
@@ -231,6 +241,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Fee income (shard 2)",
                             NormalBalance = "Credit",
                             ShardIndex = 2,
@@ -248,6 +259,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Fee income (shard 3)",
                             NormalBalance = "Credit",
                             ShardIndex = 3,
@@ -265,6 +277,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Fee income (shard 4)",
                             NormalBalance = "Credit",
                             ShardIndex = 4,
@@ -282,6 +295,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Fee income (shard 5)",
                             NormalBalance = "Credit",
                             ShardIndex = 5,
@@ -299,6 +313,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Fee income (shard 6)",
                             NormalBalance = "Credit",
                             ShardIndex = 6,
@@ -316,6 +331,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Fee income (shard 7)",
                             NormalBalance = "Credit",
                             ShardIndex = 7,
@@ -333,6 +349,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Tax payable (shard 0)",
                             NormalBalance = "Credit",
                             ShardIndex = 0,
@@ -350,6 +367,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Tax payable (shard 1)",
                             NormalBalance = "Credit",
                             ShardIndex = 1,
@@ -367,6 +385,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Tax payable (shard 2)",
                             NormalBalance = "Credit",
                             ShardIndex = 2,
@@ -384,6 +403,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Tax payable (shard 3)",
                             NormalBalance = "Credit",
                             ShardIndex = 3,
@@ -401,6 +421,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Biller settlement (shard 0)",
                             NormalBalance = "Credit",
                             ShardIndex = 0,
@@ -418,6 +439,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Biller settlement (shard 1)",
                             NormalBalance = "Credit",
                             ShardIndex = 1,
@@ -435,6 +457,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Biller settlement (shard 2)",
                             NormalBalance = "Credit",
                             ShardIndex = 2,
@@ -452,6 +475,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Biller settlement (shard 3)",
                             NormalBalance = "Credit",
                             ShardIndex = 3,
@@ -469,6 +493,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Currency = "PKR",
                             Held = 0L,
+                            LockToken = 0L,
                             Name = "Suspense",
                             NormalBalance = "Debit",
                             ShardIndex = 0,
@@ -477,6 +502,83 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                             Type = "System",
                             UpdatedAt = new DateTimeOffset(new DateTime(2026, 11, 9, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Version = 0u
+                        });
+                });
+
+            modelBuilder.Entity("WalletPK.Ledger.Domain.Holds.Hold", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("account_id");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("bigint")
+                        .HasColumnName("amount");
+
+                    b.Property<Guid?>("CaptureTransactionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("capture_transaction_id");
+
+                    b.Property<long>("CapturedAmount")
+                        .HasColumnType("bigint")
+                        .HasColumnName("captured_amount");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("description");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("reference");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasColumnName("status");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_holds");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("ix_holds_account_id");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_holds_active_expires_at")
+                        .HasFilter("status = 'Active'");
+
+                    b.ToTable("holds", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_holds_amount_positive", "amount > 0");
+
+                            t.HasCheckConstraint("ck_holds_captured_within_amount", "captured_amount >= 0 AND captured_amount <= amount");
+
+                            t.HasCheckConstraint("ck_holds_status", "status IN ('Active', 'Captured', 'Released', 'Expired')");
                         });
                 });
 
@@ -591,6 +693,63 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("WalletPK.Ledger.Infrastructure.Idempotency.IdempotencyRecord", b =>
+                {
+                    b.Property<string>("Key")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("key");
+
+                    b.Property<string>("ContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("Location")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)")
+                        .HasColumnName("location");
+
+                    b.Property<string>("RequestHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("request_hash");
+
+                    b.Property<byte[]>("ResponseBody")
+                        .HasColumnType("bytea")
+                        .HasColumnName("response_body");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasColumnName("state");
+
+                    b.Property<int?>("StatusCode")
+                        .HasColumnType("integer")
+                        .HasColumnName("status_code");
+
+                    b.HasKey("Key")
+                        .HasName("pk_idempotency_keys");
+
+                    b.HasIndex("ExpiresAt")
+                        .HasDatabaseName("ix_idempotency_keys_expires_at");
+
+                    b.ToTable("idempotency_keys", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_idempotency_keys_state", "state IN ('InProgress', 'Completed')");
+                        });
+                });
+
             modelBuilder.Entity("WalletPK.Persistence.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -663,6 +822,16 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                         .HasFilter("published_at IS NULL");
 
                     b.ToTable("outbox_messages", (string)null);
+                });
+
+            modelBuilder.Entity("WalletPK.Ledger.Domain.Holds.Hold", b =>
+                {
+                    b.HasOne("WalletPK.Ledger.Domain.Accounts.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_holds_accounts_account_id");
                 });
 
             modelBuilder.Entity("WalletPK.Ledger.Domain.Journals.JournalEntry", b =>

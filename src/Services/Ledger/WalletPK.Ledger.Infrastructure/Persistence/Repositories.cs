@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WalletPK.Common.Identifiers;
 using WalletPK.Ledger.Application.Abstractions;
 using WalletPK.Ledger.Domain.Accounts;
+using WalletPK.Ledger.Domain.Holds;
 using WalletPK.Ledger.Domain.Journals;
 
 namespace WalletPK.Ledger.Infrastructure.Persistence;
@@ -25,4 +26,21 @@ internal sealed class JournalRepository(LedgerDbContext dbContext) : IJournalRep
             .FirstOrDefaultAsync(journal => journal.Id == id, cancellationToken);
 
     public void Add(JournalTransaction journal) => dbContext.JournalTransactions.Add(journal);
+}
+
+internal sealed class HoldRepository(LedgerDbContext dbContext) : IHoldRepository
+{
+    public Task<Hold?> GetAsync(HoldId id, CancellationToken cancellationToken) =>
+        dbContext.Holds.FirstOrDefaultAsync(hold => hold.Id == id, cancellationToken);
+
+    public async Task<IReadOnlyList<HoldId>> ListExpiredAsync(DateTimeOffset now, int limit, CancellationToken cancellationToken) =>
+        await dbContext.Holds
+            .AsNoTracking()
+            .Where(hold => hold.Status == HoldStatus.Active && hold.ExpiresAt <= now)
+            .OrderBy(hold => hold.ExpiresAt)
+            .Select(hold => hold.Id)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+    public void Add(Hold hold) => dbContext.Holds.Add(hold);
 }

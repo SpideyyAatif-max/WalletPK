@@ -2,7 +2,9 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using WalletPK.Ledger.Application.Abstractions;
 using WalletPK.Ledger.Domain.Accounts;
+using WalletPK.Ledger.Domain.Holds;
 using WalletPK.Ledger.Domain.Journals;
+using WalletPK.Ledger.Infrastructure.Idempotency;
 using WalletPK.Persistence.Outbox;
 
 namespace WalletPK.Ledger.Infrastructure.Persistence;
@@ -15,6 +17,10 @@ public sealed class LedgerDbContext(DbContextOptions<LedgerDbContext> options) :
     public DbSet<JournalTransaction> JournalTransactions => Set<JournalTransaction>();
 
     public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();
+
+    public DbSet<Hold> Holds => Set<Hold>();
+
+    public DbSet<IdempotencyRecord> IdempotencyKeys => Set<IdempotencyRecord>();
 
     /// <summary>Integration events waiting for the relay (M4.1).</summary>
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();

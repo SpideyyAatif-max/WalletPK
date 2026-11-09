@@ -35,6 +35,25 @@ public static class LedgerErrors
         new("ledger.account_closed", "This account is closed.", ErrorType.BusinessRule,
             new Dictionary<string, string[]> { ["accountId"] = [accountId.ToString()] });
 
+    public static Error LockLost(AccountId accountId) =>
+        new("ledger.lock_lost", "The wallet lock expired before the payment was saved. Please try again.", ErrorType.Conflict,
+            new Dictionary<string, string[]> { ["accountId"] = [accountId.ToString()] });
+
+    public static Error HoldNotFound { get; } =
+        Error.NotFound("ledger.hold_not_found", "Hold not found.");
+
+    public static Error HoldNotActive { get; } =
+        Error.Conflict("ledger.hold_not_active", "This hold has already been captured, released or expired.");
+
+    public static Error HoldExpired { get; } =
+        Error.BusinessRule("ledger.hold_expired", "This hold has expired; the money was returned to the wallet.");
+
+    public static Error CaptureTooLarge { get; } =
+        Error.BusinessRule("ledger.capture_exceeds_hold", "You cannot capture more than was held.");
+
+    public static Error HoldLifetimeInvalid { get; } =
+        Error.Validation("ledger.hold_lifetime_invalid", "A hold must last between 1 minute and 7 days.");
+
     public static Error AccountNotFound(AccountId accountId) =>
         new("ledger.account_not_found", "Account not found.", ErrorType.NotFound,
             new Dictionary<string, string[]> { ["accountId"] = [accountId.ToString()] });

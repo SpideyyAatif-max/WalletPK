@@ -1,6 +1,7 @@
 using WalletPK.Common.Identifiers;
 using WalletPK.Common.Primitives;
 using WalletPK.Ledger.Application.Abstractions;
+using WalletPK.Ledger.Application.Concurrency;
 using WalletPK.Ledger.Application.Events;
 using WalletPK.Ledger.Application.Posting;
 using WalletPK.Ledger.Domain;
@@ -35,7 +36,9 @@ public class PostingServiceTests
         _store.Accounts.Add(_sara);
     }
 
-    private PostingService Service() => new(_store, _store, _store, new FixedTime(_now));
+    private readonly FakeLocks _locks = new();
+
+    private PostingService Service() => new(_store, _store, _store, new WalletConcurrency(_locks), new FixedTime(_now));
 
     private static PostJournalCommand CashIn(Account wallet, decimal rupees, TransactionId? id = null) =>
         new(id ?? TransactionId.New(), JournalType.CashIn, "Cash-in", "BANK-REF-1",
@@ -125,13 +128,58 @@ public class PostingServiceTests
     }
 
     [Fact]
-    public async Task A_lost_concurrency_race_is_reported_as_a_conflict()
+    public async Task A_lost_concurrency_race_is_retried_and_succeeds_on_fresh_data()
     {
-        _store.ThrowOnSave = new ConcurrencyConflictException("xmin changed");
+        _store.ConflictsBeforeSuccess = 2;
+
+        var result = await Service().PostAsync(CashIn(_ali, 10), Cancel);
+
+        result.IsSuccess.ShouldBeTrue();
+        _store.SaveAttempts.ShouldBe(3);
+        _store.Journals.ShouldHaveSingleItem();
+    }
+
+    [Fact]
+    public async Task Repeated_concurrency_conflicts_give_up_after_three_attempts()
+    {
+        _store.ConflictsBeforeSuccess = 10;
 
         var result = await Service().PostAsync(CashIn(_ali, 10), Cancel);
 
         result.Error.ShouldBe(PostingService.ConcurrentUpdate);
+        _store.SaveAttempts.ShouldBe(WalletConcurrency.MaxAttempts);
+    }
+
+    [Fact]
+    public async Task Only_wallets_are_locked_never_system_account_shards()
+    {
+        await Service().PostAsync(CashIn(_ali, 10), Cancel);
+
+        _locks.LastRequested.ShouldBe(new[] { _ali.Id });
+        _locks.Released.ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task A_busy_wallet_is_reported_without_posting()
+    {
+        _locks.Busy = true;
+
+        var result = await Service().PostAsync(CashIn(_ali, 10), Cancel);
+
+        result.Error.ShouldBe(WalletConcurrency.WalletBusy);
+        _store.SaveAttempts.ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task A_writer_whose_lock_expired_is_refused_by_the_fencing_token()
+    {
+        _ali.ApplyFencingToken(50).IsSuccess.ShouldBeTrue(); // a newer lock holder already wrote with token 50
+        _locks.NextToken = 49;                                 // our lock is older
+
+        var result = await Service().PostAsync(CashIn(_ali, 10), Cancel);
+
+        result.Error.Code.ShouldBe("ledger.lock_lost");
+        _ali.Balance.ShouldBe(0);
     }
 
     [Fact]
@@ -155,6 +203,35 @@ public class PostingServiceTests
             .ShouldBe(new[] { ("Debit", 250_00L), ("Credit", 250_00L) });
     }
 
+    /// <summary>Hands out locks with a chosen fencing token, or reports the wallet busy.</summary>
+    private sealed class FakeLocks : IAccountLockService
+    {
+        public bool Busy { get; set; }
+
+        public long NextToken { get; set; } = 1;
+
+        public IReadOnlyCollection<AccountId> LastRequested { get; private set; } = [];
+
+        public bool Released { get; private set; }
+
+        public Task<IAccountLockLease?> TryAcquireAsync(IReadOnlyCollection<AccountId> accountIds, CancellationToken cancellationToken)
+        {
+            LastRequested = accountIds;
+            return Task.FromResult<IAccountLockLease?>(Busy ? null : new Lease(this, accountIds.ToDictionary(id => id, _ => NextToken)));
+        }
+
+        private sealed class Lease(FakeLocks owner, Dictionary<AccountId, long> tokens) : IAccountLockLease
+        {
+            public IReadOnlyDictionary<AccountId, long> FencingTokens => tokens;
+
+            public ValueTask DisposeAsync()
+            {
+                owner.Released = true;
+                return ValueTask.CompletedTask;
+            }
+        }
+    }
+
     private sealed class FixedTime(DateTimeOffset now) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => now;
@@ -171,7 +248,9 @@ public class PostingServiceTests
 
         public int SaveCount { get; private set; }
 
-        public Exception? ThrowOnSave { get; set; }
+        public int ConflictsBeforeSuccess { get; set; }
+
+        public int SaveAttempts { get; private set; }
 
         public Task<Account?> GetByIdAsync(AccountId id, CancellationToken cancellationToken) =>
             Task.FromResult(Accounts.FirstOrDefault(account => account.Id == id));
@@ -188,9 +267,11 @@ public class PostingServiceTests
 
         public Task SaveChangesAsync(CancellationToken cancellationToken)
         {
-            if (ThrowOnSave is not null)
+            SaveAttempts++;
+            if (SaveAttempts <= ConflictsBeforeSuccess)
             {
-                throw ThrowOnSave;
+                _pending.Clear();
+                throw new ConcurrencyConflictException("xmin changed");
             }
 
             Journals.AddRange(_pending);

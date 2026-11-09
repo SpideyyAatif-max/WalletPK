@@ -86,6 +86,12 @@ public sealed class Account : AggregateRoot<AccountId>
     /// <summary>Optimistic concurrency token (PostgreSQL xmin): two postings can never both update a stale balance.</summary>
     public uint Version { get; private set; }
 
+    /// <summary>
+    /// The highest wallet-lock fencing token that has written to this account (M3.6). A writer holding an
+    /// older token lost its lock (it was too slow and the lock expired), so its write is refused.
+    /// </summary>
+    public long LockToken { get; private set; }
+
     public bool IsWallet => Type != AccountType.System;
 
     /// <summary>Opens a wallet. Wallets are credit-normal (WalletPK owes the holder that money) and can never go negative.</summary>
@@ -150,6 +156,52 @@ public sealed class Account : AggregateRoot<AccountId>
         Balance = checked(Balance + SignedAmount(direction, amount));
         UpdatedAt = now;
         return Balance;
+    }
+
+    /// <summary>
+    /// Records the fencing token of the lock this write is made under. Fails if a newer lock holder has
+    /// already written: the caller's lock expired and someone else took over.
+    /// </summary>
+    public Result ApplyFencingToken(long token)
+    {
+        if (token < LockToken)
+        {
+            return LedgerErrors.LockLost(Id);
+        }
+
+        LockToken = token;
+        return Result.Success();
+    }
+
+    /// <summary>Reserves money for a hold: it stays in the balance but can no longer be spent.</summary>
+    internal Result PlaceHold(long amount, DateTimeOffset now)
+    {
+        if (amount <= 0)
+        {
+            return LedgerErrors.AmountInvalid;
+        }
+
+        var allowed = CanApply(checked(-amount));
+        if (allowed.IsFailure)
+        {
+            return allowed.Error;
+        }
+
+        Held = checked(Held + amount);
+        UpdatedAt = now;
+        return Result.Success();
+    }
+
+    /// <summary>Gives a hold's reservation back (on capture, release or expiry).</summary>
+    internal void ReleaseHeld(long amount, DateTimeOffset now)
+    {
+        if (amount <= 0 || amount > Held)
+        {
+            throw new InvalidOperationException($"Cannot release {amount} paisa: only {Held} is held on account {Id}.");
+        }
+
+        Held -= amount;
+        UpdatedAt = now;
     }
 
     public void Freeze(DateTimeOffset now)
