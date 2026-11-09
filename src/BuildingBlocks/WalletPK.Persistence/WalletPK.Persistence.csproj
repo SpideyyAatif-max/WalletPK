@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Persistence</RootNamespace>
+    <Description>Shared EF Core building blocks: the transactional outbox table and the interceptor that fills it from domain events.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Messaging\WalletPK.Messaging.csproj" />
+  </ItemGroup>
+
+</Project>

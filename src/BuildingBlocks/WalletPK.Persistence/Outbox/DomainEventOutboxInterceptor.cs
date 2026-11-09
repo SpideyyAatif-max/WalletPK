@@ -1,20 +1,23 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using WalletPK.Common.Domain;
-using WalletPK.Identity.Application.Events;
 using WalletPK.Messaging.Serialization;
-using WalletPK.Web.Correlation;
 
-namespace WalletPK.Identity.Infrastructure.Persistence.Outbox;
+namespace WalletPK.Persistence.Outbox;
 
 /// <summary>
 /// Runs just before EF Core saves. It takes the domain events recorded by every changed aggregate,
-/// turns the public ones into integration events and adds them as <see cref="OutboxMessage"/> rows,
-/// so they are committed in the <b>same transaction</b> as the change itself. Either both are saved
-/// or neither is: an event can never be lost, or published for a change that rolled back.
-/// No use case has to remember to publish anything.
+/// turns the public ones into integration events (via the service's <see cref="IIntegrationEventMapper"/>)
+/// and adds them as <see cref="OutboxMessage"/> rows, so they are committed in the <b>same transaction</b>
+/// as the change itself. Either both are saved or neither is: an event can never be lost, or published
+/// for a change that rolled back. No use case has to remember to publish anything.
 /// </summary>
-internal sealed class DomainEventOutboxInterceptor(JsonEventSerializer serializer, TimeProvider timeProvider) : SaveChangesInterceptor
+/// <remarks>The DbContext must map the outbox table with <see cref="OutboxModelBuilderExtensions.AddOutboxMessages"/>.</remarks>
+public sealed class DomainEventOutboxInterceptor(
+    IIntegrationEventMapper mapper,
+    JsonEventSerializer serializer,
+    TimeProvider timeProvider,
+    Func<string?> correlationIdAccessor) : SaveChangesInterceptor
 {
     public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)
     {
@@ -47,13 +50,14 @@ internal sealed class DomainEventOutboxInterceptor(JsonEventSerializer serialize
             .ToList();
 
         var now = timeProvider.GetUtcNow();
+        var correlationId = correlationIdAccessor();
         foreach (var aggregate in aggregates)
         {
             foreach (var domainEvent in aggregate.DomainEvents)
             {
-                if (IdentityIntegrationEvents.FromDomainEvent(domainEvent) is { } integrationEvent)
+                if (mapper.Map(domainEvent) is { } integrationEvent)
                 {
-                    var envelope = serializer.Wrap(integrationEvent, CorrelationContext.Current);
+                    var envelope = serializer.Wrap(integrationEvent, correlationId);
                     context.Set<OutboxMessage>().Add(OutboxMessage.From(envelope, now));
                 }
             }

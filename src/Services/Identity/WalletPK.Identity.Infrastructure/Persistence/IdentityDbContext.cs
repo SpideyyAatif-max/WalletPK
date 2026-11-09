@@ -5,7 +5,7 @@ using WalletPK.Identity.Domain.Devices;
 using WalletPK.Identity.Domain.Kyc;
 using WalletPK.Identity.Domain.Sessions;
 using WalletPK.Identity.Domain.Users;
-using WalletPK.Identity.Infrastructure.Persistence.Outbox;
+using WalletPK.Persistence.Outbox;
 
 namespace WalletPK.Identity.Infrastructure.Persistence;
 
@@ -49,5 +49,6 @@ public sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> option
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(IdentityDbContext).Assembly);
+        modelBuilder.AddOutboxMessages();
     }
 }

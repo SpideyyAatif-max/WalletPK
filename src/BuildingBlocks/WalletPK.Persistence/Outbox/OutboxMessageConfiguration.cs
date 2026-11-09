@@ -1,14 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using WalletPK.Identity.Infrastructure.Persistence.Outbox;
 
-namespace WalletPK.Identity.Infrastructure.Persistence.Configurations;
+namespace WalletPK.Persistence.Outbox;
 
-/// <summary>Maps <see cref="OutboxMessage"/> to "outbox_messages".</summary>
-internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>
+/// <summary>Maps <see cref="OutboxMessage"/> to "outbox_messages" (the same shape in every service's database).</summary>
+public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage>
 {
     public void Configure(EntityTypeBuilder<OutboxMessage> builder)
     {
+        ArgumentNullException.ThrowIfNull(builder);
+
         builder.ToTable("outbox_messages");
 
         builder.HasKey(message => message.Id);
@@ -27,5 +28,15 @@ internal sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outb
         builder.HasIndex(message => message.CreatedAt)
             .HasDatabaseName("ix_outbox_messages_unpublished")
             .HasFilter("published_at IS NULL");
+    }
+}
+
+public static class OutboxModelBuilderExtensions
+{
+    /// <summary>Adds the "outbox_messages" table to a service's model. Call it from OnModelCreating.</summary>
+    public static ModelBuilder AddOutboxMessages(this ModelBuilder modelBuilder)
+    {
+        ArgumentNullException.ThrowIfNull(modelBuilder);
+        return modelBuilder.ApplyConfiguration(new OutboxMessageConfiguration());
     }
 }

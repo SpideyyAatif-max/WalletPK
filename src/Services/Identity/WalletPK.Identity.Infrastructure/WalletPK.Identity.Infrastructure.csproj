@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\WalletPK.Identity.Application\WalletPK.Identity.Application.csproj" />
     <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Persistence\WalletPK.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>

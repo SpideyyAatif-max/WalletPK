@@ -1,6 +1,6 @@
 using WalletPK.Messaging.Serialization;
 
-namespace WalletPK.Identity.Infrastructure.Persistence.Outbox;
+namespace WalletPK.Persistence.Outbox;
 
 /// <summary>
 /// One integration event waiting to be published, stored in the same database and the same

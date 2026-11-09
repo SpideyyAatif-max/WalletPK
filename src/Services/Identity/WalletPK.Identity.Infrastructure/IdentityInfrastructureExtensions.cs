@@ -18,10 +18,12 @@ using WalletPK.Identity.Infrastructure.Health;
 using WalletPK.Identity.Infrastructure.Nadra;
 using WalletPK.Identity.Infrastructure.Persistence;
 using WalletPK.Identity.Infrastructure.Persistence.Outbox;
+using WalletPK.Persistence.Outbox;
 using WalletPK.Identity.Infrastructure.Redis;
 using WalletPK.Identity.Infrastructure.Security;
 using WalletPK.Identity.Infrastructure.Sms;
 using WalletPK.Messaging.Serialization;
+using WalletPK.Web.Correlation;
 using WalletPK.Web.Health;
 using WalletPK.Web.Identity;
 
@@ -93,7 +95,7 @@ public static class IdentityInfrastructureExtensions
         services.AddSingleton(new IntegrationEventRegistry()
             .RegisterFromAssembly(typeof(WalletPK.Contracts.Identity.UserRegistered).Assembly, IdentityIntegrationEvents.ContractsNamespace));
         services.AddSingleton<JsonEventSerializer>();
-        services.AddSingleton<DomainEventOutboxInterceptor>();
+        services.AddDomainEventOutbox<IdentityIntegrationEventMapper>(() => CorrelationContext.Current);
 
         // ---- PostgreSQL (EF Core) ----
         services.AddDbContext<IdentityDbContext>((provider, options) => options
