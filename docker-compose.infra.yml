@@ -94,7 +94,7 @@ services:
   #   EXTERNAL  localhost:9094  -> services running on your PC (dotnet run)
   # ------------------------------------------------------------------
   kafka:
-    image: apache/kafka:4.3.0
+    image: apache/kafka:4.3.1
     container_name: walletpk-kafka
     <<: [*restart, *logging]
     environment:
@@ -131,7 +131,7 @@ services:
 
   # One-shot job: creates the WalletPK topics, then exits.
   kafka-init:
-    image: apache/kafka:4.3.0
+    image: apache/kafka:4.3.1
     container_name: walletpk-kafka-init
     depends_on:
       kafka:
