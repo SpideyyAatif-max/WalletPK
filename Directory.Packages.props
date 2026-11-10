@@ -60,7 +60,7 @@
 
   <ItemGroup Label="Testing">
     <!-- xUnit v3 4.x runs on Microsoft Testing Platform v2 (opted in via global.json "test.runner") -->
-    <PackageVersion Include="xunit.v3" Version="4.0.2" />
+    <PackageVersion Include="xunit.v3" Version="4.0.3" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
     <!-- Property-based tests (M3.12); the core library only, run from plain xUnit facts. -->
     <PackageVersion Include="FsCheck" Version="3.6.0" />
