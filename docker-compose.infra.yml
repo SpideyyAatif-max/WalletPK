@@ -163,7 +163,7 @@ services:
   # Observability
   # ------------------------------------------------------------------
   jaeger:
-    image: jaegertracing/jaeger:2.20.0
+    image: jaegertracing/jaeger:2.23.0
     container_name: walletpk-jaeger
     <<: [*restart, *logging]
     ports:
