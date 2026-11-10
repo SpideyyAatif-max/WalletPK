@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Data, cache and messaging">
-    <PackageVersion Include="StackExchange.Redis" Version="2.13.23" />
+    <PackageVersion Include="StackExchange.Redis" Version="3.4.31" />
     <!-- Kafka (M4): the official .NET client, bundling librdkafka. -->
     <PackageVersion Include="Confluent.Kafka" Version="2.16.0" />
     <!-- Hosting, DI and options abstractions for class libraries that run background services. -->
