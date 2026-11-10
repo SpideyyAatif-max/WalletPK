@@ -6,7 +6,7 @@ namespace WalletPK.Contracts.Identity;
 // Integration events published by the Identity service on the "identity.events" topic.
 // Every event is keyed by the user ID, so one user's events are consumed in order.
 
-/// <summary>A new account was created. The Ledger opens the user's wallet when it sees this (M4).</summary>
+/// <summary>A new account was created. The Ledger opens the user's wallet when it sees this (UserRegisteredHandler).</summary>
 /// <param name="UserId">The new user.</param>
 /// <param name="PhoneNumber">E.164 mobile number; it is also the wallet number customers send money to.</param>
 /// <param name="KycTier">Starting KYC tier, always "L0".</param>

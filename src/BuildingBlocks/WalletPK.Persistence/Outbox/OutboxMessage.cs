@@ -4,8 +4,8 @@ namespace WalletPK.Persistence.Outbox;
 
 /// <summary>
 /// One integration event waiting to be published, stored in the same database and the same
-/// transaction as the change that produced it (Transactional Outbox). The relay that sends these
-/// rows to Kafka and fills <see cref="PublishedAt"/> arrives in M4.1.
+/// transaction as the change that produced it (Transactional Outbox). The <see cref="OutboxRelay{TDbContext}"/>
+/// sends these rows to Kafka and fills <see cref="PublishedAt"/>.
 /// </summary>
 public sealed class OutboxMessage
 {
@@ -42,6 +42,9 @@ public sealed class OutboxMessage
 
     public string? LastError { get; private set; }
 
+    /// <summary>After a failed attempt, the relay leaves the row alone until this time (back-off).</summary>
+    public DateTimeOffset? NextAttemptAt { get; private set; }
+
     public static OutboxMessage From(EventEnvelope envelope, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(envelope);
@@ -59,6 +62,21 @@ public sealed class OutboxMessage
             OccurredAt = envelope.OccurredAt,
             CreatedAt = now,
         };
+    }
+
+    internal void MarkPublished(DateTimeOffset now)
+    {
+        PublishedAt = now;
+        PublishAttempts++;
+        LastError = null;
+        NextAttemptAt = null;
+    }
+
+    internal void RecordFailure(string error, DateTimeOffset nextAttemptAt)
+    {
+        PublishAttempts++;
+        LastError = error.Length > 2000 ? error[..2000] : error;
+        NextAttemptAt = nextAttemptAt;
     }
 
     /// <summary>Back to the envelope form the publisher sends.</summary>

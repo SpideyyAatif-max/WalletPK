@@ -18,8 +18,13 @@ internal sealed class AccountRepository(LedgerDbContext dbContext) : IAccountRep
     public Task<Account?> GetWalletByAliasAsync(string alias, CancellationToken cancellationToken) =>
         dbContext.Accounts.AsNoTracking().FirstOrDefaultAsync(account => account.Alias == alias, cancellationToken);
 
-    public async Task<IReadOnlyList<Account>> GetManyAsync(IReadOnlyCollection<AccountId> ids, CancellationToken cancellationToken) =>
-        await dbContext.Accounts.Where(account => ids.Contains(account.Id)).ToListAsync(cancellationToken);
+    public async Task<IReadOnlyList<Account>> GetManyAsync(IReadOnlyCollection<AccountId> ids, CancellationToken cancellationToken)
+    {
+        var keys = ids.Select(id => id.Value).Order().ToArray();
+        return await dbContext.Accounts
+            .FromSql($"SELECT *, xmin FROM accounts WHERE id = ANY({keys}) ORDER BY id FOR UPDATE")
+            .ToListAsync(cancellationToken);
+    }
 
     public void Add(Account account) => dbContext.Accounts.Add(account);
 }

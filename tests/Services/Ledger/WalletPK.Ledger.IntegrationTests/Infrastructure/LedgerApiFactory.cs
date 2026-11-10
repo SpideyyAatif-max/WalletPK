@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using Testcontainers.Kafka;
 using Testcontainers.PostgreSql;
 using Testcontainers.Redis;
 using WalletPK.Common.Identifiers;
@@ -22,7 +23,7 @@ using WalletPK.Ledger.Domain.Journals;
 namespace WalletPK.Ledger.IntegrationTests.Infrastructure;
 
 /// <summary>
-/// Runs the real Ledger service against real PostgreSQL and Redis in throwaway Docker containers. The
+/// Runs the real Ledger service against real PostgreSQL, Redis and Kafka in throwaway Docker containers. The
 /// database is migrated on startup, so the triggers and check constraints under test are the real ones.
 /// The clock can be moved forward (hold expiry), and the background sweeper is off so tests decide when it runs.
 /// Access tokens are signed with a test RSA key, and the Identity limits service is a fake tests can steer.
@@ -36,6 +37,9 @@ public sealed class LedgerApiFactory : WebApplicationFactory<Program>, IAsyncLif
         .Build();
 
     private readonly RedisContainer _redis = new RedisBuilder("redis:7.4-alpine").Build();
+
+    // The same broker image as docker-compose.infra.yml.
+    private readonly KafkaContainer _kafka = new KafkaBuilder("apache/kafka:4.3.0").Build();
 
     private readonly RSA _rsa = RSA.Create(2048);
 
@@ -55,13 +59,17 @@ public sealed class LedgerApiFactory : WebApplicationFactory<Program>, IAsyncLif
     /// <summary>For tests that go around the application on purpose to prove the database's own guards.</summary>
     public string ConnectionString => _postgres.GetConnectionString();
 
-    public async ValueTask InitializeAsync() => await Task.WhenAll(_postgres.StartAsync(), _redis.StartAsync());
+    /// <summary>The test broker's address, for tests that produce or consume directly.</summary>
+    public string KafkaBootstrapServers => _kafka.GetBootstrapAddress();
+
+    public async ValueTask InitializeAsync() => await Task.WhenAll(_postgres.StartAsync(), _redis.StartAsync(), _kafka.StartAsync());
 
     public override async ValueTask DisposeAsync()
     {
         await base.DisposeAsync();
         await _postgres.DisposeAsync();
         await _redis.DisposeAsync();
+        await _kafka.DisposeAsync();
         _rsa.Dispose();
     }
 
@@ -118,6 +126,11 @@ public sealed class LedgerApiFactory : WebApplicationFactory<Program>, IAsyncLif
             // Tests seal the audit chain and run the invariant checks themselves, when they want to.
             ["Ledger:Audit:SealingEnabled"] = "false",
             ["Ledger:Invariants:Enabled"] = "false",
+
+            // Real Kafka: topics created at startup; the relay polls often so tests do not wait.
+            ["Kafka:BootstrapServers"] = _kafka.GetBootstrapAddress(),
+            ["Kafka:EnsureTopics"] = "true",
+            ["Outbox:Relay:PollIntervalMilliseconds"] = "50",
             ["Observability:WriteToConsole"] = "false",
             ["Observability:WriteToSeq"] = "false",
             ["Observability:ExportTraces"] = "false",

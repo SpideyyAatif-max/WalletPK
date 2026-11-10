@@ -88,6 +88,21 @@ public sealed class LedgerInvariantChecker(
                 cancellationToken),
             await CountCheckAsync(
                 transaction,
+                "entry_sequences_gapless",
+                "Every account's entries are numbered 1, 2, 3 ... with no gaps, and its counter equals its entry count.",
+                """
+                SELECT COUNT(*)
+                  FROM accounts a
+                  LEFT JOIN (SELECT account_id, COUNT(*) AS entries, MAX(account_sequence) AS highest
+                               FROM journal_entries
+                              GROUP BY account_id) e ON e.account_id = a.id
+                 WHERE a.entry_sequence <> COALESCE(e.entries, 0)
+                    OR COALESCE(e.highest, 0) <> COALESCE(e.entries, 0)
+                """,
+                "account(s) with a gap or a wrong counter in their entry sequence",
+                cancellationToken),
+            await CountCheckAsync(
+                transaction,
                 "held_matches_active_holds",
                 "Every account's held amount equals the total of its active holds.",
                 """

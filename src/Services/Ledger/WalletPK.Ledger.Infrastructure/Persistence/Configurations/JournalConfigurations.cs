@@ -48,6 +48,7 @@ internal sealed class JournalEntryConfiguration : IEntityTypeConfiguration<Journ
         {
             table.HasCheckConstraint("ck_journal_entries_amount_positive", "amount > 0");
             table.HasCheckConstraint("ck_journal_entries_direction", "direction IN ('Debit', 'Credit')");
+            table.HasCheckConstraint("ck_journal_entries_account_sequence_positive", "account_sequence > 0");
         });
 
         builder.HasKey(entry => entry.Id);
@@ -58,6 +59,7 @@ internal sealed class JournalEntryConfiguration : IEntityTypeConfiguration<Journ
         builder.Property(entry => entry.AccountId)
             .HasConversion(id => id.Value, value => new AccountId(value));
         builder.Property(entry => entry.LineNumber);
+        builder.Property(entry => entry.AccountSequence);
         builder.Property(entry => entry.Direction).HasConversion<string>().HasMaxLength(6);
         builder.Property(entry => entry.Amount);
         builder.Property(entry => entry.BalanceAfter);
@@ -72,6 +74,11 @@ internal sealed class JournalEntryConfiguration : IEntityTypeConfiguration<Journ
         builder.HasIndex(entry => new { entry.TransactionId, entry.LineNumber })
             .IsUnique()
             .HasDatabaseName("ux_journal_entries_transaction_line");
+
+        // Each account's entries are numbered 1, 2, 3 ... exactly once (M4.2).
+        builder.HasIndex(entry => new { entry.AccountId, entry.AccountSequence })
+            .IsUnique()
+            .HasDatabaseName("ux_journal_entries_account_sequence");
 
         // Account statements: an account's entries, newest first.
         builder.HasIndex(entry => new { entry.AccountId, entry.Id })

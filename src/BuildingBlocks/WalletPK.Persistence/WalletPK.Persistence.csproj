@@ -2,15 +2,21 @@
 
   <PropertyGroup>
     <RootNamespace>WalletPK.Persistence</RootNamespace>
-    <Description>Shared EF Core building blocks: the transactional outbox table and the interceptor that fills it from domain events.</Description>
+    <Description>Shared EF Core building blocks: the transactional outbox (table, interceptor that fills it from domain events, relay that publishes it) and the inbox (exactly-once processing of consumed events). PostgreSQL SQL.</Description>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\WalletPK.Messaging\WalletPK.Messaging.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Messaging.IntegrationTests" />
   </ItemGroup>
 
 </Project>

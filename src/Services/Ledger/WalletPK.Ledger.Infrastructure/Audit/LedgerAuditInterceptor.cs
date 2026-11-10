@@ -83,6 +83,7 @@ public sealed class LedgerAuditInterceptor(
                 {
                     Line = line.LineNumber,
                     line.AccountId,
+                    Sequence = line.AccountSequence,
                     line.Direction,
                     line.Amount,
                     line.BalanceAfter,

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
 using WalletPK.Ledger.Application.Abstractions;
 using WalletPK.Ledger.Domain.Accounts;
@@ -6,6 +7,7 @@ using WalletPK.Ledger.Domain.Holds;
 using WalletPK.Ledger.Domain.Journals;
 using WalletPK.Ledger.Infrastructure.Audit;
 using WalletPK.Ledger.Infrastructure.Idempotency;
+using WalletPK.Persistence.Inbox;
 using WalletPK.Persistence.Outbox;
 
 namespace WalletPK.Ledger.Infrastructure.Persistence;
@@ -29,6 +31,11 @@ public sealed class LedgerDbContext(DbContextOptions<LedgerDbContext> options) :
     /// <summary>Integration events waiting for the relay (M4.1).</summary>
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
+    async Task<ILedgerTransaction> ILedgerUnitOfWork.BeginTransactionAsync(CancellationToken cancellationToken) =>
+        Database.CurrentTransaction is null
+            ? new OwnedTransaction(await Database.BeginTransactionAsync(cancellationToken))
+            : JoinedTransaction.Instance;
+
     async Task ILedgerUnitOfWork.SaveChangesAsync(CancellationToken cancellationToken)
     {
         try
@@ -40,6 +47,17 @@ public sealed class LedgerDbContext(DbContextOptions<LedgerDbContext> options) :
             // An account's xmin changed since it was read: another posting saved first.
             ChangeTracker.Clear();
             throw new ConcurrencyConflictException("An account was changed by another posting.", exception);
+        }
+        catch (DbUpdateException exception) when (exception.InnerException is PostgresException
+        {
+            SqlState: PostgresErrorCodes.UniqueViolation,
+            ConstraintName: "ux_journal_entries_account_sequence",
+        })
+        {
+            // Two postings to the same (system) account read the same counter and both took the next
+            // entry number; the database let only one have it. Same race as a stale xmin: retry from fresh data.
+            ChangeTracker.Clear();
+            throw new ConcurrencyConflictException("Another posting took the same entry number on an account.", exception);
         }
         catch (DbUpdateException exception) when (exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } postgres)
         {
@@ -53,5 +71,24 @@ public sealed class LedgerDbContext(DbContextOptions<LedgerDbContext> options) :
         ArgumentNullException.ThrowIfNull(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(LedgerDbContext).Assembly);
         modelBuilder.AddOutboxMessages();
+        modelBuilder.AddInboxMessages();
     }
+}
+
+/// <summary>A transaction this attempt started: it commits it, or rolls it back on dispose.</summary>
+internal sealed class OwnedTransaction(IDbContextTransaction transaction) : ILedgerTransaction
+{
+    public Task CommitAsync(CancellationToken cancellationToken) => transaction.CommitAsync(cancellationToken);
+
+    public ValueTask DisposeAsync() => transaction.DisposeAsync();
+}
+
+/// <summary>Someone else's transaction (for example an inbox handler's): its owner commits or rolls back.</summary>
+internal sealed class JoinedTransaction : ILedgerTransaction
+{
+    public static JoinedTransaction Instance { get; } = new();
+
+    public Task CommitAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 }

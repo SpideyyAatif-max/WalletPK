@@ -38,7 +38,7 @@ public class PostingServiceTests
 
     private readonly FakeLocks _locks = new();
 
-    private PostingService Service() => new(_store, _store, _store, new WalletConcurrency(_locks), new FixedTime(_now));
+    private PostingService Service() => new(_store, _store, _store, new WalletConcurrency(_locks, _store), new FixedTime(_now));
 
     private static PostJournalCommand CashIn(Account wallet, decimal rupees, TransactionId? id = null) =>
         new(id ?? TransactionId.New(), JournalType.CashIn, "Cash-in", "BANK-REF-1",
@@ -192,7 +192,8 @@ public class PostingServiceTests
             _now).Value;
         var domainEvent = journal.DomainEvents.Single();
 
-        var published = LedgerIntegrationEvents.FromDomainEvent(domainEvent).ShouldBeOfType<LedgerContracts.JournalPosted>();
+        var events = LedgerIntegrationEvents.FromDomainEvent(domainEvent);
+        var published = events[0].ShouldBeOfType<LedgerContracts.JournalPosted>();
 
         published.EventId.ShouldBe(domainEvent.EventId);
         published.TransactionId.ShouldBe(journal.Id.Value);
@@ -201,6 +202,51 @@ public class PostingServiceTests
         published.AmountPaisa.ShouldBe(250_00);
         published.Entries.Select(entry => (entry.Direction, entry.BalanceAfterPaisa))
             .ShouldBe(new[] { ("Debit", 250_00L), ("Credit", 250_00L) });
+
+        // Plus one per-wallet event for the wallet (the bank float is a system account: no event).
+        var walletEvent = events.Skip(1).ShouldHaveSingleItem().ShouldBeOfType<LedgerContracts.WalletEntryPosted>();
+        walletEvent.WalletId.ShouldBe(_ali.Id.Value);
+        walletEvent.GetPartitionKey().ShouldBe(_ali.Id.ToString());
+        walletEvent.Sequence.ShouldBe(1);
+        walletEvent.Direction.ShouldBe("Credit");
+        walletEvent.AmountPaisa.ShouldBe(250_00);
+        walletEvent.BalanceAfterPaisa.ShouldBe(250_00);
+        walletEvent.CounterpartyWalletNumber.ShouldBeNull();
+    }
+
+    [Fact]
+    public void A_wallet_to_wallet_payment_tells_each_wallet_who_the_other_was()
+    {
+        var sara = Account.OpenWallet(UserId.New(), AccountType.CustomerWallet, "Sara", _now, "+923001112233");
+        var bilal = Account.OpenWallet(UserId.New(), AccountType.CustomerWallet, "Bilal", _now, "+923004445566");
+        var bank = Account.OpenSystemShard(ChartOfAccounts.BankFloat, 0, _now);
+        var fees = Account.OpenSystemShard(ChartOfAccounts.FeeIncome, 0, _now);
+        JournalTransaction.Post(TransactionId.New(), JournalType.CashIn, "Cash-in", null,
+            [new JournalLine(bank, EntryDirection.Debit, 5_000_00), new JournalLine(sara, EntryDirection.Credit, 5_000_00)], _now);
+
+        var transfer = JournalTransaction.Post(TransactionId.New(), JournalType.P2PTransfer, "Transfer", null,
+            [
+                new JournalLine(sara, EntryDirection.Debit, 1_507_50),
+                new JournalLine(bilal, EntryDirection.Credit, 1_500_00),
+                new JournalLine(fees, EntryDirection.Credit, 7_50),
+            ],
+            _now).Value;
+
+        var walletEvents = LedgerIntegrationEvents.FromDomainEvent(transfer.DomainEvents.Single())
+            .OfType<LedgerContracts.WalletEntryPosted>()
+            .ToDictionary(walletEvent => walletEvent.WalletNumber!);
+
+        walletEvents.Keys.ShouldBe(["+923001112233", "+923004445566"], ignoreOrder: true);
+        walletEvents["+923001112233"].ShouldSatisfyAllConditions(
+            sent => sent.Sequence.ShouldBe(2),
+            sent => sent.Direction.ShouldBe("Debit"),
+            sent => sent.AmountPaisa.ShouldBe(1_507_50),
+            sent => sent.BalanceAfterPaisa.ShouldBe(3_492_50),
+            sent => sent.CounterpartyWalletNumber.ShouldBe("+923004445566"));
+        walletEvents["+923004445566"].ShouldSatisfyAllConditions(
+            received => received.Sequence.ShouldBe(1),
+            received => received.Direction.ShouldBe("Credit"),
+            received => received.CounterpartyWalletNumber.ShouldBe("+923001112233"));
     }
 
     /// <summary>Hands out locks with a chosen fencing token, or reports the wallet busy.</summary>
@@ -270,6 +316,22 @@ public class PostingServiceTests
             Task.FromResult(Journals.FirstOrDefault(journal => journal.Id == id));
 
         public void Add(JournalTransaction journal) => _pending.Add(journal);
+
+        public int TransactionsCommitted { get; private set; }
+
+        public Task<ILedgerTransaction> BeginTransactionAsync(CancellationToken cancellationToken) =>
+            Task.FromResult<ILedgerTransaction>(new FakeTransaction(this));
+
+        private sealed class FakeTransaction(FakeLedgerStore store) : ILedgerTransaction
+        {
+            public Task CommitAsync(CancellationToken cancellationToken)
+            {
+                store.TransactionsCommitted++;
+                return Task.CompletedTask;
+            }
+
+            public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        }
 
         public Task SaveChangesAsync(CancellationToken cancellationToken)
         {

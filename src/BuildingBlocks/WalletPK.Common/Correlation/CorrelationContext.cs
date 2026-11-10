@@ -1,9 +1,10 @@
-namespace WalletPK.Web.Correlation;
+namespace WalletPK.Common.Correlation;
 
 /// <summary>
 /// The correlation ID of the operation currently running on this async flow.
-/// Set by <see cref="CorrelationIdMiddleware"/> for HTTP requests (and later by Kafka consumers),
-/// read by logging, outgoing HTTP calls and outbox messages.
+/// Set by the CorrelationIdMiddleware for HTTP requests and by the Kafka consumer host for each
+/// message (from its correlation-id header), read by logging, outgoing HTTP calls and outbox messages,
+/// so one user action can be followed across every service it touches.
 /// </summary>
 public static class CorrelationContext
 {

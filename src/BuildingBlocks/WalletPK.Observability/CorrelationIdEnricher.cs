@@ -1,6 +1,6 @@
 using Serilog.Core;
 using Serilog.Events;
-using WalletPK.Web.Correlation;
+using WalletPK.Common.Correlation;
 
 namespace WalletPK.Observability;
 

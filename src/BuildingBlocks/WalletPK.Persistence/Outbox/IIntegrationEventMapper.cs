@@ -9,6 +9,9 @@ namespace WalletPK.Persistence.Outbox;
 /// </summary>
 public interface IIntegrationEventMapper
 {
-    /// <summary>The integration event to publish for <paramref name="domainEvent"/>, or null to keep it internal.</summary>
-    IntegrationEvent? Map(IDomainEvent domainEvent);
+    /// <summary>
+    /// The integration events to publish for <paramref name="domainEvent"/>: none to keep it internal,
+    /// or several when one change interests different consumers (a journal, and each wallet it touched).
+    /// </summary>
+    IEnumerable<IntegrationEvent> Map(IDomainEvent domainEvent);
 }

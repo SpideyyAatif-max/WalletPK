@@ -90,12 +90,24 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Ledger.UnitTests",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Ledger.IntegrationTests", "tests\Services\Ledger\WalletPK.Ledger.IntegrationTests\WalletPK.Ledger.IntegrationTests.csproj", "{323E9B9B-2D86-4479-A4B4-AC3FD86CED1B}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Messaging.Kafka", "src\BuildingBlocks\WalletPK.Messaging.Kafka\WalletPK.Messaging.Kafka.csproj", "{C50C75CA-31A9-4F82-990C-8404A5AE42DC}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WalletPK.Messaging.IntegrationTests", "tests\BuildingBlocks\WalletPK.Messaging.IntegrationTests\WalletPK.Messaging.IntegrationTests.csproj", "{C6CE6F59-AD13-44DB-8A93-7A3DDD51ADC8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C6CE6F59-AD13-44DB-8A93-7A3DDD51ADC8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6CE6F59-AD13-44DB-8A93-7A3DDD51ADC8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6CE6F59-AD13-44DB-8A93-7A3DDD51ADC8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6CE6F59-AD13-44DB-8A93-7A3DDD51ADC8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C50C75CA-31A9-4F82-990C-8404A5AE42DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C50C75CA-31A9-4F82-990C-8404A5AE42DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C50C75CA-31A9-4F82-990C-8404A5AE42DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C50C75CA-31A9-4F82-990C-8404A5AE42DC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{323E9B9B-2D86-4479-A4B4-AC3FD86CED1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{323E9B9B-2D86-4479-A4B4-AC3FD86CED1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{323E9B9B-2D86-4479-A4B4-AC3FD86CED1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -197,6 +209,8 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{C6CE6F59-AD13-44DB-8A93-7A3DDD51ADC8} = {255B20DB-6E50-4A7B-A96B-5E3EEB263C40}
+		{C50C75CA-31A9-4F82-990C-8404A5AE42DC} = {3341775F-EE6C-4B7B-B43F-8838AA7A92B4}
 		{323E9B9B-2D86-4479-A4B4-AC3FD86CED1B} = {B882EE3B-B8F1-49DF-8E65-6096E9AEC595}
 		{78EC7E57-704B-494B-A328-A821C99B4D5B} = {B882EE3B-B8F1-49DF-8E65-6096E9AEC595}
 		{464C20F1-5CDE-40FD-9BFC-0D1E38DB8FE3} = {CE80AC92-17BB-4310-9B39-B2406DF77E07}

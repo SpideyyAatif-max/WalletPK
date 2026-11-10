@@ -103,7 +103,7 @@ public class LedgerPropertyTests(LedgerApiFactory factory)
                 {
                     if (response.StatusCode != HttpStatusCode.OK)
                     {
-                        response.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity);
+                        response.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity, await response.Content.ReadAsStringAsync(Cancel));
                         return new Outcome();
                     }
 

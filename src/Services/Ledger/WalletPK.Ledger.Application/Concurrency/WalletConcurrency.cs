@@ -6,17 +6,20 @@ using WalletPK.Ledger.Domain.Accounts;
 namespace WalletPK.Ledger.Application.Concurrency;
 
 /// <summary>
-/// Two layers against double-spending (M3.6):
+/// Three layers against double-spending (M3.6, M4.2):
 /// <list type="number">
-/// <item><b>Pessimistic:</b> every wallet a use case debits or credits is locked first (Redis), so
+/// <item><b>Wallet locks (Redis):</b> every wallet a use case debits or credits is locked first, so
 /// payments from one wallet run one at a time across all servers.</item>
-/// <item><b>Optimistic:</b> every account row carries a version (PostgreSQL xmin). If it changed between
-/// read and save (for example a system account shard, which is never locked), the save fails and the
-/// whole attempt is retried from fresh data, up to <see cref="MaxAttempts"/> times.</item>
+/// <item><b>Row locks (PostgreSQL):</b> each attempt runs in one transaction and loads its accounts with
+/// <c>SELECT ... FOR UPDATE</c> in ID order. System shards (fees, tax, bank float) are shared by every
+/// payment and cannot be locked per wallet; their writers now queue for a few milliseconds instead of
+/// colliding.</item>
+/// <item><b>Row versions (xmin) and entry numbers:</b> the last line of defence. If an account still
+/// changed between read and save, the attempt is retried from fresh data, up to <see cref="MaxAttempts"/> times.</item>
 /// </list>
 /// Plus the fencing token: a writer whose lock expired is refused (see <see cref="Account.ApplyFencingToken"/>).
 /// </summary>
-public sealed class WalletConcurrency(IAccountLockService locks)
+public sealed class WalletConcurrency(IAccountLockService locks, ILedgerUnitOfWork unitOfWork)
 {
     public const int MaxAttempts = 3;
 
@@ -48,7 +51,14 @@ public sealed class WalletConcurrency(IAccountLockService locks)
         {
             try
             {
-                return await attempt(lease.FencingTokens, cancellationToken);
+                await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
+                var result = await attempt(lease.FencingTokens, cancellationToken);
+                if (result.IsSuccess)
+                {
+                    await transaction.CommitAsync(cancellationToken);
+                }
+
+                return result;
             }
             catch (ConcurrencyConflictException) when (attemptNumber < MaxAttempts)
             {

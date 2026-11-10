@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
+using WalletPK.Common.Correlation;
 using WalletPK.Web.Correlation;
 using WalletPK.Web.Identity;
 using Yarp.ReverseProxy.Configuration;

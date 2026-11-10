@@ -5,6 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
+using WalletPK.Common.Correlation;
 using WalletPK.Ledger.Application.Abstractions;
 using WalletPK.Ledger.Application.Concurrency;
 using WalletPK.Ledger.Application.Events;
@@ -20,9 +21,12 @@ using WalletPK.Ledger.Infrastructure.Limits;
 using WalletPK.Ledger.Infrastructure.Maintenance;
 using WalletPK.Ledger.Infrastructure.Persistence;
 using WalletPK.Ledger.Infrastructure.Redis;
+using WalletPK.Messaging;
+using WalletPK.Messaging.Dispatching;
+using WalletPK.Messaging.Kafka;
 using WalletPK.Messaging.Serialization;
+using WalletPK.Persistence;
 using WalletPK.Persistence.Outbox;
-using WalletPK.Web.Correlation;
 using WalletPK.Web.Health;
 using WalletPK.Web.Idempotency;
 
@@ -30,6 +34,9 @@ namespace WalletPK.Ledger.Infrastructure;
 
 public static class LedgerInfrastructureExtensions
 {
+    /// <summary>The Ledger's Kafka consumer group (and inbox consumer name).</summary>
+    public const string LedgerConsumerGroup = "ledger";
+
     public const string DatabaseConnectionName = "LedgerDb";
     public const string RedisConnectionName = "Redis";
 
@@ -78,10 +85,19 @@ public static class LedgerInfrastructureExtensions
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<MaintenanceOptions>>().Value);
 
         // ---- Integration events and the outbox writer ----
+        // Events the Ledger publishes (ledger.*) and consumes (identity.*).
         services.AddSingleton(new IntegrationEventRegistry()
-            .RegisterFromAssembly(typeof(WalletPK.Contracts.Ledger.JournalPosted).Assembly, LedgerIntegrationEvents.ContractsNamespace));
+            .RegisterFromAssembly(typeof(WalletPK.Contracts.Ledger.JournalPosted).Assembly, LedgerIntegrationEvents.ContractsNamespace)
+            .RegisterFromAssembly(typeof(WalletPK.Contracts.Identity.UserRegistered).Assembly, typeof(WalletPK.Contracts.Identity.UserRegistered).Namespace));
         services.AddSingleton<JsonEventSerializer>();
         services.AddDomainEventOutbox<LedgerIntegrationEventMapper>(() => CorrelationContext.Current);
+
+        // ---- Kafka (M4): outbox relay out, inbox in; new users get a wallet automatically ----
+        services.AddWalletPkKafka(clientId: "ledger");
+        services.AddOutboxRelay<LedgerDbContext>();
+        services.AddInbox<LedgerDbContext>();
+        services.AddIntegrationEventHandler<WalletPK.Contracts.Identity.UserRegistered, UserRegisteredHandler>();
+        services.AddKafkaConsumer(LedgerConsumerGroup, KafkaTopics.IdentityEvents);
 
         // ---- Audit log: a row for every money-relevant change, in the same transaction (M3.10) ----
         services.AddHttpContextAccessor();
@@ -117,7 +133,7 @@ public static class LedgerInfrastructureExtensions
         services.AddScoped<ILimitsGateway, IdentityLimitsGateway>();
 
         // ---- Use cases ----
-        services.AddSingleton<WalletConcurrency>();
+        services.AddScoped<WalletConcurrency>();
         services.AddScoped<PostingService>();
         services.AddScoped<HoldService>();
         services.AddSingleton<FeeEngine>();

@@ -8,5 +8,6 @@ namespace WalletPK.Identity.Infrastructure.Persistence.Outbox;
 /// <summary>Plugs the Identity event mapping into the shared outbox interceptor.</summary>
 internal sealed class IdentityIntegrationEventMapper : IIntegrationEventMapper
 {
-    public IntegrationEvent? Map(IDomainEvent domainEvent) => IdentityIntegrationEvents.FromDomainEvent(domainEvent);
+    public IEnumerable<IntegrationEvent> Map(IDomainEvent domainEvent) =>
+        IdentityIntegrationEvents.FromDomainEvent(domainEvent) is { } integrationEvent ? [integrationEvent] : [];
 }

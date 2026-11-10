@@ -18,7 +18,7 @@ public class InvariantTests(LedgerApiFactory factory)
     private static readonly string[] _allChecks =
     [
         "debits_equal_credits", "journals_balanced", "balances_match_entries", "last_balance_after_matches",
-        "held_matches_active_holds", "no_negative_balances", "trial_balance_zero", "journals_audited", "audit_chain_intact",
+        "entry_sequences_gapless", "held_matches_active_holds", "no_negative_balances", "trial_balance_zero", "journals_audited", "audit_chain_intact",
     ];
 
     private async Task<string[]> FailedChecksAsync() =>
@@ -106,19 +106,20 @@ public class InvariantTests(LedgerApiFactory factory)
         // A balanced journal inserted straight into the database: it passes the database's own guards
         // (balanced, append-only) but nothing recorded who made it. It debits and credits the suspense
         // account by the same amount, so balances stay right and only the audit check can see it.
-        var suspense = ChartOfAccounts.IdFor(ChartOfAccounts.Suspense.Code, 0);
-        var balance = await factory.BalanceAsync(suspense);
+        var suspense = await factory.AccountAsync(ChartOfAccounts.IdFor(ChartOfAccounts.Suspense.Code, 0));
         var id = Guid.CreateVersion7();
 
+        // Even the sequence numbers are right: someone who knew the schema well.
         await factory.ExecuteSqlAsync(
             """
             BEGIN;
             INSERT INTO journal_transactions (id, type, description, amount, currency, posted_at) VALUES (@id, 'Adjustment', 'manual fix', 100, 'PKR', now());
-            INSERT INTO journal_entries (transaction_id, line_number, account_id, direction, amount, balance_after, posted_at)
-                 VALUES (@id, 1, @account, 'Debit', 100, @balance, now()), (@id, 2, @account, 'Credit', 100, @balance, now());
+            INSERT INTO journal_entries (transaction_id, line_number, account_id, account_sequence, direction, amount, balance_after, posted_at)
+                 VALUES (@id, 1, @account, @sequence + 1, 'Debit', 100, @balance, now()), (@id, 2, @account, @sequence + 2, 'Credit', 100, @balance, now());
+            UPDATE accounts SET entry_sequence = @sequence + 2 WHERE id = @account;
             COMMIT;
             """,
-            ("id", id), ("account", suspense.Value), ("balance", balance));
+            ("id", id), ("account", suspense.Id.Value), ("balance", suspense.Balance), ("sequence", suspense.EntrySequence));
 
         (await FailedChecksAsync()).ShouldBe(["journals_audited"]);
 

@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\BuildingBlocks\WalletPK.Messaging\WalletPK.Messaging.csproj" />
+    <ProjectReference Include="..\..\..\src\BuildingBlocks\WalletPK.Messaging.Kafka\WalletPK.Messaging.Kafka.csproj" />
   </ItemGroup>
 
   <ItemGroup>

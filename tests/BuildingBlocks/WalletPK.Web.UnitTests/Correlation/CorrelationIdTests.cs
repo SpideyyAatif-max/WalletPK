@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
+using WalletPK.Common.Correlation;
 using WalletPK.Web.Correlation;
 using WalletPK.Web.UnitTests.Infrastructure;
 

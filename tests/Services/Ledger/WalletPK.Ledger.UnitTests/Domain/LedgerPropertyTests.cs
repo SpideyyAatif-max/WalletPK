@@ -47,11 +47,12 @@ public class LedgerPropertyTests
         accounts.Sum(account => account.NormalBalance == NormalBalance.Credit ? account.Balance : -account.Balance);
 
     [Fact]
-    public void Any_sequence_of_postings_conserves_money_and_never_overdraws_a_wallet()
+    public void Any_sequence_of_postings_conserves_money_never_overdraws_and_numbers_entries_without_gaps()
     {
         var property = Prop.ForAll(Arb.From(_move.ListOf()), moves =>
         {
             var books = OpenBooks();
+            var sequences = books.ToDictionary(account => account.Id, _ => new List<long>());
             foreach (var move in moves)
             {
                 var before = books.Select(account => account.Balance).ToArray();
@@ -79,6 +80,11 @@ public class LedgerPropertyTests
                     journal.Entries.Where(entry => entry.Direction == EntryDirection.Debit).Sum(entry => entry.Amount)
                         .ShouldBe(journal.Entries.Where(entry => entry.Direction == EntryDirection.Credit).Sum(entry => entry.Amount));
 
+                    foreach (var entry in journal.Entries)
+                    {
+                        sequences[entry.AccountId].Add(entry.AccountSequence);
+                    }
+
                     // Each account's last entry in the journal shows its balance after the journal.
                     foreach (var last in journal.Entries.GroupBy(entry => entry.AccountId).Select(group => group.Last()))
                     {
@@ -88,6 +94,14 @@ public class LedgerPropertyTests
 
                 TrialBalance(books).ShouldBe(0);
                 books.Where(account => account.IsWallet).ShouldAllBe(account => account.Balance >= 0 && account.Available >= 0);
+            }
+
+            // Every account's entries are numbered 1, 2, 3 ... with no gaps or repeats, even across
+            // refused journals (which must not use up a number).
+            foreach (var account in books)
+            {
+                sequences[account.Id].ShouldBe(Enumerable.Range(1, sequences[account.Id].Count).Select(number => (long)number));
+                account.EntrySequence.ShouldBe(sequences[account.Id].Count);
             }
         });
 

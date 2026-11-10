@@ -1,3 +1,5 @@
+using WalletPK.Common.Correlation;
+
 namespace WalletPK.Web.Correlation;
 
 /// <summary>

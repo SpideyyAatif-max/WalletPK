@@ -20,6 +20,11 @@ public interface IAccountRepository
     Task<Account?> GetWalletByAliasAsync(string alias, CancellationToken cancellationToken);
 
     /// <summary>Loads several accounts in one query (tracked, so posting can update them).</summary>
+    /// <summary>
+    /// Loads accounts to change them, locking their rows (in ID order, so two postings can never
+    /// deadlock) until the current transaction ends. A busy system account (a fee or tax shard) is then
+    /// updated by one posting after another instead of all of them colliding and retrying.
+    /// </summary>
     Task<IReadOnlyList<Account>> GetManyAsync(IReadOnlyCollection<AccountId> ids, CancellationToken cancellationToken);
 
     void Add(Account account);
@@ -143,6 +148,19 @@ public interface ILedgerUnitOfWork
     /// <exception cref="DuplicateKeyException">A row with the same key already exists (for example the same transaction ID).</exception>
     /// <exception cref="ConcurrencyConflictException">An account changed between being read and being saved.</exception>
     Task SaveChangesAsync(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Starts a database transaction for one attempt: the row locks taken while loading accounts are
+    /// held until it commits. If a transaction is already open (an inbox handler's), joins it instead:
+    /// committing is then left to its owner.
+    /// </summary>
+    Task<ILedgerTransaction> BeginTransactionAsync(CancellationToken cancellationToken);
+}
+
+/// <summary>A database transaction; disposing it without committing rolls it back.</summary>
+public interface ILedgerTransaction : IAsyncDisposable
+{
+    Task CommitAsync(CancellationToken cancellationToken);
 }
 
 /// <summary>A unique key was violated, for example a journal with this transaction ID was already posted.</summary>

@@ -3,6 +3,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
+using WalletPK.Common.Correlation;
 
 namespace WalletPK.Web.Correlation;
 

@@ -55,7 +55,7 @@ public sealed class DomainEventOutboxInterceptor(
         {
             foreach (var domainEvent in aggregate.DomainEvents)
             {
-                if (mapper.Map(domainEvent) is { } integrationEvent)
+                foreach (var integrationEvent in mapper.Map(domainEvent))
                 {
                     var envelope = serializer.Wrap(integrationEvent, correlationId);
                     context.Set<OutboxMessage>().Add(OutboxMessage.From(envelope, now));

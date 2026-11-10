@@ -147,4 +147,35 @@ public class TransferRaceTests(LedgerApiFactory factory)
 
         await factory.ShouldBeHealthyAsync();
     }
+
+    [Fact]
+    public async Task Twenty_postings_to_the_same_hot_system_shard_at_once_all_succeed()
+    {
+        // Found by the property test: postings racing for one bank-float shard both took the same entry
+        // number; the duplicate-key error was mistaken for "already posted" and the payment failed.
+        // Pick 20 transaction IDs that all land on one shard, then post them at the same instant.
+        var target = ChartOfAccounts.ShardIdFor(ChartOfAccounts.BankFloat, TransactionId.New());
+        var ids = Enumerable.Range(0, 10_000).Select(_ => TransactionId.New())
+            .Where(id => ChartOfAccounts.ShardIdFor(ChartOfAccounts.BankFloat, id) == target)
+            .Take(20)
+            .ToList();
+        var wallets = await Task.WhenAll(Enumerable.Range(0, 20).Select(_ => factory.CustomerAsync()));
+        var before = await factory.AccountAsync(target);
+
+        var results = await Task.WhenAll(ids.Select((id, i) => factory.InScopeAsync(services =>
+            services.GetRequiredService<PostingService>().PostAsync(
+                new PostJournalCommand(id, JournalType.CashIn, "Cash-in at agent", null,
+                [
+                    PostingLine.Debit(AccountRef.System(ChartOfAccounts.BankFloat), Money.FromRupees(100)),
+                    PostingLine.Credit(AccountRef.Account(wallets[i].WalletId), Money.FromRupees(100)),
+                ]),
+                Cancel))));
+
+        results.ShouldAllBe(result => result.IsSuccess);
+        var after = await factory.AccountAsync(target);
+        after.Balance.ShouldBe(before.Balance + 20 * 10_000);
+        after.EntrySequence.ShouldBe(before.EntrySequence + 20);
+
+        await factory.ShouldBeHealthyAsync();
+    }
 }

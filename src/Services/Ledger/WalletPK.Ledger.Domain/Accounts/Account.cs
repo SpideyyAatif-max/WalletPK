@@ -98,6 +98,14 @@ public sealed class Account : AggregateRoot<AccountId>
     /// </summary>
     public long LockToken { get; private set; }
 
+    /// <summary>
+    /// How many entries have ever been applied to this account (M4.2). Each entry gets the next number
+    /// (1, 2, 3 ...) as its <c>AccountSequence</c>, so an account's history has no gaps and no repeats,
+    /// and anyone reading its events (read models, notifications) can tell a duplicate, a gap or an
+    /// out-of-order event at a glance.
+    /// </summary>
+    public long EntrySequence { get; private set; }
+
     public bool IsWallet => Type != AccountType.System;
 
     /// <summary>Opens a wallet. Wallets are credit-normal (WalletPK owes the holder that money) and can never go negative.</summary>
@@ -159,12 +167,16 @@ public sealed class Account : AggregateRoot<AccountId>
         return Result.Success();
     }
 
-    /// <summary>Applies one entry and returns the balance after it. Only journals call this, after <see cref="CanApply"/>.</summary>
-    internal long ApplyEntry(EntryDirection direction, long amount, DateTimeOffset now)
+    /// <summary>
+    /// Applies one entry and returns the balance after it and the entry's sequence number on this
+    /// account. Only journals call this, after <see cref="CanApply"/>.
+    /// </summary>
+    internal (long BalanceAfter, long Sequence) ApplyEntry(EntryDirection direction, long amount, DateTimeOffset now)
     {
         Balance = checked(Balance + SignedAmount(direction, amount));
+        EntrySequence++;
         UpdatedAt = now;
-        return Balance;
+        return (Balance, EntrySequence);
     }
 
     /// <summary>

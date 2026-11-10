@@ -54,6 +54,9 @@ public sealed class IdentityApiFactory : WebApplicationFactory<Program>, IAsyncL
             ["ConnectionStrings:IdentityDb"] = _postgres.GetConnectionString(),
             ["ConnectionStrings:Redis"] = _redis.GetConnectionString(),
             ["Database:MigrateOnStartup"] = "true",
+
+            // No Kafka here: outbox rows are checked in the database; the relay is tested with real Kafka elsewhere.
+            ["Outbox:Relay:Enabled"] = "false",
             ["Jwt:SigningKeyPath"] = string.Empty,
             ["Observability:WriteToConsole"] = "false",
             ["Observability:WriteToSeq"] = "false",

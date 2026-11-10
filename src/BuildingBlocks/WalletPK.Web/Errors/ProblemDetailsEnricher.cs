@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Http;
+using WalletPK.Common.Correlation;
 using WalletPK.Web.Correlation;
 
 namespace WalletPK.Web.Errors;

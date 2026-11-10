@@ -191,6 +191,31 @@ public static class LedgerDatabaseGuards
          ORDER BY j.posted_at, j.id;
         """;
 
+    /// <summary>
+    /// M4.2: numbers the entries posted before per-account sequences existed (1, 2, 3 ... per account, in
+    /// posting order) and sets each account's counter. The append-only guard is paused for this one
+    /// statement, inside the migration's transaction.
+    /// </summary>
+    public const string BackfillEntrySequences = """
+        ALTER TABLE journal_entries DISABLE TRIGGER trg_journal_entries_append_only;
+
+        UPDATE journal_entries e
+           SET account_sequence = numbered.sequence
+          FROM (SELECT id, ROW_NUMBER() OVER (PARTITION BY account_id ORDER BY id) AS sequence
+                  FROM journal_entries) numbered
+         WHERE numbered.id = e.id;
+
+        ALTER TABLE journal_entries ENABLE TRIGGER trg_journal_entries_append_only;
+
+        -- The 0 default only existed to add the column; every new entry must state its number.
+        ALTER TABLE journal_entries ALTER COLUMN account_sequence DROP DEFAULT;
+
+        UPDATE accounts a
+           SET entry_sequence = counts.entries
+          FROM (SELECT account_id, COUNT(*) AS entries FROM journal_entries GROUP BY account_id) counts
+         WHERE counts.account_id = a.id;
+        """;
+
     public const string Uninstall = """
         DROP TRIGGER IF EXISTS trg_journal_transactions_no_truncate ON journal_transactions;
         DROP TRIGGER IF EXISTS trg_journal_transactions_append_only ON journal_transactions;

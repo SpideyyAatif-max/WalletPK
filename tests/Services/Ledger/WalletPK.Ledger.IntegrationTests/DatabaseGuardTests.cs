@@ -78,7 +78,7 @@ public class DatabaseGuardTests(LedgerApiFactory factory)
         }
 
         await using (var entry = Sql(connection,
-            "INSERT INTO journal_entries (transaction_id, line_number, account_id, direction, amount, balance_after, posted_at) VALUES (@id, 1, @account, 'Debit', 500, 0, now())",
+            "INSERT INTO journal_entries (transaction_id, line_number, account_id, account_sequence, direction, amount, balance_after, posted_at) VALUES (@id, 1, @account, 999999999, 'Debit', 500, 0, now())",
             ("id", id), ("account", suspense)))
         {
             await entry.ExecuteNonQueryAsync(Cancel); // accepted for now: the check is deferred to COMMIT
@@ -153,7 +153,7 @@ public class DatabaseGuardTests(LedgerApiFactory factory)
         await using var connection = await OpenAsync();
         await using var transaction = await connection.BeginTransactionAsync(Cancel);
         await using var command = Sql(connection,
-            "INSERT INTO journal_entries (transaction_id, line_number, account_id, direction, amount, balance_after, posted_at) VALUES (@id, 1, @account, 'Credit', -5, 0, now())",
+            "INSERT INTO journal_entries (transaction_id, line_number, account_id, account_sequence, direction, amount, balance_after, posted_at) VALUES (@id, 1, @account, 999999999, 'Credit', -5, 0, now())",
             ("id", Guid.CreateVersion7()), ("account", wallet.Value));
 
         var error = await Should.ThrowAsync<PostgresException>(() => command.ExecuteNonQueryAsync(Cancel));

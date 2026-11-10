@@ -62,6 +62,8 @@ services:
       # REST on 8080 (via the gateway), internal gRPC on 8081 (HTTP/2 only, called by other services)
       Kestrel__Endpoints__Http__Url: http://+:8080
       Kestrel__Endpoints__Grpc__Url: http://+:8081
+      # The outbox relay publishes identity.events here (topics are created by kafka-init).
+      Kafka__BootstrapServers: kafka:9092
       Observability__SeqUrl: http://seq:5341
       Observability__OtlpTracesEndpoint: http://jaeger:4317
       Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
@@ -73,6 +75,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   ledger:
     <<: *dotnet-service
@@ -89,6 +93,8 @@ services:
       # Access tokens are validated with Identity's published keys; limits are checked over Identity's gRPC port.
       Jwt__Authority: http://identity:8080/
       Services__IdentityGrpc__Address: http://identity:8081
+      # Publishes ledger.events, consumes identity.events (opens a wallet for every new user).
+      Kafka__BootstrapServers: kafka:9092
       Observability__SeqUrl: http://seq:5341
       Observability__OtlpTracesEndpoint: http://jaeger:4317
       Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
@@ -99,5 +105,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
       identity:
         condition: service_started

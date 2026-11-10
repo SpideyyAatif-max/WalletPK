@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using StackExchange.Redis;
+using WalletPK.Common.Correlation;
 using WalletPK.Identity.Application.Abstractions;
 using WalletPK.Identity.Application.Account;
 using WalletPK.Identity.Application.Authentication;
@@ -21,9 +22,10 @@ using WalletPK.Identity.Infrastructure.Persistence.Outbox;
 using WalletPK.Identity.Infrastructure.Redis;
 using WalletPK.Identity.Infrastructure.Security;
 using WalletPK.Identity.Infrastructure.Sms;
+using WalletPK.Messaging.Kafka;
 using WalletPK.Messaging.Serialization;
+using WalletPK.Persistence;
 using WalletPK.Persistence.Outbox;
-using WalletPK.Web.Correlation;
 using WalletPK.Web.Health;
 using WalletPK.Web.Identity;
 
@@ -96,6 +98,10 @@ public static class IdentityInfrastructureExtensions
             .RegisterFromAssembly(typeof(WalletPK.Contracts.Identity.UserRegistered).Assembly, IdentityIntegrationEvents.ContractsNamespace));
         services.AddSingleton<JsonEventSerializer>();
         services.AddDomainEventOutbox<IdentityIntegrationEventMapper>(() => CorrelationContext.Current);
+
+        // ---- Kafka (M4.1): the relay publishes the outbox to identity.events ----
+        services.AddWalletPkKafka(clientId: "identity");
+        services.AddOutboxRelay<IdentityDbContext>();
 
         // ---- PostgreSQL (EF Core) ----
         services.AddDbContext<IdentityDbContext>((provider, options) => options

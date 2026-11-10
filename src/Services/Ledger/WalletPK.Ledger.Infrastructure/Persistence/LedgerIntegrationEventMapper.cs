@@ -8,5 +8,5 @@ namespace WalletPK.Ledger.Infrastructure.Persistence;
 /// <summary>Plugs the Ledger event mapping into the shared outbox interceptor.</summary>
 internal sealed class LedgerIntegrationEventMapper : IIntegrationEventMapper
 {
-    public IntegrationEvent? Map(IDomainEvent domainEvent) => LedgerIntegrationEvents.FromDomainEvent(domainEvent);
+    public IEnumerable<IntegrationEvent> Map(IDomainEvent domainEvent) => LedgerIntegrationEvents.FromDomainEvent(domainEvent);
 }

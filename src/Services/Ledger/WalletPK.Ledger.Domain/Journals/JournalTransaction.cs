@@ -131,11 +131,14 @@ public sealed class JournalTransaction : AggregateRoot<TransactionId>
         var lineNumber = 1;
         foreach (var line in lines)
         {
-            var balanceAfter = line.Account.ApplyEntry(line.Direction, line.Amount, now);
-            journal._entries.Add(new JournalEntry(id, (short)lineNumber++, line.Account.Id, line.Direction, line.Amount, balanceAfter, now));
+            var (balanceAfter, sequence) = line.Account.ApplyEntry(line.Direction, line.Amount, now);
+            journal._entries.Add(new JournalEntry(id, (short)lineNumber++, line.Account.Id, sequence, line.Direction, line.Amount, balanceAfter, now));
         }
 
-        journal.Raise(new JournalPosted(journal));
+        journal.Raise(new JournalPosted(
+            journal,
+            [.. lines.Select(line => line.Account).Distinct().Select(account =>
+                new PostedAccount(account.Id, account.Type, account.OwnerId, account.Alias))]));
         return journal;
     }
 }
@@ -146,11 +149,12 @@ public sealed class JournalTransaction : AggregateRoot<TransactionId>
 /// </summary>
 public sealed class JournalEntry : Entity<long>
 {
-    internal JournalEntry(TransactionId transactionId, short lineNumber, AccountId accountId, EntryDirection direction, long amount, long balanceAfter, DateTimeOffset postedAt)
+    internal JournalEntry(TransactionId transactionId, short lineNumber, AccountId accountId, long accountSequence, EntryDirection direction, long amount, long balanceAfter, DateTimeOffset postedAt)
     {
         TransactionId = transactionId;
         LineNumber = lineNumber;
         AccountId = accountId;
+        AccountSequence = accountSequence;
         Direction = direction;
         Amount = amount;
         BalanceAfter = balanceAfter;
@@ -169,6 +173,9 @@ public sealed class JournalEntry : Entity<long>
 
     public AccountId AccountId { get; private set; }
 
+    /// <summary>This entry's number in its account's history: 1, 2, 3 ... with no gaps (unique per account).</summary>
+    public long AccountSequence { get; private set; }
+
     public EntryDirection Direction { get; private set; }
 
     /// <summary>Always positive, in paisa; the direction says which way it goes.</summary>
@@ -179,5 +186,16 @@ public sealed class JournalEntry : Entity<long>
     public DateTimeOffset PostedAt { get; private set; }
 }
 
-/// <summary>Raised when a journal is posted. Becomes the public <c>ledger.journal_posted</c> event.</summary>
-public sealed record JournalPosted(JournalTransaction Journal) : DomainEvent(Journal.PostedAt);
+/// <summary>
+/// Raised when a journal is posted. Becomes the public <c>ledger.journal_posted</c> event, plus one
+/// <c>ledger.wallet_entry_posted</c> per wallet entry (M4.2).
+/// </summary>
+/// <param name="Journal">The journal.</param>
+/// <param name="Accounts">The accounts it touched, as they were when it was posted.</param>
+public sealed record JournalPosted(JournalTransaction Journal, IReadOnlyList<PostedAccount> Accounts) : DomainEvent(Journal.PostedAt);
+
+/// <summary>What the public events need to know about an account a journal touched.</summary>
+public sealed record PostedAccount(AccountId Id, AccountType Type, UserId? OwnerId, string? Alias)
+{
+    public bool IsWallet => Type != AccountType.System;
+}
