@@ -219,14 +219,14 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M3.7 Idempotency-Key middleware (Redis fast path + Postgres record; replays the first response, 409 while in progress)
 - [x] M3.8 Wallet APIs: create, balance, P2P (limits reserved at Identity over gRPC, released on failure), history (keyset paging)
 - [x] M3.9 Fee engine: configurable bands (flat + percent, min/max), 16% tax on the fee, FEE_INCOME / TAX_PAYABLE shards
-- [ ] M3.10 Hash-chained audit log
-- [ ] M3.11 Invariant checker (debits = credits, no negatives)
-- [ ] M3.12 Property-based and 50-parallel-debit race tests
+- [x] M3.10 Hash-chained audit log (SHA-256 chain sealed in the background, append-only guard, verifier)
+- [x] M3.11 Invariant checker (debits = credits, no negatives, balances = entries, gapless entry numbers, audit chain; every 15 min + /api/ledger/invariants)
+- [x] M3.12 Property-based (FsCheck) and race tests (50 parallel debits, both directions, parallel retries, hot system shard)
 
 ### M4 — Event Pipeline & CQRS (weeks 5–6)
-- [ ] M4.1 Outbox relay (FOR UPDATE SKIP LOCKED, batch publish)
-- [ ] M4.2 Kafka topics keyed by wallet ID
-- [ ] M4.3 Inbox: idempotent consumers
+- [x] M4.1 Outbox relay (FOR UPDATE SKIP LOCKED, batch publish, back-off) and Kafka transport (WalletPK.Messaging.Kafka)
+- [x] M4.2 Kafka topics keyed by wallet ID (ledger.wallet_entry_posted with a gapless per-wallet sequence)
+- [x] M4.3 Inbox: idempotent consumers (the Ledger opens a wallet on identity.user_registered)
 - [ ] M4.4 Read models: balances, history, per-minute metrics
 - [ ] M4.5 Dapper query API (p95 < 10 ms)
 - [ ] M4.6 Read-model replay from Kafka
