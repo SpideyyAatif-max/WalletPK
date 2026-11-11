@@ -70,8 +70,23 @@ public sealed record TransferReceipt(
     Money BalanceAfter,
     DateTimeOffset PostedAt);
 
+/// <summary>Which statement lines to return. Every filter is optional.</summary>
+/// <param name="Limit">Page size, 1-100 (default 20).</param>
+/// <param name="Before">Paging cursor: the previous page's NextBefore.</param>
+/// <param name="Type">A journal type, for example "P2PTransfer" or "CashIn".</param>
+/// <param name="Direction">"in" or "out".</param>
+/// <param name="From">Posted at or after.</param>
+/// <param name="To">Posted before.</param>
+public sealed record StatementQuery(
+    int? Limit = null,
+    long? Before = null,
+    string? Type = null,
+    string? Direction = null,
+    DateTimeOffset? From = null,
+    DateTimeOffset? To = null);
+
 /// <summary>One line of the wallet's statement, as shown in the app.</summary>
-/// <param name="EntryId">Paging cursor.</param>
+/// <param name="Sequence">The entry's number in the wallet's history (1 = first); also the paging cursor.</param>
 /// <param name="TransactionId">The journal.</param>
 /// <param name="Type">What happened.</param>
 /// <param name="Title">For example "Sent to +92300*****67" or "Cash-in".</param>
@@ -80,7 +95,7 @@ public sealed record TransferReceipt(
 /// <param name="BalanceAfter">Balance right after.</param>
 /// <param name="PostedAt">When.</param>
 public sealed record StatementLine(
-    long EntryId,
+    long Sequence,
     TransactionId TransactionId,
     JournalType Type,
     string Title,
@@ -92,3 +107,11 @@ public sealed record StatementLine(
 /// <param name="Items">Newest first.</param>
 /// <param name="NextBefore">Pass as "before" to get the next (older) page; null on the last page.</param>
 public sealed record StatementPage(IReadOnlyList<StatementLine> Items, long? NextBefore);
+
+/// <summary>The wallet's balance from the read model, for fast and live views.</summary>
+/// <param name="WalletId">The wallet.</param>
+/// <param name="WalletNumber">Its mobile number.</param>
+/// <param name="Balance">The balance after entry <paramref name="Sequence"/>.</param>
+/// <param name="Sequence">The newest entry included; a live update with a higher sequence is newer.</param>
+/// <param name="AsOf">When that entry was posted.</param>
+public sealed record WalletBalance(AccountId WalletId, string? WalletNumber, Money Balance, long Sequence, DateTimeOffset AsOf);

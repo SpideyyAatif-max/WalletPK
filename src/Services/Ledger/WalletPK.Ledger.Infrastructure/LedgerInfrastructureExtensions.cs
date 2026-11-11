@@ -13,6 +13,7 @@ using WalletPK.Ledger.Application.Fees;
 using WalletPK.Ledger.Application.Holds;
 using WalletPK.Ledger.Application.Invariants;
 using WalletPK.Ledger.Application.Posting;
+using WalletPK.Ledger.Application.ReadModels;
 using WalletPK.Ledger.Application.Wallets;
 using WalletPK.Ledger.Infrastructure.Audit;
 using WalletPK.Ledger.Infrastructure.Idempotency;
@@ -20,6 +21,7 @@ using WalletPK.Ledger.Infrastructure.Invariants;
 using WalletPK.Ledger.Infrastructure.Limits;
 using WalletPK.Ledger.Infrastructure.Maintenance;
 using WalletPK.Ledger.Infrastructure.Persistence;
+using WalletPK.Ledger.Infrastructure.ReadModels;
 using WalletPK.Ledger.Infrastructure.Redis;
 using WalletPK.Messaging;
 using WalletPK.Messaging.Dispatching;
@@ -38,6 +40,9 @@ public static class LedgerInfrastructureExtensions
     public const string LedgerConsumerGroup = "ledger";
 
     public const string DatabaseConnectionName = "LedgerDb";
+
+    /// <summary>Optional: where read-model queries go (a read replica). Defaults to <see cref="DatabaseConnectionName"/>.</summary>
+    public const string ReadDatabaseConnectionName = "LedgerReadDb";
     public const string RedisConnectionName = "Redis";
 
     /// <summary>Registers the Ledger use cases and their adapters. Settings are read lazily from configuration.</summary>
@@ -99,6 +104,21 @@ public static class LedgerInfrastructureExtensions
         services.AddIntegrationEventHandler<WalletPK.Contracts.Identity.UserRegistered, UserRegisteredHandler>();
         services.AddKafkaConsumer(LedgerConsumerGroup, KafkaTopics.IdentityEvents);
 
+        // ---- Read models (M4.4-M4.6): projected from ledger.events, queried with Dapper, rebuildable ----
+        services.AddOptions<ReadModelOptions>()
+            .BindConfiguration(ReadModelOptions.SectionName)
+            .Validate(options => options.IsValid(), "Ledger:ReadModels: GenerationPollMilliseconds >= 100 and a ConsumerGroupPrefix.")
+            .ValidateOnStart();
+        services.AddSingleton(provider => provider.GetRequiredService<IOptions<ReadModelOptions>>().Value);
+        services.AddSingleton(provider => new LedgerReadModelDatabase(
+            RequiredConnectionString(provider, DatabaseConnectionName),
+            provider.GetRequiredService<IConfiguration>().GetConnectionString(ReadDatabaseConnectionName)));
+        services.AddSingleton<ReadModelMetrics>();
+        services.AddScoped<LedgerProjector>();
+        services.AddScoped<IReadModelQueries, ReadModelQueries>();
+        services.AddScoped<IReadModelMaintenance, ReadModelMaintenance>();
+        services.AddHostedService<ReadModelProjectionHost>();
+
         // ---- Audit log: a row for every money-relevant change, in the same transaction (M3.10) ----
         services.AddHttpContextAccessor();
         services.AddSingleton(provider => new LedgerAuditInterceptor(
@@ -119,7 +139,6 @@ public static class LedgerInfrastructureExtensions
         services.AddScoped<IAccountRepository, AccountRepository>();
         services.AddScoped<IJournalRepository, JournalRepository>();
         services.AddScoped<IHoldRepository, HoldRepository>();
-        services.AddScoped<ILedgerQueries, LedgerQueries>();
 
         // ---- Redis: wallet locks and the idempotency fast path ----
         services.AddSingleton<IConnectionMultiplexer>(provider =>

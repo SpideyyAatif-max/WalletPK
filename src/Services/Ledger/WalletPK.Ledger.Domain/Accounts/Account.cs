@@ -117,10 +117,12 @@ public sealed class Account : AggregateRoot<AccountId>
         }
 
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        return new Account(AccountId.New(), type, name, NormalBalance.Credit, allowNegative: false, ownerId, null, 0, now)
+        var wallet = new Account(AccountId.New(), type, name, NormalBalance.Credit, allowNegative: false, ownerId, null, 0, now)
         {
             Alias = string.IsNullOrWhiteSpace(alias) ? null : alias,
         };
+        wallet.Raise(new WalletOpened(wallet.Id, ownerId, type, wallet.Alias, now));
+        return wallet;
     }
 
     /// <summary>Creates one shard of a system account from its chart-of-accounts definition.</summary>
@@ -234,3 +236,11 @@ public sealed class Account : AggregateRoot<AccountId>
         }
     }
 }
+
+/// <summary>A customer, merchant or agent wallet was opened. Becomes the public <c>ledger.wallet_opened</c> event.</summary>
+/// <param name="WalletId">The new wallet.</param>
+/// <param name="OwnerId">Its owner.</param>
+/// <param name="Type">Customer, merchant or agent wallet.</param>
+/// <param name="Alias">The wallet number (E.164 mobile number), if it has one.</param>
+/// <param name="OpenedAt">When.</param>
+public sealed record WalletOpened(AccountId WalletId, UserId OwnerId, AccountType Type, string? Alias, DateTimeOffset OpenedAt) : DomainEvent(OpenedAt);

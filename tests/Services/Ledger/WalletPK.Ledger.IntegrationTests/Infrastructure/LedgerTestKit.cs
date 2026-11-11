@@ -92,6 +92,21 @@ public static class LedgerTestKit
         return await from.Client.SendAsync(request, Cancel);
     }
 
+    /// <summary>GET /api/wallets/me/transactions{query} as <paramref name="customer"/>; must succeed.</summary>
+    public static async Task<JsonElement> HistoryAsync(this Customer customer, string query = "")
+    {
+        ArgumentNullException.ThrowIfNull(customer);
+        using var response = await customer.Client.GetAsync(new Uri($"/api/wallets/me/transactions{query}", UriKind.Relative), Cancel);
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        return await JsonAsync(response);
+    }
+
+    /// <summary>Waits until the history read model shows at least <paramref name="entries"/> entries for the customer.</summary>
+    public static Task WaitForHistoryAsync(this Customer customer, int entries) =>
+        KafkaTestKit.EventuallyAsync(
+            async () => (await customer.HistoryAsync("?limit=100")).GetProperty("items").GetArrayLength() >= entries,
+            because: $"The history read model never reached {entries} entries.");
+
     public static Task<Account> AccountAsync(this LedgerApiFactory factory, AccountId id) =>
         factory.InScopeAsync(services => services.GetRequiredService<LedgerDbContext>().Accounts.AsNoTracking()
             .SingleAsync(account => account.Id == id, Cancel));

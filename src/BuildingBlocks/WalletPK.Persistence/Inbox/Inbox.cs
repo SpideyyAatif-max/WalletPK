@@ -116,8 +116,9 @@ public sealed class InboxOptions
     public const string SectionName = "Inbox";
 
     /// <summary>
-    /// Processed rows are deleted after this long. Must exceed the longest Kafka retention (30 days),
-    /// or a replayed event could slip past the inbox.
+    /// Processed rows are deleted after this long. It must exceed the retention of every topic an inbox
+    /// consumer reads (identity.events keeps 7 days), so a redelivered event always meets its row.
+    /// Read-model projections do not use the inbox (they replay on purpose; see M4.6).
     /// </summary>
     public int RetentionDays { get; set; } = 35;
 }

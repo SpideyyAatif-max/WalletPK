@@ -131,6 +131,7 @@ public sealed class LedgerApiFactory : WebApplicationFactory<Program>, IAsyncLif
             ["Kafka:BootstrapServers"] = _kafka.GetBootstrapAddress(),
             ["Kafka:EnsureTopics"] = "true",
             ["Outbox:Relay:PollIntervalMilliseconds"] = "50",
+            ["Ledger:ReadModels:GenerationPollMilliseconds"] = "200",
             ["Observability:WriteToConsole"] = "false",
             ["Observability:WriteToSeq"] = "false",
             ["Observability:ExportTraces"] = "false",

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>WalletPK.Ledger.Infrastructure</RootNamespace>
-    <Description>Ledger adapters: PostgreSQL via EF Core (with database-level guards), the outbox, Redis wallet locks, idempotency store, hold expiry sweeper, the Identity limits gRPC client.</Description>
+    <Description>Ledger adapters: PostgreSQL via EF Core (with database-level guards), the outbox, Redis wallet locks, idempotency store, hold expiry sweeper, the Identity limits gRPC client, and the Dapper read models fed from Kafka.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Dapper" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
@@ -28,6 +29,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="WalletPK.Ledger.UnitTests" />
+    <InternalsVisibleTo Include="WalletPK.Ledger.IntegrationTests" />
   </ItemGroup>
 
 </Project>

@@ -29,6 +29,20 @@ public class KafkaTopicsTests
     }
 
     [Fact]
+    public void Topics_created_by_the_services_keep_messages_as_long_as_those_docker_creates()
+    {
+        var script = File.ReadAllText(Path.Combine(FindRepositoryRoot(), "ops", "kafka", "create-topics.sh"));
+        var constants = Regex.Matches(script, @"^([A-Z_]+)=(-?\d+)\s*$", RegexOptions.Multiline)
+            .ToDictionary(match => match.Groups[1].Value, match => long.Parse(match.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture));
+
+        var retention = Regex.Matches(script, @"^create\s+(\S+)\s+\d+\s+\$(\w+)", RegexOptions.Multiline)
+            .ToDictionary(match => match.Groups[1].Value, match => constants[match.Groups[2].Value]);
+
+        KafkaTopicAdmin.RetentionMilliseconds.ShouldBe(retention, ignoreOrder: true);
+        KafkaTopicAdmin.RetentionMilliseconds[KafkaTopics.LedgerEvents].ShouldBe(-1, "read models are rebuilt from the whole ledger history");
+    }
+
+    [Fact]
     public void Topic_names_are_unique()
     {
         KafkaTopics.All.Distinct().Count().ShouldBe(KafkaTopics.All.Count);

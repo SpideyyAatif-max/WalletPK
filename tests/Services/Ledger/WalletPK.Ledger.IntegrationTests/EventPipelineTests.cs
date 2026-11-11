@@ -49,7 +49,7 @@ public class EventPipelineTests(LedgerApiFactory factory)
         }
 
         var transactionId = WalletService.TransactionIdFor(sender.Id, key).Value;
-        bool Mine(ReadMessage message) => message.Payload.GetProperty("transactionId").GetGuid() == transactionId;
+        bool Mine(ReadMessage message) => message.Payload.TryGetProperty("transactionId", out var id) && id.GetGuid() == transactionId;
 
         var messages = factory.ReadUntil(KafkaTopics.LedgerEvents, read => read.Count(Mine) == 3).Where(Mine).ToList();
 
@@ -91,10 +91,15 @@ public class EventPipelineTests(LedgerApiFactory factory)
         }
 
         bool Mine(ReadMessage message) => message.Key == sender.WalletId.ToString();
-        var events = factory.ReadUntil(KafkaTopics.LedgerEvents, read => read.Count(Mine) == 10).Where(Mine).ToList();
+        var events = factory.ReadUntil(KafkaTopics.LedgerEvents, read => read.Count(Mine) == 11).Where(Mine).ToList();
 
+        // The wallet was opened first, then came its ten entries, all on the wallet's partition.
         events.Select(message => message.Partition).Distinct().ShouldHaveSingleItem();
-        events.Select(message => message.Payload.GetProperty("sequence").GetInt64()).ShouldBe([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+        events[0].EventType.ShouldBe("ledger.wallet_opened");
+        events[0].Payload.GetProperty("walletNumber").GetString().ShouldBe(sender.Phone);
+        events[0].Payload.GetProperty("ownerId").GetGuid().ShouldBe(sender.Id.Value);
+        events.Skip(1).Select(message => message.EventType).Distinct().ShouldBe(["ledger.wallet_entry_posted"]);
+        events.Skip(1).Select(message => message.Payload.GetProperty("sequence").GetInt64()).ShouldBe([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     }
 
     [Fact]

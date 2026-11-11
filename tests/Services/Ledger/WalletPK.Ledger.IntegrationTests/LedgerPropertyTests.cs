@@ -32,7 +32,7 @@ public class LedgerPropertyTests(LedgerApiFactory factory)
         from kind in Gen.Elements("transfer", "transfer", "transfer", "hold", "capture", "release")
         from source in Gen.Choose(0, Customers - 1)
         from target in Gen.Choose(0, Customers - 1)
-        from paisa in Gen.Choose(1, 300_000)
+        from paisa in Gen.Frequency((1, Gen.Choose(1, 99)), (20, Gen.Choose(100, 300_000)))
         from holdIndex in Gen.Choose(0, 20)
         from percent in Gen.Choose(1, 100)
         select new Step(kind, source, target, paisa, holdIndex, percent);
@@ -101,6 +101,13 @@ public class LedgerPropertyTests(LedgerApiFactory factory)
             case "transfer" when step.From != step.To:
                 using (var response = await customers[step.From].SendAsync(customers[step.To].Phone, step.Paisa, NewKey()))
                 {
+                    if (step.Paisa < 100)
+                    {
+                        // Below Rs. 1 is always refused, before any money or limit is touched.
+                        response.StatusCode.ShouldBe(HttpStatusCode.BadRequest, await response.Content.ReadAsStringAsync(Cancel));
+                        return new Outcome();
+                    }
+
                     if (response.StatusCode != HttpStatusCode.OK)
                     {
                         response.StatusCode.ShouldBe(HttpStatusCode.UnprocessableEntity, await response.Content.ReadAsStringAsync(Cancel));

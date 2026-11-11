@@ -8,16 +8,22 @@ using WalletPK.Messaging.Abstractions;
 
 namespace WalletPK.Messaging.Kafka;
 
-/// <summary>One consumer group of a service: its group ID and the topics it reads.</summary>
+/// <summary>One consumer group of a service: its group ID, the topics it reads and who processes the messages.</summary>
 /// <param name="GroupId">The consumer group, for example "ledger". Also the inbox's consumer name.</param>
 /// <param name="Topics">Topics to subscribe to.</param>
-public sealed record KafkaConsumerDefinition(string GroupId, IReadOnlyList<string> Topics);
+/// <param name="ProcessorType">
+/// The scoped service that processes each message; it must implement <see cref="IEnvelopeProcessor"/>.
+/// Null means the registered <see cref="IEnvelopeProcessor"/> (the inbox). Read-model projections use
+/// their own processor, idempotent by design, so they can replay a topic from the start (M4.6).
+/// </param>
+public sealed record KafkaConsumerDefinition(string GroupId, IReadOnlyList<string> Topics, Type? ProcessorType = null);
 
 /// <summary>
 /// Reads one consumer group's topics and hands every message to the scoped <see cref="IEnvelopeProcessor"/>.
 /// <list type="bullet">
 /// <item><b>At least once:</b> a message's offset is stored only after it was processed, so a crash
-/// re-delivers it; the inbox turns that into exactly-once processing.</item>
+/// re-delivers it; the inbox (or a processor that is idempotent by itself) turns that into exactly-once
+/// processing.</item>
 /// <item><b>In order:</b> messages are processed one at a time; a failing message is retried with
 /// growing back-off (up to 30 s) and the partition does not move past it, so one wallet's events are
 /// never applied out of order. Dead-lettering poison messages arrives with M7.5.</item>
@@ -120,8 +126,8 @@ public sealed partial class KafkaConsumerService(
                 }))
                 {
                     await using var scope = scopes.CreateAsyncScope();
-                    await scope.ServiceProvider.GetRequiredService<IEnvelopeProcessor>()
-                        .ProcessAsync(envelope, definition.GroupId, stoppingToken);
+                    var processor = (IEnvelopeProcessor)scope.ServiceProvider.GetRequiredService(definition.ProcessorType ?? typeof(IEnvelopeProcessor));
+                    await processor.ProcessAsync(envelope, definition.GroupId, stoppingToken);
                 }
 
                 Count(result.Topic, "processed");

@@ -14,7 +14,8 @@ namespace WalletPK.Ledger.Api.Endpoints;
 /// <list type="bullet">
 /// <item>POST /api/wallets                        open my wallet (201; 200 if it already exists)</item>
 /// <item>GET  /api/wallets/me                     balance, held and available</item>
-/// <item>GET  /api/wallets/me/transactions        statement, newest first (?limit=20&amp;before={nextBefore})</item>
+/// <item>GET  /api/wallets/me/balance             balance from the read model, with the sequence of the newest entry in it</item>
+/// <item>GET  /api/wallets/me/transactions        statement, newest first (?limit=20&amp;before={nextBefore}&amp;type=P2PTransfer&amp;direction=out&amp;from=&amp;to=)</item>
 /// <item>GET  /api/wallets/transfers/quote        fee and tax for ?amountPaisa=</item>
 /// <item>POST /api/wallets/transfers              send money to a mobile number (Idempotency-Key required)</item>
 /// </list>
@@ -36,9 +37,20 @@ public static class WalletEndpoints
         group.MapGet("/me", async (ICurrentUser currentUser, WalletService wallets, CancellationToken cancellationToken) =>
             (await wallets.GetAsync(currentUser.GetRequiredId(), cancellationToken)).ToHttpResult());
 
+        group.MapGet("/me/balance", async (ICurrentUser currentUser, WalletService wallets, CancellationToken cancellationToken) =>
+            (await wallets.BalanceAsync(currentUser.GetRequiredId(), cancellationToken)).ToHttpResult());
+
         group.MapGet("/me/transactions", async (
-            int? limit, long? before, ICurrentUser currentUser, WalletService wallets, CancellationToken cancellationToken) =>
-            (await wallets.HistoryAsync(currentUser.GetRequiredId(), limit, before, cancellationToken)).ToHttpResult());
+            int? limit,
+            long? before,
+            string? type,
+            string? direction,
+            DateTimeOffset? from,
+            DateTimeOffset? to,
+            ICurrentUser currentUser,
+            WalletService wallets,
+            CancellationToken cancellationToken) =>
+            (await wallets.HistoryAsync(currentUser.GetRequiredId(), new StatementQuery(limit, before, type, direction, from, to), cancellationToken)).ToHttpResult());
 
         group.MapGet("/transfers/quote", (long? amountPaisa, WalletService wallets) =>
             (amountPaisa is > 0 ? wallets.QuoteTransfer(Money.FromPaisa(amountPaisa.Value)) : Result.Failure<Application.Fees.FeeQuote>(WalletErrors.AmountInvalid))

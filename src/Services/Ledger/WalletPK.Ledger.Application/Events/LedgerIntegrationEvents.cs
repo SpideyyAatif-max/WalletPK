@@ -1,4 +1,5 @@
 using WalletPK.Common.Domain;
+using WalletPK.Ledger.Domain.Accounts;
 using WalletPK.Ledger.Domain.Journals;
 using WalletPK.Messaging.Events;
 using LedgerContracts = WalletPK.Contracts.Ledger;
@@ -13,11 +14,24 @@ public static class LedgerIntegrationEvents
 
     /// <summary>
     /// A posted journal becomes one <c>ledger.journal_posted</c> (keyed by the journal) plus one
-    /// <c>ledger.wallet_entry_posted</c> per wallet entry (keyed by the wallet). Other domain events stay internal.
+    /// <c>ledger.wallet_entry_posted</c> per wallet entry (keyed by the wallet); an opened wallet becomes
+    /// <c>ledger.wallet_opened</c> (keyed by the wallet). Other domain events stay internal.
     /// </summary>
     public static IReadOnlyList<IntegrationEvent> FromDomainEvent(IDomainEvent domainEvent)
     {
         ArgumentNullException.ThrowIfNull(domainEvent);
+
+        if (domainEvent is WalletOpened opened)
+        {
+            return
+            [
+                new LedgerContracts.WalletOpened(opened.WalletId.Value, opened.OwnerId.Value, opened.Alias, opened.Type.ToString(), opened.OpenedAt)
+                {
+                    EventId = domainEvent.EventId,
+                    OccurredAt = domainEvent.OccurredAt,
+                },
+            ];
+        }
 
         if (domainEvent is not JournalPosted { Journal: var journal, Accounts: var accounts })
         {

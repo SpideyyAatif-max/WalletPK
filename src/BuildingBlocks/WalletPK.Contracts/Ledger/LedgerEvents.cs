@@ -75,3 +75,23 @@ public sealed record WalletEntryPosted(
 {
     public override string GetPartitionKey() => WalletId.ToString();
 }
+
+/// <summary>
+/// A wallet was opened (M4.4), so read models know it before its first entry. Keyed by the wallet ID,
+/// like <see cref="WalletEntryPosted"/>, so it always comes before the wallet's first entry.
+/// </summary>
+/// <param name="WalletId">The wallet's account ID (also the Kafka key).</param>
+/// <param name="OwnerId">The wallet's owner.</param>
+/// <param name="WalletNumber">The wallet's mobile number (E.164), if it has one.</param>
+/// <param name="WalletType">"CustomerWallet", "MerchantWallet" or "AgentWallet".</param>
+/// <param name="OpenedAt">When it was opened.</param>
+[IntegrationEvent("ledger.wallet_opened", KafkaTopics.LedgerEvents)]
+public sealed record WalletOpened(
+    Guid WalletId,
+    Guid OwnerId,
+    string? WalletNumber,
+    string WalletType,
+    DateTimeOffset OpenedAt) : IntegrationEvent
+{
+    public override string GetPartitionKey() => WalletId.ToString();
+}

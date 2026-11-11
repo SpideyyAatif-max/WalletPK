@@ -42,7 +42,7 @@ public static class MessagingServiceCollectionExtensions
 
         services.AddOptions<InboxOptions>()
             .BindConfiguration(InboxOptions.SectionName)
-            .Validate(options => options.RetentionDays >= 31, "Inbox:RetentionDays must be longer than the longest Kafka retention (30 days).")
+            .Validate(options => options.RetentionDays >= 31, "Inbox:RetentionDays must be at least 31 days (longer than the topics inbox consumers read keep their messages).")
             .ValidateOnStart();
         services.TryAddSingleton(provider => provider.GetRequiredService<IOptions<InboxOptions>>().Value);
         services.TryAddScoped<IntegrationEventDispatcher>();

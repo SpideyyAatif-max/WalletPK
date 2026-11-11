@@ -6,6 +6,7 @@ using WalletPK.Common.Results;
 using WalletPK.Ledger.Application.Abstractions;
 using WalletPK.Ledger.Application.Fees;
 using WalletPK.Ledger.Application.Posting;
+using WalletPK.Ledger.Application.ReadModels;
 using WalletPK.Ledger.Domain.Accounts;
 using WalletPK.Ledger.Domain.Journals;
 
@@ -34,6 +35,9 @@ public static class WalletErrors
     public static Error RecipientUnavailable { get; } =
         Error.BusinessRule("wallet.recipient_unavailable", "This wallet cannot receive money right now.");
 
+    public static Error StatementFilterInvalid(string detail) =>
+        Error.Validation("wallet.statement_filter_invalid", detail);
+
     public static Error LimitsUnavailable { get; } =
         Error.Unavailable("wallet.limits_unavailable", "Payments are temporarily unavailable. Please try again in a minute.");
 
@@ -55,7 +59,7 @@ public sealed class WalletService(
     IAccountRepository accounts,
     IJournalRepository journals,
     ILedgerUnitOfWork unitOfWork,
-    ILedgerQueries queries,
+    IReadModelQueries readModels,
     PostingService posting,
     FeeEngine fees,
     ILimitsGateway limits,
@@ -211,44 +215,96 @@ public sealed class WalletService(
         return Receipt(posted.Value, sender.Id, recipientNumber);
     }
 
-    /// <summary>The wallet's statement, newest first, in pages.</summary>
-    public async Task<Result<StatementPage>> HistoryAsync(UserId ownerId, int? limit, long? before, CancellationToken cancellationToken)
+    /// <summary>
+    /// The wallet's statement, newest first, in pages, optionally filtered by type, direction and date.
+    /// Served from the history read model (M4.4), so a payment shows up a few milliseconds after it posts.
+    /// </summary>
+    public async Task<Result<StatementPage>> HistoryAsync(UserId ownerId, StatementQuery query, CancellationToken cancellationToken)
     {
-        var wallet = await accounts.GetWalletByOwnerAsync(ownerId, AccountType.CustomerWallet, cancellationToken);
-        if (wallet is null)
+        ArgumentNullException.ThrowIfNull(query);
+
+        JournalType? type = null;
+        if (query.Type is { Length: > 0 } typeName)
+        {
+            if (!Enum.TryParse<JournalType>(typeName, ignoreCase: true, out var parsed) || !Enum.IsDefined(parsed) || int.TryParse(typeName, out _))
+            {
+                return WalletErrors.StatementFilterInvalid($"Unknown type '{typeName}'. Use one of: {string.Join(", ", Enum.GetNames<JournalType>())}.");
+            }
+
+            type = parsed;
+        }
+
+        EntryDirection? direction;
+        switch (query.Direction?.Trim().ToUpperInvariant())
+        {
+            case null or "":
+                direction = null;
+                break;
+            case "IN":
+                direction = EntryDirection.Credit;
+                break;
+            case "OUT":
+                direction = EntryDirection.Debit;
+                break;
+            default:
+                return WalletErrors.StatementFilterInvalid("Direction must be \"in\" or \"out\".");
+        }
+
+        if (query.From is { } from && query.To is { } to && from >= to)
+        {
+            return WalletErrors.StatementFilterInvalid("\"from\" must be before \"to\".");
+        }
+
+        var walletId = await CustomerWalletIdAsync(ownerId, cancellationToken);
+        if (walletId is null)
         {
             return WalletErrors.WalletNotFound;
         }
 
-        var size = Math.Clamp(limit ?? 20, 1, MaxPageSize);
+        var size = Math.Clamp(query.Limit ?? 20, 1, MaxPageSize);
 
         // One extra row tells whether there is another page, without a COUNT query.
-        var lines = await queries.GetHistoryAsync(wallet.Id, size + 1, before, cancellationToken);
-        var hasMore = lines.Count > size;
+        var rows = await readModels.GetHistoryAsync(
+            new HistoryQuery(walletId.Value, size + 1, query.Before, type, direction, query.From, query.To),
+            cancellationToken);
+        var hasMore = rows.Count > size;
 
         StatementLine[] items =
         [
-            .. lines.Take(size).Select(line => new StatementLine(
-                line.EntryId,
-                line.TransactionId,
-                line.Type,
-                Title(line),
-                line.Direction == EntryDirection.Debit ? "Out" : "In",
-                line.Amount,
-                line.BalanceAfter,
-                line.PostedAt)),
+            .. rows.Take(size).Select(row => new StatementLine(
+                row.Sequence,
+                row.TransactionId,
+                row.Type,
+                StatementTitles.For(row.Type, row.Description, row.Direction, row.CounterpartyWalletNumber),
+                row.Direction == EntryDirection.Debit ? "Out" : "In",
+                row.Amount,
+                row.BalanceAfter,
+                row.PostedAt)),
         ];
-        return new StatementPage(items, hasMore ? items[^1].EntryId : null);
+        return new StatementPage(items, hasMore ? items[^1].Sequence : null);
     }
 
-    private static string Title(HistoryLine line) => (line.Type, line.CounterpartyNumber, line.Direction) switch
+    /// <summary>
+    /// The wallet's balance from the balance read model, with the sequence of the newest entry it
+    /// includes, so a live view can tell whether a pushed update is newer. For the authoritative balance
+    /// with holds, use <see cref="GetAsync"/>.
+    /// </summary>
+    public async Task<Result<WalletBalance>> BalanceAsync(UserId ownerId, CancellationToken cancellationToken)
     {
-        (JournalType.P2PTransfer, { } other, EntryDirection.Debit) => $"Sent to {PakistaniMobileNumber.Mask(other)}",
-        (JournalType.P2PTransfer, { } other, EntryDirection.Credit) => $"Received from {PakistaniMobileNumber.Mask(other)}",
-        (JournalType.CashIn, _, _) => "Cash-in",
-        (JournalType.CashOut, _, _) => "Cash-out",
-        _ => line.Description,
-    };
+        if (await readModels.GetWalletAsync(ownerId, AccountType.CustomerWallet, cancellationToken) is { } row)
+        {
+            return new WalletBalance(row.WalletId, row.WalletNumber, row.Balance, row.Sequence, row.UpdatedAt);
+        }
+
+        // Not projected yet (opened a moment ago): the ledger itself answers.
+        return await accounts.GetWalletByOwnerAsync(ownerId, AccountType.CustomerWallet, cancellationToken) is { } wallet
+            ? new WalletBalance(wallet.Id, wallet.Alias, Money.FromPaisa(wallet.Balance), wallet.EntrySequence, wallet.UpdatedAt)
+            : WalletErrors.WalletNotFound;
+    }
+
+    private async Task<AccountId?> CustomerWalletIdAsync(UserId ownerId, CancellationToken cancellationToken) =>
+        (await readModels.GetWalletAsync(ownerId, AccountType.CustomerWallet, cancellationToken))?.WalletId
+        ?? (await accounts.GetWalletByOwnerAsync(ownerId, AccountType.CustomerWallet, cancellationToken))?.Id;
 
     private static Result<TransferReceipt> Receipt(PostedJournal journal, AccountId senderId, string recipientNumber)
     {

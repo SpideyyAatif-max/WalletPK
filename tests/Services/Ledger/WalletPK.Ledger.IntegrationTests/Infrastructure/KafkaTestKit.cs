@@ -8,7 +8,7 @@ using WalletPK.Messaging.Serialization;
 namespace WalletPK.Ledger.IntegrationTests.Infrastructure;
 
 /// <summary>A message read back from the test broker.</summary>
-public sealed record ReadMessage(string Topic, int Partition, string Key, string EventType, Guid EventId, JsonElement Payload);
+public sealed record ReadMessage(string Topic, int Partition, string Key, string EventType, Guid EventId, JsonElement Payload, EventEnvelope Envelope);
 
 /// <summary>Produces to and reads from the test Kafka broker directly, around the service under test.</summary>
 public static class KafkaTestKit
@@ -81,7 +81,8 @@ public static class KafkaTestKit
                         result.Message.Key,
                         envelope!.EventType,
                         envelope.EventId,
-                        JsonDocument.Parse(envelope.Payload).RootElement.Clone()));
+                        JsonDocument.Parse(envelope.Payload).RootElement.Clone(),
+                        envelope));
                 }
 
                 if (done(read))

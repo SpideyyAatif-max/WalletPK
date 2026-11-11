@@ -266,11 +266,14 @@ public class WalletApiTests(LedgerApiFactory factory)
             sent.StatusCode.ShouldBe(HttpStatusCode.OK);
         }
 
-        using var page1 = await sender.Client.GetAsync(new Uri("/api/wallets/me/transactions?limit=2", UriKind.Relative), Cancel);
-        var first = await JsonAsync(page1);
+        // History comes from the read model, a few milliseconds behind the ledger.
+        await sender.WaitForHistoryAsync(entries: 4);
+        await recipient.WaitForHistoryAsync(entries: 3);
+
+        var first = await sender.HistoryAsync("?limit=2");
         var nextBefore = first.GetProperty("nextBefore").GetInt64();
-        using var page2 = await sender.Client.GetAsync(new Uri($"/api/wallets/me/transactions?limit=2&before={nextBefore}", UriKind.Relative), Cancel);
-        var second = await JsonAsync(page2);
+        nextBefore.ShouldBe(3);
+        var second = await sender.HistoryAsync($"?limit=2&before={nextBefore}");
 
         var items = first.GetProperty("items").EnumerateArray().Concat(second.GetProperty("items").EnumerateArray()).ToList();
         items.Select(item => Paisa(item, "amount")).ShouldBe([3_000, 2_000, 1_000, 100_000]);
@@ -281,8 +284,9 @@ public class WalletApiTests(LedgerApiFactory factory)
         items[3].GetProperty("direction").GetString().ShouldBe("In");
         second.GetProperty("nextBefore").ValueKind.ShouldBe(JsonValueKind.Null);
 
-        using var received = await recipient.Client.GetAsync(new Uri("/api/wallets/me/transactions", UriKind.Relative), Cancel);
-        var recipientItems = (await JsonAsync(received)).GetProperty("items").EnumerateArray().ToList();
+        items.Select(item => item.GetProperty("sequence").GetInt64()).ShouldBe([4, 3, 2, 1]);
+
+        var recipientItems = (await recipient.HistoryAsync()).GetProperty("items").EnumerateArray().ToList();
         recipientItems.Count.ShouldBe(3);
         recipientItems[0].GetProperty("title").GetString().ShouldBe($"Received from {PakistaniMobileNumber.Mask(sender.Phone)}");
     }
