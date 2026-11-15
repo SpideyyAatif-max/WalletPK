@@ -102,7 +102,14 @@ public static class LedgerInfrastructureExtensions
         services.AddOutboxRelay<LedgerDbContext>();
         services.AddInbox<LedgerDbContext>();
         services.AddIntegrationEventHandler<WalletPK.Contracts.Identity.UserRegistered, UserRegisteredHandler>();
-        services.AddKafkaConsumer(LedgerConsumerGroup, KafkaTopics.IdentityEvents);
+
+        // ---- Holds for Sagas (M6): commands in on ledger.commands, answers out on ledger.replies ----
+        services.AddScoped<IReplyOutbox, LedgerReplyOutbox>();
+        services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.PlaceHold, HoldCommandHandlers>();
+        services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.CaptureHold, HoldCommandHandlers>();
+        services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.ReleaseHold, HoldCommandHandlers>();
+
+        services.AddKafkaConsumer(LedgerConsumerGroup, KafkaTopics.IdentityEvents, KafkaTopics.LedgerCommands);
 
         // ---- Read models (M4.4-M4.6): projected from ledger.events, queried with Dapper, rebuildable ----
         services.AddOptions<ReadModelOptions>()

@@ -31,6 +31,10 @@
     <!-- Hosting, DI and options abstractions for class libraries that run background services. -->
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.15" />
     <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.15" />
+    <!-- Resilience (M6.5): per-bank pipelines (bulkhead, timeouts, retry with jitter, circuit breaker). -->
+    <PackageVersion Include="Polly.Core" Version="8.9.1" />
+    <PackageVersion Include="Polly.Extensions" Version="8.9.1" />
+    <PackageVersion Include="Polly.RateLimiting" Version="8.9.1" />
   </ItemGroup>
 
   <ItemGroup Label="Security">

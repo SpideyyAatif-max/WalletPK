@@ -8,6 +8,12 @@ public static class KafkaTopics
 {
     public const string IdentityEvents = "identity.events";
     public const string LedgerEvents = "ledger.events";
+
+    /// <summary>Requests to the Ledger from Sagas: place, capture or release a hold (M6).</summary>
+    public const string LedgerCommands = "ledger.commands";
+
+    /// <summary>The Ledger's answers to <see cref="LedgerCommands"/>, keyed by hold ID.</summary>
+    public const string LedgerReplies = "ledger.replies";
     public const string PaymentsEvents = "payments.events";
     public const string BillsEvents = "bills.events";
     public const string TopupEvents = "topup.events";
@@ -23,7 +29,7 @@ public static class KafkaTopics
 
     public static IReadOnlyList<string> All { get; } =
     [
-        IdentityEvents, LedgerEvents, PaymentsEvents, BillsEvents, TopupEvents, AgentsEvents,
+        IdentityEvents, LedgerEvents, LedgerCommands, LedgerReplies, PaymentsEvents, BillsEvents, TopupEvents, AgentsEvents,
         FraudAlerts, NotificationsEvents, PaymentsDeadLetter, BillsDeadLetter, TopupDeadLetter,
         SimulationMetrics,
     ];

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Payments.Application</RootNamespace>
+    <Description>Payments use cases: the Raast bank-transfer Saga and the queries behind the transfer tracker, written against ports (the Raast gateway, bank availability).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Payments.Domain\WalletPK.Payments.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Contracts\WalletPK.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Sagas\WalletPK.Sagas.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Payments.UnitTests" />
+    <InternalsVisibleTo Include="WalletPK.Payments.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

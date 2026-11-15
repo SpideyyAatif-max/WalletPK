@@ -111,8 +111,11 @@ public sealed class Hold : AggregateRoot<HoldId>
 
     public bool IsExpired(DateTimeOffset now) => Status == HoldStatus.Active && ExpiresAt <= now;
 
-    /// <summary>Reserves <paramref name="amount"/> paisa in <paramref name="account"/> for <paramref name="lifetime"/>.</summary>
-    public static Result<Hold> Place(Account account, long amount, string? description, string? reference, TimeSpan lifetime, DateTimeOffset now)
+    /// <summary>
+    /// Reserves <paramref name="amount"/> paisa in <paramref name="account"/> for <paramref name="lifetime"/>.
+    /// A Saga passes its own <paramref name="id"/>, so a repeated request can find the hold it already placed.
+    /// </summary>
+    public static Result<Hold> Place(Account account, long amount, string? description, string? reference, TimeSpan lifetime, DateTimeOffset now, HoldId? id = null)
     {
         ArgumentNullException.ThrowIfNull(account);
 
@@ -132,7 +135,7 @@ public sealed class Hold : AggregateRoot<HoldId>
             return reserved.Error;
         }
 
-        return new Hold(HoldId.New(), account.Id, amount, description.Trim(), string.IsNullOrWhiteSpace(reference) ? null : reference.Trim(), now, now + lifetime);
+        return new Hold(id ?? HoldId.New(), account.Id, amount, description.Trim(), string.IsNullOrWhiteSpace(reference) ? null : reference.Trim(), now, now + lifetime);
     }
 
     /// <summary>

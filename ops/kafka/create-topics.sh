@@ -28,6 +28,9 @@ echo "Creating WalletPK topics on $BOOTSTRAP ..."
 create identity.events      6 $SEVEN_DAYS
 # Kept forever: read models are rebuilt by replaying it from offset 0 (M4.6).
 create ledger.events       12 $FOREVER
+# Saga requests to the Ledger (place / capture / release a hold) and its answers, keyed by hold.
+create ledger.commands      6 $SEVEN_DAYS
+create ledger.replies       6 $SEVEN_DAYS
 create payments.events      6 $SEVEN_DAYS
 create bills.events         6 $SEVEN_DAYS
 create topup.events         6 $SEVEN_DAYS

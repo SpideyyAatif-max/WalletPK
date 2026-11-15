@@ -147,6 +147,38 @@ Banks, Raast, billers, mobile networks and NADRA are simulated by the mock provi
 with `--profile apps`). You can make any of them slow, flaky or dead while the system runs, and they produce
 settlement files with mismatches you plant yourself. See [src/MockProviders/README.md](src/MockProviders/README.md).
 
+## Sending Money to a Bank (Raast)
+
+The Payments service (port 5103, `/api/payments/*` through the gateway) sends money from a wallet to any
+account at the four simulated banks. Every transfer is a Saga with a timeline you can watch:
+
+1. **Reserving**: the Ledger holds the amount in the wallet (`ledger.commands` → `ledger.replies` on Kafka).
+2. **Sending**: Payments calls Raast through that bank's own resilience pipeline (bulkhead, timeouts,
+   retries with jitter, circuit breaker).
+3. **AwaitingBank**: Raast accepted it; the bank's signed callback (or, if it never comes, a status query)
+   says how it ended.
+4. **Settling → Completed**: the hold is captured into the bank float. If the bank refuses it
+   (**Returning → Failed**), the money goes back to the wallet.
+
+If the bank is down, the transfer is **Queued** and sent by itself when the bank is back (after 24 hours
+it is given up and the money returned). If a send times out, Payments asks Raast whether it arrived before
+sending again, so nothing is paid twice.
+
+```bash
+# A valid IBAN at MCB, who is behind it, then send Rs. 2,500 (Idempotency-Key required)
+POST /api/payments/beneficiaries/lookup   {"iban": "PK76MUCB5512340001234567"}
+POST /api/payments/bank-transfers         {"toIban": "PK76MUCB5512340001234567", "amountPaisa": 250000, "note": "Rent"}
+GET  /api/payments/bank-transfers/{id}    # status (Processing, Queued, Completed, Failed) and the timeline
+GET  /api/payments/banks                  # each bank: Available, Degraded or Down (its circuit breaker)
+
+# Take HBL down, send to an HBL account (it queues), then bring HBL back (it completes)
+curl -X PUT localhost:5200/admin/faults/bank:HBL -H "X-Admin-Key: dev-only-provider-admin-key" \
+     -H "Content-Type: application/json" -d '{"outage": true}'
+curl -X DELETE localhost:5200/admin/faults/bank:HBL -H "X-Admin-Key: dev-only-provider-admin-key"
+```
+
+Account numbers ending `0000` are closed accounts: the bank refuses the transfer and the money comes back.
+
 ## Service Ports
 
 | Service | Local port (`dotnet run`) | Gateway path |

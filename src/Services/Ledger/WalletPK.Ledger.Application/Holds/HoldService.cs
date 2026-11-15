@@ -17,7 +17,8 @@ namespace WalletPK.Ledger.Application.Holds;
 /// <param name="Description">What it is for.</param>
 /// <param name="Reference">Business reference, for example a payment ID.</param>
 /// <param name="Lifetime">How long until it expires automatically (1 minute to 7 days).</param>
-public sealed record PlaceHoldCommand(AccountId AccountId, Money Amount, string Description, string? Reference, TimeSpan Lifetime);
+/// <param name="HoldId">The caller's ID for the hold (a Saga's); placing the same ID again returns the existing hold.</param>
+public sealed record PlaceHoldCommand(AccountId AccountId, Money Amount, string Description, string? Reference, TimeSpan Lifetime, HoldId? HoldId = null);
 
 /// <summary>Settle a hold: debit <paramref name="Amount"/> from the held wallet and credit <paramref name="CreditLines"/>.</summary>
 /// <param name="HoldId">The hold.</param>
@@ -83,7 +84,13 @@ public sealed class HoldService(
                 return fenced.Error;
             }
 
-            var placed = Hold.Place(account, command.Amount.MinorUnits, command.Description, command.Reference, command.Lifetime, timeProvider.GetUtcNow());
+            // Placed before (a retried command): answer with that hold, never reserve twice.
+            if (command.HoldId is { } holdId && await holds.GetAsync(holdId, ct) is { } existing)
+            {
+                return existing.AccountId == account.Id ? HoldView.From(existing, account) : LedgerErrors.HoldNotFound;
+            }
+
+            var placed = Hold.Place(account, command.Amount.MinorUnits, command.Description, command.Reference, command.Lifetime, timeProvider.GetUtcNow(), command.HoldId);
             if (placed.IsFailure)
             {
                 return placed.Error;
@@ -177,6 +184,9 @@ public sealed class HoldService(
             return PostedJournal.From(posted.Value, alreadyPosted: false);
         }, cancellationToken);
     }
+
+    /// <summary>The hold as it is now (a snapshot), or null.</summary>
+    public Task<Hold?> FindAsync(HoldId holdId, CancellationToken cancellationToken) => holds.PeekAsync(holdId, cancellationToken);
 
     /// <summary>Cancels a hold and returns all of its money to the wallet.</summary>
     public Task<Result<HoldView>> ReleaseAsync(HoldId holdId, CancellationToken cancellationToken) =>

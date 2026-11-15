@@ -113,6 +113,19 @@ public static class LedgerTestKit
 
     public static async Task<long> BalanceAsync(this LedgerApiFactory factory, AccountId id) => (await factory.AccountAsync(id)).Balance;
 
+    /// <summary>The balance of a system account, all shards together.</summary>
+    public static async Task<long> SystemBalanceAsync(this LedgerApiFactory factory, SystemAccountDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        long total = 0;
+        for (var shard = 0; shard < definition.Shards; shard++)
+        {
+            total += await factory.BalanceAsync(ChartOfAccounts.IdFor(definition.Code, shard));
+        }
+
+        return total;
+    }
+
     /// <summary>Seals every pending audit row (the background sealer is off in tests).</summary>
     public static Task<int> SealAuditAsync(this LedgerApiFactory factory) =>
         factory.InScopeAsync(services => services.GetRequiredService<AuditSealer>().SealAllAsync(500, Cancel));

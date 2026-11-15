@@ -16,6 +16,8 @@ public sealed partial class KafkaTopicAdmin(KafkaOptions options, ILogger<KafkaT
     {
         [KafkaTopics.IdentityEvents] = 6,
         [KafkaTopics.LedgerEvents] = 12,
+        [KafkaTopics.LedgerCommands] = 6,
+        [KafkaTopics.LedgerReplies] = 6,
         [KafkaTopics.PaymentsEvents] = 6,
         [KafkaTopics.BillsEvents] = 6,
         [KafkaTopics.TopupEvents] = 6,
@@ -36,6 +38,8 @@ public sealed partial class KafkaTopicAdmin(KafkaOptions options, ILogger<KafkaT
     {
         [KafkaTopics.IdentityEvents] = SevenDays,
         [KafkaTopics.LedgerEvents] = -1,
+        [KafkaTopics.LedgerCommands] = SevenDays,
+        [KafkaTopics.LedgerReplies] = SevenDays,
         [KafkaTopics.PaymentsEvents] = SevenDays,
         [KafkaTopics.BillsEvents] = SevenDays,
         [KafkaTopics.TopupEvents] = SevenDays,

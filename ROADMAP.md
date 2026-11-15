@@ -233,22 +233,22 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M4.7 End-to-end slice with live balance in the UI
 
 ### M5 — Mock External Providers (week 6)
-- [ ] M5.1 Runtime fault injection (latency, errors, timeouts, outages)
-- [ ] M5.2 Mock Raast and banks (HBL, Meezan, UBL, MCB) with signed callbacks
-- [ ] M5.3 Mock billers (K-Electric, LESCO, SNGPL, PTCL)
-- [ ] M5.4 Mock telcos (Jazz, Zong, Telenor, Ufone)
-- [ ] M5.5 Mock NADRA
-- [ ] M5.6 Settlement files with injectable mismatches
-- [ ] M5.7 Accept-but-timeout mode
+- [x] M5.1 Runtime fault injection (latency, errors, timeouts, outages)
+- [x] M5.2 Mock Raast and banks (HBL, Meezan, UBL, MCB) with signed callbacks
+- [x] M5.3 Mock billers (K-Electric, LESCO, SNGPL, PTCL)
+- [x] M5.4 Mock telcos (Jazz, Zong, Telenor, Ufone)
+- [x] M5.5 Mock NADRA
+- [x] M5.6 Settlement files with injectable mismatches
+- [x] M5.7 Accept-but-timeout mode
 
 ### M6 — Payments: P2P & Raast (week 7)
 - [ ] M6.1 P2P transfer flow
 - [ ] M6.2 Request money and split bill
-- [ ] M6.3 Saga infrastructure (own engine, persisted state)
-- [ ] M6.4 Raast transfer Saga
-- [ ] M6.5 Polly per bank: timeout, retry + jitter, circuit breaker, bulkhead
-- [ ] M6.6 Queue transfers while a bank is down
-- [ ] M6.7 Saga status timeline API
+- [x] M6.3 Saga infrastructure (own engine, persisted state): WalletPK.Sagas, saga_instances + saga_steps, row-locked message steps, leased timers
+- [x] M6.4 Raast transfer Saga (Payments service): reserve → send → bank confirms → settle, or return the money
+- [x] M6.5 Polly per bank: timeout, retry + jitter, circuit breaker, bulkhead
+- [x] M6.6 Queue transfers while a bank is down (given up, money returned, after 24 h)
+- [x] M6.7 Saga status timeline API (and payments.bank_transfer_changed events)
 
 ### M7 — Bill Payment (week 8)
 - [ ] M7.1 Biller catalog and validation
