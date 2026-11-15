@@ -64,6 +64,10 @@ services:
       Kestrel__Endpoints__Grpc__Url: http://+:8081
       # The outbox relay publishes identity.events here (topics are created by kafka-init).
       Kafka__BootstrapServers: kafka:9092
+      # KYC checks go to the mock NADRA over HTTP (M5.5) instead of the in-process stand-in.
+      Nadra__Mode: Http
+      Nadra__BaseUrl: http://mock-providers:8080/
+      Nadra__ApiKey: dev-only-provider-client-key
       Observability__SeqUrl: http://seq:5341
       Observability__OtlpTracesEndpoint: http://jaeger:4317
       Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
@@ -77,6 +81,8 @@ services:
         condition: service_healthy
       kafka-init:
         condition: service_completed_successfully
+      mock-providers:
+        condition: service_started
 
   ledger:
     <<: *dotnet-service
@@ -109,6 +115,33 @@ services:
         condition: service_completed_successfully
       identity:
         condition: service_started
+
+  # Mock external providers (M5): Raast and banks, billers, telcos, NADRA, with runtime faults and
+  # settlement files. Internal: services call it on the compose network; port 5200 is for you and tests.
+  # Control API example:  curl -X PUT localhost:5200/admin/faults/biller:KE -H "X-Admin-Key: dev-only-provider-admin-key"
+  #                            -H "Content-Type: application/json" -d '{"timeoutRate": 1}'
+  mock-providers:
+    <<: *dotnet-service
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: src/MockProviders/WalletPK.MockProviders/Dockerfile
+    image: walletpk/mock-providers:dev
+    container_name: walletpk-mock-providers
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__MockProvidersDb: Host=postgres;Port=5432;Database=walletpk_mockproviders;Username=${POSTGRES_USER:-walletpk};Password=${POSTGRES_PASSWORD:-walletpk_dev}
+      # Raast confirmations go to WalletPK's webhook through the gateway, signed with the gateway's raast secret.
+      MockProviders__Raast__CallbackUrl: http://gateway:8080/webhooks/raast/transfer-status
+      MockProviders__Raast__CallbackSecret: dev-only-raast-webhook-secret
+      Observability__SeqUrl: http://seq:5341
+      Observability__OtlpTracesEndpoint: http://jaeger:4317
+      Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
+    ports:
+      - "${MOCK_PROVIDERS_PORT:-5200}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   # Web app (M4.7): the customer wallet at http://localhost:3000. The browser talks to the gateway on
   # localhost:5000 (REST + /hubs/wallet); the Next.js server keeps the refresh token in a cookie and

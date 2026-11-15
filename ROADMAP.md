@@ -230,7 +230,7 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M4.4 Read models: balances, history, per-minute metrics
 - [x] M4.5 Dapper query API (p95 < 10 ms)
 - [x] M4.6 Read-model replay from Kafka
-- [ ] M4.7 End-to-end slice with live balance in the UI
+- [x] M4.7 End-to-end slice with live balance in the UI
 
 ### M5 — Mock External Providers (week 6)
 - [ ] M5.1 Runtime fault injection (latency, errors, timeouts, outages)

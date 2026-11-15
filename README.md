@@ -141,6 +141,12 @@ npm run dev
 
 Try it with two browsers (or one normal and one private window): sign up as two users. No phone is needed, because in Development the yellow **Dev SMS inbox** shows each code. Tap **Add Rs. 5,000** for test money, then send money from one to the other. The other screen updates by itself within a second. See [web/README.md](web/README.md) for how it works.
 
+## Simulating the Outside World
+
+Banks, Raast, billers, mobile networks and NADRA are simulated by the mock providers service (port 5200, started
+with `--profile apps`). You can make any of them slow, flaky or dead while the system runs, and they produce
+settlement files with mismatches you plant yourself. See [src/MockProviders/README.md](src/MockProviders/README.md).
+
 ## Service Ports
 
 | Service | Local port (`dotnet run`) | Gateway path |
@@ -156,7 +162,7 @@ Try it with two browsers (or one normal and one private window): sign up as two 
 | Notifications | 5108 | `/api/notifications/*`, `/hubs/*` (except `/hubs/wallet`) |
 | Reconciliation | 5109 | `/api/reconciliation/*` (staff only) |
 | Simulation | 5110 | `/api/simulation/*` (staff only) |
-| Mock Providers | 5200 | not exposed through the gateway |
+| Mock Providers | 5200 | not exposed through the gateway ([README](src/MockProviders/README.md)) |
 | Web app (Next.js) | 3000 | |
 
 ## Project Conventions

@@ -132,7 +132,7 @@ public static class IdentityInfrastructureExtensions
         services.AddSingleton<ISmsSender, LoggingSmsSender>();
         services.AddSingleton<IFieldEncryptor, AesGcmFieldEncryptor>();
         services.AddSingleton<IBlindIndex, HmacBlindIndex>();
-        services.AddSingleton<INadraClient, SimulatedNadraClient>();
+        AddNadra(services);
         services.TryAddSingleton(TimeProvider.System);
 
         // ---- Use cases ----
@@ -192,6 +192,32 @@ public static class IdentityInfrastructureExtensions
             });
 
         services.AddAuthorization();
+    }
+
+    /// <summary>NADRA: the in-process stand-in by default, or the mock provider over HTTP (Nadra:Mode = Http, M5.5).</summary>
+    private static void AddNadra(IServiceCollection services)
+    {
+        services.AddOptions<NadraOptions>()
+            .BindConfiguration(NadraOptions.SectionName)
+            .Validate(options => options.IsValid(), "Nadra: Mode is Simulated or Http; Http needs BaseUrl and ApiKey; TimeoutSeconds 1-60.")
+            .ValidateOnStart();
+
+        services.AddSingleton<SimulatedNadraClient>();
+        services.AddHttpClient<HttpNadraClient>((provider, client) =>
+        {
+            var options = provider.GetRequiredService<IOptions<NadraOptions>>().Value;
+            if (options.UsesHttp)
+            {
+                client.BaseAddress = new Uri(options.BaseUrl.EndsWith('/') ? options.BaseUrl : options.BaseUrl + "/");
+                client.DefaultRequestHeaders.Add("X-Api-Key", options.ApiKey);
+            }
+
+            client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+        });
+        services.AddTransient<INadraClient>(provider =>
+            provider.GetRequiredService<IOptions<NadraOptions>>().Value.UsesHttp
+                ? provider.GetRequiredService<HttpNadraClient>()
+                : provider.GetRequiredService<SimulatedNadraClient>());
     }
 
     private static string RequiredConnectionString(IServiceProvider provider, string name)
