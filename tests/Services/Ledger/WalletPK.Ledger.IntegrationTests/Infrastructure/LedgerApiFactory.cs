@@ -39,7 +39,7 @@ public sealed class LedgerApiFactory : WebApplicationFactory<Program>, IAsyncLif
     private readonly RedisContainer _redis = new RedisBuilder("redis:7.4-alpine").Build();
 
     // The same broker image as docker-compose.infra.yml.
-    private readonly KafkaContainer _kafka = new KafkaBuilder("apache/kafka:4.3.0").Build();
+    private readonly KafkaContainer _kafka = new KafkaBuilder("apache/kafka:4.3.1").Build();
 
     private readonly RSA _rsa = RSA.Create(2048);
 

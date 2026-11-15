@@ -9,12 +9,27 @@ updates:
       timezone: Asia/Karachi
     open-pull-requests-limit: 5
     groups:
+      # Microsoft ships these together (10.0.x patches); one PR, or restore fails on mixed versions.
+      dotnet-platform:
+        patterns: ["Microsoft.AspNetCore.*", "Microsoft.EntityFrameworkCore*", "Microsoft.Extensions.*", "dotnet-ef"]
       opentelemetry:
         patterns: ["OpenTelemetry*"]
       serilog:
         patterns: ["Serilog*"]
       testing:
-        patterns: ["xunit*", "Shouldly", "Microsoft.AspNetCore.TestHost"]
+        patterns: ["xunit*", "Shouldly"]
+    ignore:
+      # Stay on .NET 10 (LTS); .NET 11 is a short-term release.
+      - dependency-name: "Microsoft.AspNetCore.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.EntityFrameworkCore*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Microsoft.Extensions.*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "Npgsql*"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "dotnet-ef"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: npm
     directory: /web
@@ -28,6 +43,18 @@ updates:
         patterns: ["next", "eslint-config-next", "react", "react-dom", "@types/react", "@types/react-dom"]
       tailwind:
         patterns: ["tailwindcss", "@tailwindcss/*"]
+    ignore:
+      # Majors that do not fit yet: Next's lint plugins support ESLint 9 only, typescript-eslint does
+      # not support TypeScript 7, Node types follow the Node 22 runtime, and the SignalR client follows
+      # the server (.NET 10).
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@microsoft/signalr"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /

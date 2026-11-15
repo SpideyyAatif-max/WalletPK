@@ -84,7 +84,7 @@ public sealed class NoteWritingHandler(TestDbContext db) : IIntegrationEventHand
 public sealed class PipelineFixture : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine").Build();
-    private readonly KafkaContainer _kafka = new KafkaBuilder("apache/kafka:4.3.0").Build();
+    private readonly KafkaContainer _kafka = new KafkaBuilder("apache/kafka:4.3.1").Build();
 
     public string KafkaBootstrapServers => _kafka.GetBootstrapAddress();
 
