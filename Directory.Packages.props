@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup Label="ASP.NET Core and EF Core">
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.15" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- EF Core core packages must share one version -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.14" />
