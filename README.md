@@ -29,7 +29,7 @@ WalletPK is a distributed mobile wallet and payments platform modelled on JazzCa
 | Database | PostgreSQL 17, EF Core (writes), Dapper (reads) |
 | Cache and locks | Redis 7 |
 | Event streaming | Apache Kafka (KRaft) |
-| Sagas and resilience | MassTransit, Polly |
+| Sagas and resilience | Own Saga engine (Postgres + outbox + Kafka), Polly |
 | Real-time | SignalR |
 | Frontend | Next.js, TypeScript, Tailwind CSS, shadcn/ui |
 | Observability | OpenTelemetry, Jaeger, Prometheus, Grafana, Seq |

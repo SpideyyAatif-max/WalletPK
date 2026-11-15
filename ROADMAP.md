@@ -31,7 +31,7 @@ By the end of M4 a full working slice exists: sign up -> wallet -> transfer -> l
 | Dapper | Fast reads from read models | M4 | M10, M12, ops dashboards |
 | Redis | Short-lived, fast state (see 2.1) | M1 | M2, M3, M10, M11 |
 | Kafka | Durable event log connecting services | M0 (container), M4 (real use) | Every service after M4 |
-| MassTransit | Saga state machines | M6 | M7, M8 |
+| Saga engine (our own) | Saga state machines: state in Postgres, steps over the outbox, inbox and Kafka, timeouts as scheduled rows. Chosen over MassTransit (v9 is commercial; the free v8 loses support at the end of 2026) | M6 | M7, M8 |
 | Polly | Retries, timeouts, circuit breakers, bulkheads | M6 | M7, M8, M2 (NADRA calls) |
 | gRPC | Fast internal service-to-service calls | M2 (limits check) | M3, M10 (fraud score) |
 | SignalR | Pushes live updates to the browser | M4.7 (first live balance) | M11 (full hubs), M13, M14 |
@@ -244,7 +244,7 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 ### M6 — Payments: P2P & Raast (week 7)
 - [ ] M6.1 P2P transfer flow
 - [ ] M6.2 Request money and split bill
-- [ ] M6.3 Saga infrastructure (MassTransit, persisted state)
+- [ ] M6.3 Saga infrastructure (own engine, persisted state)
 - [ ] M6.4 Raast transfer Saga
 - [ ] M6.5 Polly per bank: timeout, retry + jitter, circuit breaker, bulkhead
 - [ ] M6.6 Queue transfers while a bank is down
