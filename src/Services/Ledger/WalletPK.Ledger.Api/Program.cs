@@ -1,5 +1,6 @@
 using WalletPK.Ledger.Api;
 using WalletPK.Ledger.Api.Endpoints;
+using WalletPK.Ledger.Api.Realtime;
 using WalletPK.Ledger.Infrastructure;
 using WalletPK.Observability;
 using WalletPK.Web;
@@ -12,6 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddWalletPkObservability("ledger");
 builder.Services.AddWalletPkWeb();
 builder.Services.AddLedgerServices();
+
+// Live balance in the browser: SignalR hub fed from ledger.events (M4.7).
+builder.Services.AddLiveWalletUpdates();
 
 // Every wallet call needs a valid access token, checked here as well as at the gateway (defence in depth).
 builder.Services.AddWalletPkJwtBearer();
@@ -32,6 +36,8 @@ await app.MigrateDatabaseIfConfiguredAsync();
 
 app.MapWalletEndpoints();
 app.MapLedgerOperationsEndpoints();
+app.MapLiveWalletUpdates();
+app.MapDevToolsEndpoints();
 
 await app.RunAsync();
 

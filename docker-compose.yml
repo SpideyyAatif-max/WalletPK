@@ -109,3 +109,32 @@ services:
         condition: service_completed_successfully
       identity:
         condition: service_started
+
+  # Web app (M4.7): the customer wallet at http://localhost:3000. The browser talks to the gateway on
+  # localhost:5000 (REST + /hubs/wallet); the Next.js server keeps the refresh token in a cookie and
+  # reaches the gateway over the compose network.
+  web:
+    profiles: [apps]
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    build:
+      context: web
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:${GATEWAY_PORT:-5000}
+        NEXT_PUBLIC_DEV_TOOLS: "true"
+    image: walletpk/web:dev
+    container_name: walletpk-web
+    environment:
+      API_URL: http://gateway:8080
+      # Plain http on localhost: Secure cookies would be dropped by some browsers.
+      SESSION_COOKIE_SECURE: "false"
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      gateway:
+        condition: service_started
+    networks: [walletpk]

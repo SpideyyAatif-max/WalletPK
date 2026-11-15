@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/* WalletPK palette: a deep green for money, warm neutrals for text. */
+@theme {
+  --color-brand-50: #ecfdf3;
+  --color-brand-100: #d1fadf;
+  --color-brand-200: #a6f4c5;
+  --color-brand-300: #6ce9a6;
+  --color-brand-400: #32d583;
+  --color-brand-500: #12b76a;
+  --color-brand-600: #039855;
+  --color-brand-700: #027a48;
+  --color-brand-800: #05603a;
+  --color-brand-900: #054f31;
+  --color-brand-950: #053321;
+
+  --color-ink-50: #f9fafb;
+  --color-ink-100: #f2f4f7;
+  --color-ink-200: #e4e7ec;
+  --color-ink-300: #d0d5dd;
+  --color-ink-400: #98a2b3;
+  --color-ink-500: #667085;
+  --color-ink-600: #475467;
+  --color-ink-700: #344054;
+  --color-ink-800: #1d2939;
+  --color-ink-900: #101828;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-ink-50 text-ink-900 antialiased;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@keyframes flash {
+  0% {
+    background-color: var(--color-brand-100);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.flash {
+  animation: flash 1.6s ease-out;
+}

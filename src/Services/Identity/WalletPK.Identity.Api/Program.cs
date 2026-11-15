@@ -27,6 +27,7 @@ app.MapRegistrationEndpoints();
 app.MapAuthEndpoints();
 app.MapAccountEndpoints();
 app.MapKycAndLimitsEndpoints();
+app.MapDevToolsEndpoints();
 
 // Internal service-to-service API (HTTP/2 only; the gateway never routes here).
 app.MapGrpcService<LimitsGrpcService>();

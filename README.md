@@ -119,19 +119,41 @@ dotnet run --project src/Gateway/WalletPK.Gateway
 Open http://localhost:5000 to see every route. Requests appear in Seq (http://localhost:8081) and traces in Jaeger (http://localhost:16686, service `gateway`).
 Calls to a service that is not running yet return `503`; protected routes without a token return `401`.
 
+## Running the Web App (live demo)
+
+The customer wallet at http://localhost:3000: sign up, log in, see your balance update live, send money, browse history.
+
+**Everything in Docker** (first build takes a few minutes):
+
+```bash
+docker compose --profile apps up -d --build
+```
+
+**Or with hot reload** while working on the frontend (services in Docker, the web app from source):
+
+```bash
+docker compose --profile apps up -d --build gateway identity ledger
+cd web
+copy .env.example .env.local     # macOS/Linux: cp .env.example .env.local
+npm install
+npm run dev
+```
+
+Try it with two browsers (or one normal and one private window): sign up as two users. No phone is needed, because in Development the yellow **Dev SMS inbox** shows each code. Tap **Add Rs. 5,000** for test money, then send money from one to the other. The other screen updates by itself within a second. See [web/README.md](web/README.md) for how it works.
+
 ## Service Ports
 
 | Service | Local port (`dotnet run`) | Gateway path |
 | --- | --- | --- |
 | API Gateway | 5000 | `/` |
 | Identity & KYC | 5101 (gRPC: 5201, internal only) | `/api/identity/*` |
-| Wallet & Ledger | 5102 | `/api/wallets/*` |
+| Wallet & Ledger | 5102 | `/api/wallets/*`, `/api/ledger/*` (staff only), `/hubs/wallet` (live balance) |
 | Payments | 5103 | `/api/payments/*`, `/webhooks/raast/*` |
 | Bill Payment | 5104 | `/api/bills/*`, `/webhooks/billers/*` |
 | Top-up & Merchant | 5105 | `/api/topups/*`, `/api/merchants/*` |
 | Agent Network | 5106 | `/api/agents/*` |
 | Fraud & Risk | 5107 | `/api/fraud/*` (staff only) |
-| Notifications | 5108 | `/api/notifications/*`, `/hubs/*` |
+| Notifications | 5108 | `/api/notifications/*`, `/hubs/*` (except `/hubs/wallet`) |
 | Reconciliation | 5109 | `/api/reconciliation/*` (staff only) |
 | Simulation | 5110 | `/api/simulation/*` (staff only) |
 | Mock Providers | 5200 | not exposed through the gateway |

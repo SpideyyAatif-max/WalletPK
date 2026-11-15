@@ -7,10 +7,11 @@ namespace WalletPK.Identity.Infrastructure.Sms;
 
 /// <summary>
 /// Stand-in SMS gateway. In Development the full message (including the OTP) is logged, so you can
-/// read codes in Seq while testing; in other environments only the masked number is logged, because
-/// OTPs must never appear in production logs. A real SMS provider would replace this class.
+/// read codes in Seq while testing (and the web app can show them, see <see cref="DevSmsInbox"/>); in
+/// other environments only the masked number is logged, because OTPs must never appear in production
+/// logs. A real SMS provider would replace this class.
 /// </summary>
-internal sealed partial class LoggingSmsSender(IHostEnvironment environment, ILogger<LoggingSmsSender> logger) : ISmsSender
+internal sealed partial class LoggingSmsSender(IHostEnvironment environment, DevSmsInbox inbox, ILogger<LoggingSmsSender> logger) : ISmsSender
 {
     public Task SendAsync(PhoneNumber to, string message, CancellationToken cancellationToken)
     {
@@ -19,6 +20,7 @@ internal sealed partial class LoggingSmsSender(IHostEnvironment environment, ILo
         if (environment.IsDevelopment())
         {
             LogDevelopmentSms(logger, to.Value, message);
+            inbox.Add(to.Value, message);
         }
         else
         {

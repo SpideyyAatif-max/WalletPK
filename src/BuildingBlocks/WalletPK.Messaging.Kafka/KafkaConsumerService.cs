@@ -16,7 +16,11 @@ namespace WalletPK.Messaging.Kafka;
 /// Null means the registered <see cref="IEnvelopeProcessor"/> (the inbox). Read-model projections use
 /// their own processor, idempotent by design, so they can replay a topic from the start (M4.6).
 /// </param>
-public sealed record KafkaConsumerDefinition(string GroupId, IReadOnlyList<string> Topics, Type? ProcessorType = null);
+/// <param name="StartFromLatest">
+/// Where a group with no committed offsets begins: false (the default) reads the whole topic, true
+/// only messages that arrive from now on. Live push to browsers uses true (M4.7).
+/// </param>
+public sealed record KafkaConsumerDefinition(string GroupId, IReadOnlyList<string> Topics, Type? ProcessorType = null, bool StartFromLatest = false);
 
 /// <summary>
 /// Reads one consumer group's topics and hands every message to the scoped <see cref="IEnvelopeProcessor"/>.
@@ -54,7 +58,7 @@ public sealed partial class KafkaConsumerService(
             BootstrapServers = options.BootstrapServers,
             ClientId = options.ClientId,
             GroupId = definition.GroupId,
-            AutoOffsetReset = AutoOffsetReset.Earliest,
+            AutoOffsetReset = definition.StartFromLatest ? AutoOffsetReset.Latest : AutoOffsetReset.Earliest,
             EnableAutoCommit = true,        // commits the offsets we store, every few seconds
             EnableAutoOffsetStore = false,  // ...and we store an offset only after processing succeeded
             EnablePartitionEof = false,

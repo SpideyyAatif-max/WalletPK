@@ -227,9 +227,9 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M4.1 Outbox relay (FOR UPDATE SKIP LOCKED, batch publish, back-off) and Kafka transport (WalletPK.Messaging.Kafka)
 - [x] M4.2 Kafka topics keyed by wallet ID (ledger.wallet_entry_posted with a gapless per-wallet sequence)
 - [x] M4.3 Inbox: idempotent consumers (the Ledger opens a wallet on identity.user_registered)
-- [ ] M4.4 Read models: balances, history, per-minute metrics
-- [ ] M4.5 Dapper query API (p95 < 10 ms)
-- [ ] M4.6 Read-model replay from Kafka
+- [x] M4.4 Read models: balances, history, per-minute metrics
+- [x] M4.5 Dapper query API (p95 < 10 ms)
+- [x] M4.6 Read-model replay from Kafka
 - [ ] M4.7 End-to-end slice with live balance in the UI
 
 ### M5 — Mock External Providers (week 6)

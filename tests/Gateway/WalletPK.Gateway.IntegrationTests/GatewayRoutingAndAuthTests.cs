@@ -27,7 +27,7 @@ public class GatewayRoutingAndAuthTests(GatewayFactory factory) : IClassFixture<
         var info = await client.GetFromJsonAsync<JsonElement>(new Uri("/", UriKind.Relative), Cancel);
 
         info.GetProperty("service").GetString().ShouldBe("WalletPK API Gateway");
-        info.GetProperty("routes").GetArrayLength().ShouldBe(16);
+        info.GetProperty("routes").GetArrayLength().ShouldBe(18); // 17 + the Development-only SMS inbox
     }
 
     [Fact]
@@ -113,6 +113,40 @@ public class GatewayRoutingAndAuthTests(GatewayFactory factory) : IClassFixture<
         echo.ShouldNotBeNull();
         echo.Header(IdentityHeaders.UserId).ShouldBe("real-user");
         echo.Header(IdentityHeaders.KycTier).ShouldBe("L1");
+    }
+
+    [Fact]
+    public async Task In_development_the_sms_inbox_is_reachable_without_a_token()
+    {
+        using var client = factory.CreateClient();
+
+        var echo = await client.GetFromJsonAsync<EchoResponse>(new Uri("/api/identity/dev/sms?phoneNumber=03001234567", UriKind.Relative), Cancel);
+
+        echo.ShouldNotBeNull();
+        echo.Path.ShouldBe("/api/identity/dev/sms");
+        echo.Header(IdentityHeaders.UserId).ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task The_wallet_hub_takes_its_token_from_the_query_string_like_a_browser_websocket()
+    {
+        using var client = factory.CreateClient();
+        var token = factory.CreateToken("user-ws");
+
+        using var anonymous = await client.PostAsync(new Uri("/hubs/wallet/negotiate?negotiateVersion=1", UriKind.Relative), null, Cancel);
+        anonymous.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+
+        using var response = await client.PostAsync(new Uri($"/hubs/wallet/negotiate?negotiateVersion=1&access_token={token}", UriKind.Relative), null, Cancel);
+        var echo = await response.Content.ReadFromJsonAsync<EchoResponse>(Cancel);
+
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+        echo.ShouldNotBeNull();
+        echo.Path.ShouldBe("/hubs/wallet/negotiate");
+        echo.Header(IdentityHeaders.UserId).ShouldBe("user-ws");
+
+        // Outside /hubs a token in the query string counts for nothing.
+        using var wallet = await client.GetAsync(new Uri($"/api/wallets/me?access_token={token}", UriKind.Relative), Cancel);
+        wallet.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
