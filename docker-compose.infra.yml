@@ -61,7 +61,7 @@ services:
   # noeviction: a lock or idempotency key must never be silently evicted.
   # ------------------------------------------------------------------
   redis:
-    image: redis:7.4-alpine
+    image: redis:8.10-alpine
     container_name: walletpk-redis
     <<: [*restart, *logging]
     command:
