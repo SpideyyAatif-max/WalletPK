@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Bills.Domain</RootNamespace>
+    <Description>Bill payment domain: the biller catalog, consumer-number rules, bill payment states and the reminder rule. No infrastructure dependencies.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Common\WalletPK.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Bills.UnitTests" />
+  </ItemGroup>
+
+</Project>

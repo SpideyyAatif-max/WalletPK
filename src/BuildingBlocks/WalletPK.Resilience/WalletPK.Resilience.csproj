@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Resilience</RootNamespace>
+    <Description>Calling outside providers (banks, billers, telcos) safely: a Polly pipeline per provider (bulkhead, timeouts, retry with jitter, circuit breaker) and one way to read how a call ended.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Polly.Core" />
+    <PackageReference Include="Polly.Extensions" />
+    <PackageReference Include="Polly.RateLimiting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Payments.UnitTests" />
+    <InternalsVisibleTo Include="WalletPK.Bills.UnitTests" />
+  </ItemGroup>
+
+</Project>

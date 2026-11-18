@@ -196,6 +196,25 @@ instant and all-or-nothing:
 In the web app (http://localhost:3000/wallet): **Send**, **Bank** (lookup, send, live tracker, bank status)
 and **Requests** (to pay, I asked, split bills).
 
+## Paying Bills
+
+The Bill Payment service (port 5104, `/api/bills/*`) pays K-Electric, LESCO, SNGPL and PTCL bills:
+
+1. `POST /api/bills/inquiry` `{"biller": "KE", "consumerNumber": "0400012345678"}` shows this month's bill
+   (name, due date, amount within / after due date, payable today). The number's format is checked first.
+2. `POST /api/bills/payments` (Idempotency-Key) with the payable amount starts a Saga: the money is
+   reserved, the biller is paid, then the money is settled to `BILLER_SETTLEMENT` (or returned).
+3. If the biller is **down**, it retries with back-off (and gives up, returning the money, after 30 minutes).
+   If the biller **times out**, it never pays again blindly: it asks the biller whether the payment arrived.
+   With no answer for 10 minutes the payment is **pending verification** (money stays reserved); after 48 hours
+   it is **dead-lettered** (`bills.dlq`) for operations, who **replay**, **refund** or **confirm** it
+   (`/api/bills/ops/*`, operations roles only).
+4. **Saved billers** (`/api/bills/saved`) remember the last bill; a job checks them twice a day and sends one
+   `bills.bill_due_reminder` per unpaid bill from three days before its due date.
+
+Consumer numbers ending `0000` do not exist, `1111` are already paid, `2222` are disconnected (refused).
+Make a biller time out with `curl -X PUT localhost:5200/admin/faults/biller:KE -H "X-Admin-Key: dev-only-provider-admin-key" -H "Content-Type: application/json" -d '{"acceptButTimeoutRate": 1}'`.
+
 ## Service Ports
 
 | Service | Local port (`dotnet run`) | Gateway path |

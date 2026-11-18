@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight, Building2, FlaskConical, HandCoins } from "lucide-react";
+import { ArrowUpRight, Building2, FlaskConical, HandCoins, Receipt } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { LiveBadge } from "@/components/live-badge";
@@ -47,6 +47,7 @@ export default function WalletHome() {
       <div className="grid grid-cols-4 gap-3">
         <QuickAction href="/wallet/send" label="Send money" icon={<ArrowUpRight className="h-5 w-5" />} />
         <QuickAction href="/wallet/bank" label="To bank" icon={<Building2 className="h-5 w-5" />} />
+        <QuickAction href="/wallet/bills" label="Bills" icon={<Receipt className="h-5 w-5" />} />
         <QuickAction href="/wallet/requests" label="Requests" icon={<HandCoins className="h-5 w-5" />} />
         {devToolsEnabled && <DevTopUp />}
       </div>

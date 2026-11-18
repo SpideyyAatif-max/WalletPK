@@ -161,6 +161,24 @@ public sealed class RaastGatewayTests : IDisposable
     }
 
     [Fact]
+    public async Task A_call_that_timed_out_before_the_circuit_opened_is_unknown_not_unavailable()
+    {
+        // Earlier calls trip the breaker half way; this call's first try timed out (it may have arrived),
+        // so even though its retry meets an open circuit, the outcome must be "ask first", not "not done".
+        _network.Respond(HttpStatusCode.ServiceUnavailable, "", times: 3);
+        for (var i = 0; i < 3; i++)
+        {
+            (await SendAsync(Hbl)).Outcome.ShouldBe(RaastCallOutcome.Unavailable);
+        }
+
+        _network.Hang();
+        var result = await SendAsync(Hbl);
+
+        result.Outcome.ShouldBe(RaastCallOutcome.Unknown);
+        result.Detail!.ShouldContain("circuit open");
+    }
+
+    [Fact]
     public async Task A_full_bulkhead_refuses_more_calls_to_that_bank()
     {
         var release = new TaskCompletionSource();

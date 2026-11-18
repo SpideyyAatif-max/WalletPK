@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Bills.Api</RootNamespace>
+    <Description>WalletPK Bill Payment service: biller catalog and inquiry, bill payment Sagas (status query before retry, pending verification, dead-letter queue), saved billers and due-date reminders.</Description>
+    <UserSecretsId>walletpk-bills</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Needed only by the dotnet-ef tool (migrations); not shipped with the app. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Bills.Infrastructure\WalletPK.Bills.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Observability\WalletPK.Observability.csproj" />
+  </ItemGroup>
+
+</Project>

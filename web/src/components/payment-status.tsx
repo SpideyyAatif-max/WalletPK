@@ -15,11 +15,16 @@ const tones: Record<string, string> = {
   Cancelled: "bg-ink-100 text-ink-600",
   Expired: "bg-ink-100 text-ink-600",
   NeedsReview: "bg-amber-50 text-amber-800",
+  PendingVerification: "bg-amber-50 text-amber-800",
+  UnderReview: "bg-amber-50 text-amber-800",
+  Unpaid: "bg-amber-50 text-amber-800",
 };
+
+const labels: Record<string, string> = { NeedsReview: "Under review", UnderReview: "Under review", PendingVerification: "Confirming" };
 
 /** A small coloured label for a transfer's or request's status. */
 export function StatusPill({ status }: { status: string }) {
-  return <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold", tones[status] ?? "bg-ink-100 text-ink-700")}>{status === "NeedsReview" ? "Under review" : status}</span>;
+  return <span className={cn("inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold", tones[status] ?? "bg-ink-100 text-ink-700")}>{labels[status] ?? status}</span>;
 }
 
 /**
@@ -33,9 +38,9 @@ export function Timeline({ steps, status }: { steps: TimelineStep[]; status: str
       {steps.map((step, index) => {
         const last = index === steps.length - 1;
         const icon = last && moving
-          ? step.state === "Queued" ? <Clock className="h-5 w-5 text-amber-600" /> : <Loader2 className="h-5 w-5 animate-spin text-sky-600" />
+          ? ["Queued", "Retrying", "PendingVerification", "DeadLettered"].includes(step.state) ? <Clock className="h-5 w-5 text-amber-600" /> : <Loader2 className="h-5 w-5 animate-spin text-sky-600" />
           : ["Failed", "Declined", "Expired", "Cancelled"].includes(step.state) ? <XCircle className="h-5 w-5 text-red-600" />
-          : ["Returning", "NeedsReview", "Queued"].includes(step.state) ? <AlertTriangle className="h-5 w-5 text-amber-600" />
+          : ["Returning", "NeedsReview", "Queued", "Retrying", "PendingVerification", "DeadLettered"].includes(step.state) ? <AlertTriangle className="h-5 w-5 text-amber-600" />
           : last ? <CheckCircle2 className="h-5 w-5 text-brand-600" />
           : <Circle className="h-5 w-5 fill-brand-600 text-brand-600" />;
         return (

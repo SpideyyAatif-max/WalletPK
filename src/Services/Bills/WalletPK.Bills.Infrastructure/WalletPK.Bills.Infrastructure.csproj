@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Bills.Infrastructure</RootNamespace>
+    <Description>Bills adapters: PostgreSQL via EF Core (outbox, inbox, Saga tables, saved billers), Kafka, the biller client with a resilience pipeline per biller, and the reminder job.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Bills.Application\WalletPK.Bills.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Persistence\WalletPK.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Messaging.Kafka\WalletPK.Messaging.Kafka.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Resilience\WalletPK.Resilience.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Bills.UnitTests" />
+    <InternalsVisibleTo Include="WalletPK.Bills.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

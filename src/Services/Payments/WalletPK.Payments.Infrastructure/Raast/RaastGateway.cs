@@ -1,14 +1,11 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using Polly.CircuitBreaker;
-using Polly.RateLimiting;
-using Polly.Timeout;
 using WalletPK.Payments.Application.Raast;
 using WalletPK.Payments.Domain;
+using WalletPK.Resilience;
 
 namespace WalletPK.Payments.Infrastructure.Raast;
 
@@ -129,71 +126,22 @@ internal sealed partial class RaastGateway(
 
     private async Task<CallResult> ExecuteAsync(string pipelineKey, Func<CancellationToken, Task<HttpResponseMessage>> send, CancellationToken cancellationToken)
     {
-        try
+        var result = await resilience.Pipelines.CallAsync(pipelineKey, send, cancellationToken);
+        var outcome = result.Outcome switch
         {
-            using var response = await resilience.For(pipelineKey).ExecuteAsync(async token => await send(token), cancellationToken);
-            var body = await ReadBodyAsync(response, cancellationToken);
-
-            if (response.IsSuccessStatusCode)
-            {
-                return new(RaastCallOutcome.Ok, body, null, null);
-            }
-
-            var code = body.ValueKind == JsonValueKind.Object && body.TryGetProperty("code", out var value) ? value.GetString() : null;
-            var detail = body.ValueKind == JsonValueKind.Object && body.TryGetProperty("detail", out var text) ? text.GetString() : null;
-            var described = $"HTTP {(int)response.StatusCode}{(code is null ? "" : $" {code}")}";
-            return response.StatusCode switch
-            {
-                HttpStatusCode.NotFound => new(RaastCallOutcome.NotFound, body, code, detail ?? described),
-                HttpStatusCode.ServiceUnavailable or HttpStatusCode.TooManyRequests => new(RaastCallOutcome.Unavailable, body, code, described),
-                >= HttpStatusCode.InternalServerError => new(RaastCallOutcome.Unknown, body, code, described),
-                _ => new(RaastCallOutcome.Rejected, body, code, detail ?? described),
-            };
-        }
-        catch (BrokenCircuitException)
+            ProviderOutcome.Ok => RaastCallOutcome.Ok,
+            ProviderOutcome.Rejected => RaastCallOutcome.Rejected,
+            ProviderOutcome.NotFound => RaastCallOutcome.NotFound,
+            ProviderOutcome.Unavailable => RaastCallOutcome.Unavailable,
+            _ => RaastCallOutcome.Unknown,
+        };
+        var detail = result.Detail switch
         {
-            return new(RaastCallOutcome.Unavailable, default, null, "circuit open: the bank is failing");
-        }
-        catch (RateLimiterRejectedException)
-        {
-            return new(RaastCallOutcome.Unavailable, default, null, "too many calls to the bank in flight");
-        }
-        catch (HttpRequestException exception) when (exception.HttpRequestError == HttpRequestError.ConnectionError)
-        {
-            // Could not even connect: the request never left.
-            return new(RaastCallOutcome.Unavailable, default, null, "could not connect");
-        }
-        catch (HttpRequestException exception)
-        {
-            return new(RaastCallOutcome.Unknown, default, null, $"connection lost ({exception.HttpRequestError})");
-        }
-        catch (TimeoutRejectedException)
-        {
-            return new(RaastCallOutcome.Unknown, default, null, "timed out");
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return new(RaastCallOutcome.Unknown, default, null, "timed out");
-        }
-    }
-
-    private static async Task<JsonElement> ReadBodyAsync(HttpResponseMessage response, CancellationToken cancellationToken)
-    {
-        var text = await response.Content.ReadAsStringAsync(cancellationToken);
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return default;
-        }
-
-        try
-        {
-            using var document = JsonDocument.Parse(text);
-            return document.RootElement.Clone();
-        }
-        catch (JsonException)
-        {
-            return default;
-        }
+            "circuit open: the provider is failing" => "circuit open: the bank is failing",
+            "too many calls in flight" => "too many calls to the bank in flight",
+            _ => result.Detail,
+        };
+        return new(outcome, result.Body, result.Code, detail);
     }
 
     private sealed record CallResult(RaastCallOutcome Outcome, JsonElement Body, string? Code, string? Detail);

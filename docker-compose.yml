@@ -38,6 +38,7 @@ services:
       ReverseProxy__Clusters__identity__Destinations__d1__Address: http://identity:8080/
       ReverseProxy__Clusters__ledger__Destinations__d1__Address: http://ledger:8080/
       ReverseProxy__Clusters__payments__Destinations__d1__Address: http://payments:8080/
+      ReverseProxy__Clusters__bills__Destinations__d1__Address: http://bills:8080/
     ports:
       - "${GATEWAY_PORT:-5000}:8080"
     depends_on:
@@ -141,6 +142,39 @@ services:
       Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
     ports:
       - "${PAYMENTS_PORT:-5103}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      ledger:
+        condition: service_started
+      mock-providers:
+        condition: service_started
+
+  # Bill Payment (M7): biller inquiry and payment Sagas (status query before retry, pending verification,
+  # dead-letter queue bills.dlq), saved billers and due-date reminders. Talks to the Ledger over Kafka
+  # (holds) and to the billers (the mock providers) through a resilience pipeline per biller.
+  bills:
+    <<: *dotnet-service
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: src/Services/Bills/WalletPK.Bills.Api/Dockerfile
+    image: walletpk/bills:dev
+    container_name: walletpk-bills
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__BillsDb: Host=postgres;Port=5432;Database=walletpk_bills;Username=${POSTGRES_USER:-walletpk};Password=${POSTGRES_PASSWORD:-walletpk_dev}
+      Jwt__Authority: http://identity:8080/
+      Kafka__BootstrapServers: kafka:9092
+      Providers__Billers__BaseUrl: http://mock-providers:8080/
+      Providers__Billers__ApiKey: dev-only-provider-client-key
+      Observability__SeqUrl: http://seq:5341
+      Observability__OtlpTracesEndpoint: http://jaeger:4317
+      Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
+    ports:
+      - "${BILLS_PORT:-5104}:8080"
     depends_on:
       postgres:
         condition: service_healthy

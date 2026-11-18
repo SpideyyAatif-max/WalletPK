@@ -251,12 +251,12 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M6.7 Saga status timeline API (and payments.bank_transfer_changed events)
 
 ### M7 — Bill Payment (week 8)
-- [ ] M7.1 Biller catalog and validation
-- [ ] M7.2 Bill inquiry
-- [ ] M7.3 Payment Saga with status query before retry
-- [ ] M7.4 Pending-verification state
-- [ ] M7.5 Dead-letter queue, replay, manual refund
-- [ ] M7.6 Saved billers and reminders
+- [x] M7.1 Biller catalog and validation (new Bill Payment service, port 5104)
+- [x] M7.2 Bill inquiry
+- [x] M7.3 Payment Saga with status query before retry (reserve → pay → settle to BILLER_SETTLEMENT, or return)
+- [x] M7.4 Pending-verification state
+- [x] M7.5 Dead-letter queue, replay, manual refund (bills.dlq, /api/bills/ops/*; also confirm-paid)
+- [x] M7.6 Saved billers and reminders (bills.bill_due_reminder)
 
 ### M8 — Top-up & Merchant QR (week 9)
 - [ ] M8.1 Mobile top-up Saga

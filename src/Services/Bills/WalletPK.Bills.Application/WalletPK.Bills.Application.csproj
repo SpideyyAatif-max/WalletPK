@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Bills.Application</RootNamespace>
+    <Description>Bill payment use cases: inquiry, the payment Saga (with status query before retry, pending verification and dead-lettering), saved billers and operations, written against ports.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Bills.Domain\WalletPK.Bills.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Contracts\WalletPK.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Sagas\WalletPK.Sagas.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Bills.UnitTests" />
+    <InternalsVisibleTo Include="WalletPK.Bills.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

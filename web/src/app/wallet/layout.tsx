@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, HandCoins, History, Home, Loader2, LogOut, Send } from "lucide-react";
+import { Building2, HandCoins, History, Home, Loader2, LogOut, Receipt, Send } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -17,6 +17,7 @@ const nav = [
   { href: "/wallet", label: "Home", icon: Home },
   { href: "/wallet/send", label: "Send", icon: Send },
   { href: "/wallet/bank", label: "Bank", icon: Building2 },
+  { href: "/wallet/bills", label: "Bills", icon: Receipt },
   { href: "/wallet/requests", label: "Requests", icon: HandCoins },
   { href: "/wallet/history", label: "History", icon: History },
 ];
@@ -81,7 +82,7 @@ function WalletShell({ children, phoneNumber, onLogout }: { children: ReactNode;
               const active = href === "/wallet" ? pathname === href : pathname.startsWith(href);
               return (
                 <li key={href} className="flex-1">
-                  <Link href={href} className={cn("flex flex-col items-center gap-1 py-3 text-xs font-medium", active ? "text-brand-700" : "text-ink-500 hover:text-ink-800")} aria-current={active ? "page" : undefined}>
+                  <Link href={href} className={cn("flex flex-col items-center gap-1 py-3 text-[11px] font-medium", active ? "text-brand-700" : "text-ink-500 hover:text-ink-800")} aria-current={active ? "page" : undefined}>
                     <Icon className="h-5 w-5" aria-hidden />
                     {label}
                   </Link>
