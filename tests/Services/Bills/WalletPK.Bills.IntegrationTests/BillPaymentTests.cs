@@ -111,7 +111,10 @@ public class BillPaymentTests(BillsFactory factory) : IAsyncLifetime
         var billers = (await JsonAsync(response)).EnumerateArray().ToList();
         billers.Select(biller => biller.GetProperty("code").GetString()).ShouldBe(["KE", "LESCO", "SNGPL", "PTCL"]);
         billers.Single(biller => biller.GetProperty("code").GetString() == "KE").GetProperty("consumerNumberLength").GetInt32().ShouldBe(13);
-        billers.ShouldAllBe(biller => biller.GetProperty("status").GetString() == "Available");
+
+        // Every biller reports its circuit's state. Which state depends on the tests that ran before this one
+        // (the fault tests open circuits on purpose), so only the shape is checked here.
+        billers.ShouldAllBe(biller => new[] { "Available", "Degraded", "Down" }.Contains(biller.GetProperty("status").GetString()));
     }
 
     [Fact]
