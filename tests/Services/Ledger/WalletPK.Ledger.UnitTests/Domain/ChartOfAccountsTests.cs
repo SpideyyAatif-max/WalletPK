@@ -6,14 +6,15 @@ namespace WalletPK.Ledger.UnitTests.Domain;
 public class ChartOfAccountsTests
 {
     [Fact]
-    public void The_chart_has_the_five_system_accounts_with_the_expected_sides()
+    public void The_chart_has_the_six_system_accounts_with_the_expected_sides()
     {
         ChartOfAccounts.SystemAccounts.Select(account => account.Code)
-            .ShouldBe(new[] { "BANK_FLOAT", "FEE_INCOME", "TAX_PAYABLE", "BILLER_SETTLEMENT", "SUSPENSE" });
+            .ShouldBe(new[] { "BANK_FLOAT", "FEE_INCOME", "TAX_PAYABLE", "BILLER_SETTLEMENT", "TELCO_SETTLEMENT", "SUSPENSE" });
         ChartOfAccounts.BankFloat.NormalBalance.ShouldBe(NormalBalance.Debit);
         ChartOfAccounts.FeeIncome.NormalBalance.ShouldBe(NormalBalance.Credit);
         ChartOfAccounts.FeeIncome.Shards.ShouldBe(8);
-        ChartOfAccounts.SystemAccounts.Sum(account => account.Shards).ShouldBe(21);
+        ChartOfAccounts.TelcoSettlement.NormalBalance.ShouldBe(NormalBalance.Credit);
+        ChartOfAccounts.SystemAccounts.Sum(account => account.Shards).ShouldBe(25);
     }
 
     [Fact]
@@ -23,7 +24,7 @@ public class ChartOfAccountsTests
             .SelectMany(account => Enumerable.Range(0, account.Shards).Select(shard => ChartOfAccounts.IdFor(account.Code, shard)))
             .ToList();
 
-        ids.Distinct().Count().ShouldBe(21);
+        ids.Distinct().Count().ShouldBe(25);
         ChartOfAccounts.IdFor("FEE_INCOME", 3).ShouldBe(ChartOfAccounts.IdFor("FEE_INCOME", 3));
         ChartOfAccounts.IdFor("FEE_INCOME", 3).ShouldNotBe(ChartOfAccounts.IdFor("FEE_INCOME", 4));
     }

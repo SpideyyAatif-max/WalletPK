@@ -193,8 +193,8 @@ instant and all-or-nothing:
 - **Split a bill**: `POST /api/payments/splits` with a title, a total and the people; equal shares (or
   your own amounts) become one request each, and `GET /api/payments/splits/{id}` shows who has paid.
 
-In the web app (http://localhost:3000/wallet): **Send**, **Bank** (lookup, send, live tracker, bank status)
-and **Requests** (to pay, I asked, split bills).
+In the web app (http://localhost:3000/wallet): **Send**, **Bank** (lookup, send, live tracker, bank status),
+**Requests** (to pay, I asked, split bills), **Bills**, **Mobile load**, **Scan & pay** and **My shop**.
 
 ## Paying Bills
 
@@ -214,6 +214,31 @@ The Bill Payment service (port 5104, `/api/bills/*`) pays K-Electric, LESCO, SNG
 
 Consumer numbers ending `0000` do not exist, `1111` are already paid, `2222` are disconnected (refused).
 Make a biller time out with `curl -X PUT localhost:5200/admin/faults/biller:KE -H "X-Admin-Key: dev-only-provider-admin-key" -H "Content-Type: application/json" -d '{"acceptButTimeoutRate": 1}'`.
+
+## Mobile Load, QR Payments and Merchants
+
+The Top-up & Merchant service (port 5105, `/api/topups/*`, `/api/merchants/*`):
+
+1. **Mobile load:** `POST /api/topups` (Idempotency-Key) `{"msisdn": "0300 1234567", "amountPaisa": 10000}` for
+   airtime (Rs. 20 to Rs. 5,000, whole rupees), or with a `bundleCode` from `/api/topups/networks/{code}/bundles`.
+   The network comes from the number's prefix. Like a bill: the money is reserved, the number topped up, then
+   settled to `TELCO_SETTLEMENT`. A network that is down is retried (and given up after 10 minutes); a timeout
+   is checked with the network's status query, so a number is never topped up twice; unconfirmed for 24 hours,
+   it goes to `topup.dlq`. Numbers ending `0000` are inactive.
+2. **Merchants:** `POST /api/merchants` `{"name": "Ali Tea Stall", "category": "FOOD"}` registers your shop; the
+   Ledger opens its merchant wallet (`WPKM` and six digits). The category sets the fee plan
+   (`/api/merchants/fee-plans`): a percentage with a floor and a ceiling, plus 16% tax on the fee.
+3. **Dynamic QR:** `POST /api/merchants/me/qr` `{"amountPaisa": 100000, "reference": "INV-42"}` returns a signed
+   payload (`WPKQR1.{data}.{HMAC-SHA256}`) for one amount, payable once, for 5 minutes. The till polls
+   `/api/merchants/me/qr/{id}` until it is paid.
+4. **Scan & pay:** `POST /api/merchants/qr/preview` shows who and how much; `POST /api/merchants/qr/pay`
+   (Idempotency-Key) pays it in one Ledger journal: the customer pays the amount, the merchant gets it less
+   the fee and tax, which go to `FEE_INCOME` and `TAX_PAYABLE`. Two people paying the same code: one wins.
+5. **Settlement:** after midnight (Pakistan time) each merchant's completed sales of the day before are swept
+   from its merchant wallet to its bank (`BANK_FLOAT`), once. A refused settlement is retried the next night.
+   Operations can run it now: `POST /api/merchants/ops/settlements/run?date=2026-11-18`.
+
+Set `Merchants__Qr__SigningKey` (32+ characters) outside development; docker compose reads `QR_SIGNING_KEY`.
 
 ## Service Ports
 

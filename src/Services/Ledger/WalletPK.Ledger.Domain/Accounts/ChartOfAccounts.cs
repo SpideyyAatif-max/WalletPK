@@ -39,12 +39,16 @@ public static class ChartOfAccounts
         "BILLER_SETTLEMENT", "Biller settlement", NormalBalance.Credit, 4,
         "Bill payments collected but not yet paid out to utility companies. Liability.");
 
+    public static SystemAccountDefinition TelcoSettlement { get; } = new(
+        "TELCO_SETTLEMENT", "Telco settlement", NormalBalance.Credit, 4,
+        "Mobile top-ups collected but not yet paid out to the networks. Liability.");
+
     public static SystemAccountDefinition Suspense { get; } = new(
         "SUSPENSE", "Suspense", NormalBalance.Debit, 1,
         "Money whose destination is not known yet (failed or unmatched transfers); cleared by reconciliation.");
 
     public static IReadOnlyList<SystemAccountDefinition> SystemAccounts { get; } =
-        [BankFloat, FeeIncome, TaxPayable, BillerSettlement, Suspense];
+        [BankFloat, FeeIncome, TaxPayable, BillerSettlement, TelcoSettlement, Suspense];
 
     public static SystemAccountDefinition Get(string code) =>
         SystemAccounts.FirstOrDefault(definition => definition.Code == code)

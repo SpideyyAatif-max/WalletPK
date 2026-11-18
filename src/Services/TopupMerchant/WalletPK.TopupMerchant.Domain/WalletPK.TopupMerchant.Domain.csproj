@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.TopupMerchant.Domain</RootNamespace>
+    <Description>Top-up and merchant domain: mobile networks and their number ranges, merchants, fee plans and the fee split, signed dynamic QR codes. No infrastructure dependencies.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Common\WalletPK.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.TopupMerchant.UnitTests" />
+  </ItemGroup>
+
+</Project>

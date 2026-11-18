@@ -57,7 +57,7 @@ public class PostingEngineTests(LedgerApiFactory factory)
 
         var system = await db.Accounts.Where(account => account.SystemCode != null).ToListAsync(Cancel);
 
-        system.Count.ShouldBe(21);
+        system.Count.ShouldBe(25);
         foreach (var definition in ChartOfAccounts.SystemAccounts)
         {
             var shards = system.Where(account => account.SystemCode == definition.Code).OrderBy(account => account.ShardIndex).ToList();

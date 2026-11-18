@@ -259,11 +259,11 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M7.6 Saved billers and reminders (bills.bill_due_reminder)
 
 ### M8 — Top-up & Merchant QR (week 9)
-- [ ] M8.1 Mobile top-up Saga
-- [ ] M8.2 Merchant onboarding and fee plans
-- [ ] M8.3 Signed dynamic QR
-- [ ] M8.4 QR payment with fee split
-- [ ] M8.5 Nightly merchant settlement
+- [x] M8.1 Mobile top-up Saga (new Top-up & Merchant service, port 5105): reserve → top up → settle to TELCO_SETTLEMENT, or return; status query before retry, topup.dlq
+- [x] M8.2 Merchant onboarding and fee plans (merchant wallet opened by the Ledger; STANDARD, KIRYANA, FOOD, FUEL)
+- [x] M8.3 Signed dynamic QR (HMAC-SHA256 payload, one amount, paid once, 1-15 minutes)
+- [x] M8.4 QR payment with fee split (one Ledger journal: payer → merchant net, FEE_INCOME, TAX_PAYABLE)
+- [x] M8.5 Nightly merchant settlement (merchant wallet → BANK_FLOAT per merchant and day; refused ones retried the next night)
 
 ### M9 — Agent Network (week 9)
 - [ ] M9.1 Agent profile and float

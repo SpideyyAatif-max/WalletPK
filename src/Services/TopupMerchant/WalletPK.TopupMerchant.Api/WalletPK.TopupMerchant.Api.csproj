@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.TopupMerchant.Api</RootNamespace>
+    <Description>WalletPK Top-up &amp; Merchant service: mobile top-ups and bundles (Saga with status query before retry and a dead-letter queue), merchant onboarding and fee plans, signed dynamic QR codes, QR payments with the fee split off, and nightly merchant settlement.</Description>
+    <UserSecretsId>walletpk-topup-merchant</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Needed only by the dotnet-ef tool (migrations); not shipped with the app. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.TopupMerchant.Infrastructure\WalletPK.TopupMerchant.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Observability\WalletPK.Observability.csproj" />
+  </ItemGroup>
+
+</Project>

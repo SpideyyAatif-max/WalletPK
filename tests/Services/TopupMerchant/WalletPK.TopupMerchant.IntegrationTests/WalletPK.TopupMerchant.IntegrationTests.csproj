@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The Top-up &amp; Merchant service end to end: real PostgreSQL and Kafka (Testcontainers), the real mock providers
+    in-process (the mobile networks, with their faults), and a stand-in Ledger
+    that answers hold and merchant commands on Kafka.
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.Kafka" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\Services\TopupMerchant\WalletPK.TopupMerchant.Api\WalletPK.TopupMerchant.Api.csproj" />
+    <!-- Both services have a Program class: the mock's is reached through the alias "mock". -->
+    <ProjectReference Include="..\..\..\..\src\MockProviders\WalletPK.MockProviders\WalletPK.MockProviders.csproj" Aliases="mock" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Shouldly" />
+  </ItemGroup>
+
+</Project>

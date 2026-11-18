@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.TopupMerchant.Application</RootNamespace>
+    <Description>Top-up and merchant use cases: the top-up Saga, merchant onboarding, signed QR codes, the QR payment Saga and nightly settlement, written against ports.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.TopupMerchant.Domain\WalletPK.TopupMerchant.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Contracts\WalletPK.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Sagas\WalletPK.Sagas.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.TopupMerchant.UnitTests" />
+    <InternalsVisibleTo Include="WalletPK.TopupMerchant.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

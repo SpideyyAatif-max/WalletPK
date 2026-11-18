@@ -39,6 +39,7 @@ services:
       ReverseProxy__Clusters__ledger__Destinations__d1__Address: http://ledger:8080/
       ReverseProxy__Clusters__payments__Destinations__d1__Address: http://payments:8080/
       ReverseProxy__Clusters__bills__Destinations__d1__Address: http://bills:8080/
+      ReverseProxy__Clusters__topup-merchant__Destinations__d1__Address: http://topup-merchant:8080/
     ports:
       - "${GATEWAY_PORT:-5000}:8080"
     depends_on:
@@ -175,6 +176,40 @@ services:
       Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
     ports:
       - "${BILLS_PORT:-5104}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      ledger:
+        condition: service_started
+      mock-providers:
+        condition: service_started
+
+  # Top-up & Merchant (M8): mobile top-up Sagas (status query before retry, dead-letter queue topup.dlq),
+  # merchant onboarding and fee plans, signed dynamic QR codes, QR payments with the fee split off, and
+  # nightly settlement. Talks to the Ledger over Kafka and to the networks (the mock providers).
+  topup-merchant:
+    <<: *dotnet-service
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: src/Services/TopupMerchant/WalletPK.TopupMerchant.Api/Dockerfile
+    image: walletpk/topup-merchant:dev
+    container_name: walletpk-topup-merchant
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__TopupMerchantDb: Host=postgres;Port=5432;Database=walletpk_topup_merchant;Username=${POSTGRES_USER:-walletpk};Password=${POSTGRES_PASSWORD:-walletpk_dev}
+      Jwt__Authority: http://identity:8080/
+      Kafka__BootstrapServers: kafka:9092
+      Providers__Telcos__BaseUrl: http://mock-providers:8080/
+      Providers__Telcos__ApiKey: dev-only-provider-client-key
+      Merchants__Qr__SigningKey: ${QR_SIGNING_KEY:-dev-only-qr-signing-key-change-me-in-production}
+      Observability__SeqUrl: http://seq:5341
+      Observability__OtlpTracesEndpoint: http://jaeger:4317
+      Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
+    ports:
+      - "${TOPUP_MERCHANT_PORT:-5105}:8080"
     depends_on:
       postgres:
         condition: service_healthy

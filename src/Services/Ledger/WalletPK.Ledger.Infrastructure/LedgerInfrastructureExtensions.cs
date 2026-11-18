@@ -11,6 +11,7 @@ using WalletPK.Ledger.Application.Concurrency;
 using WalletPK.Ledger.Application.Events;
 using WalletPK.Ledger.Application.Fees;
 using WalletPK.Ledger.Application.Holds;
+using WalletPK.Ledger.Application.Merchants;
 using WalletPK.Ledger.Application.Invariants;
 using WalletPK.Ledger.Application.Posting;
 using WalletPK.Ledger.Application.ReadModels;
@@ -110,6 +111,9 @@ public static class LedgerInfrastructureExtensions
         services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.ReleaseHold, HoldCommandHandlers>();
         services.AddScoped<ITransferRejections, TransferRejections>();
         services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.TransferFunds, TransferCommandHandler>();
+        services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.OpenMerchantWallet, MerchantCommandHandlers>();
+        services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.PayMerchant, MerchantCommandHandlers>();
+        services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.SettleMerchant, MerchantCommandHandlers>();
 
         services.AddKafkaConsumer(LedgerConsumerGroup, KafkaTopics.IdentityEvents, KafkaTopics.LedgerCommands);
 

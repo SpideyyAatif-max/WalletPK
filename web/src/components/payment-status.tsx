@@ -31,7 +31,7 @@ export function StatusPill({ status }: { status: string }) {
  * The live tracker: each step the Saga took, newest at the bottom, with a spinner on the current one
  * while the transfer is still moving.
  */
-export function Timeline({ steps, status }: { steps: TimelineStep[]; status: string }) {
+export function Timeline({ steps, status, names }: { steps: TimelineStep[]; status: string; names?: Record<string, string> }) {
   const moving = !isFinal(status);
   return (
     <ol className="space-y-0" aria-label="Progress">
@@ -48,7 +48,7 @@ export function Timeline({ steps, status }: { steps: TimelineStep[]; status: str
             {!last && <span aria-hidden className="absolute top-6 left-2.5 h-full w-px bg-ink-200" />}
             <span className="relative z-10 shrink-0 bg-white">{icon}</span>
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-ink-900">{stepName(step.state)}</p>
+              <p className="text-sm font-semibold text-ink-900">{names?.[step.state] ?? stepName(step.state)}</p>
               <p className="text-sm text-ink-600">{step.detail}</p>
               <p className="text-xs text-ink-400">
                 {formatDay(step.at)}, {formatTime(step.at)}
