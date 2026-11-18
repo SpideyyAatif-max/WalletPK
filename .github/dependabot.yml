@@ -18,6 +18,10 @@ updates:
         patterns: ["Serilog*"]
       testing:
         patterns: ["xunit*", "Shouldly"]
+      # The modules (PostgreSql, Redis, Kafka) must match the core Testcontainers package they pull in:
+      # bumped one at a time, the core stays behind and the tests fail with MissingMethodException.
+      testcontainers:
+        patterns: ["Testcontainers*"]
     ignore:
       # Stay on .NET 10 (LTS); .NET 11 is a short-term release.
       - dependency-name: "Microsoft.AspNetCore.*"
@@ -29,6 +33,9 @@ updates:
       - dependency-name: "Npgsql*"
         update-types: ["version-update:semver-major"]
       - dependency-name: "dotnet-ef"
+        update-types: ["version-update:semver-major"]
+      # Serilog.AspNetCore 11 needs Microsoft.Extensions 11 (.NET 11): restore fails with NU1109 on .NET 10.
+      - dependency-name: "Serilog*"
         update-types: ["version-update:semver-major"]
 
   - package-ecosystem: npm
