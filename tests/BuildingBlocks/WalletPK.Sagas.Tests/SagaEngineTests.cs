@@ -121,7 +121,8 @@ public class SagaEngineTests(SagaFixture fixture) : IAsyncLifetime
             step => step.Trigger.ShouldBe(nameof(MoneyArrived)),
             step => step.PreviousState.ShouldBe("AwaitingBank"),
             step => step.State.ShouldBe("Completed"));
-        (await OutboxAsync()).Select(row => row.EventType).ShouldBe(["test.hold_money", "test.transfer_settled"]);
+        // Both steps ran at the same (test) clock time, so their order in the outbox is not defined.
+        (await OutboxAsync()).Select(row => row.EventType).ShouldBe(["test.hold_money", "test.transfer_settled"], ignoreOrder: true);
 
         // A completed Saga's timer never fires again.
         fixture.Clock.Advance(TimeSpan.FromHours(1));

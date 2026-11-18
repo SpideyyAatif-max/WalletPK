@@ -9,6 +9,7 @@ using WalletPK.Messaging.Kafka;
 using WalletPK.Messaging.Serialization;
 using WalletPK.Payments.Application.BankTransfers;
 using WalletPK.Payments.Application.Raast;
+using WalletPK.Payments.Application.Wallets;
 using WalletPK.Payments.Infrastructure.Persistence;
 using WalletPK.Payments.Infrastructure.Raast;
 using WalletPK.Persistence;
@@ -70,6 +71,12 @@ public static class PaymentsInfrastructureExtensions
         services.AddSagaMessage<HoldCaptureFailed, PaymentsDbContext>(reply => reply.HoldId);
         services.AddSagaMessage<HoldReleased, PaymentsDbContext>(reply => reply.HoldId);
 
+        // ---- Wallet payments (M6.1, M6.2): sends, money requests and split bills, answered by TransferFunds ----
+        services.AddSaga<P2PTransferSaga>();
+        services.AddSaga<MoneyRequestSaga>();
+        services.AddSagaMessage<FundsTransferred, PaymentsDbContext>(reply => reply.ReplyTo);
+        services.AddSagaMessage<FundsTransferRejected, PaymentsDbContext>(reply => reply.ReplyTo);
+
         // ---- Raast (M6.5): one resilience pipeline per bank ----
         services.AddSingleton<RaastMetrics>();
         services.AddSingleton<RaastResilience>();
@@ -90,10 +97,11 @@ public static class PaymentsInfrastructureExtensions
                 RequiredConnectionString(provider, DatabaseConnectionName),
                 npgsql => npgsql.MigrationsHistoryTable("ef_migrations_history"))
             .UseSnakeCaseNamingConvention());
-        services.AddScoped<IBankTransferQueries, BankTransferQueries>();
+        services.AddScoped<ISagaQueries, SagaQueries>();
 
         // ---- Use cases ----
         services.AddScoped<BankTransferService>();
+        services.AddScoped<WalletPaymentsService>();
 
         // ---- Readiness: ready only when the database is reachable ----
         services.AddHealthChecks()

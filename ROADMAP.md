@@ -242,8 +242,8 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M5.7 Accept-but-timeout mode
 
 ### M6 — Payments: P2P & Raast (week 7)
-- [ ] M6.1 P2P transfer flow
-- [ ] M6.2 Request money and split bill
+- [x] M6.1 P2P transfer flow (Payments Saga → one Ledger journal via TransferFunds; refusals remembered, so resends are safe)
+- [x] M6.2 Request money and split bill (a Saga per request: pay, decline, cancel, expire; a split = one request per share)
 - [x] M6.3 Saga infrastructure (own engine, persisted state): WalletPK.Sagas, saga_instances + saga_steps, row-locked message steps, leased timers
 - [x] M6.4 Raast transfer Saga (Payments service): reserve → send → bank confirms → settle, or return the money
 - [x] M6.5 Polly per bank: timeout, retry + jitter, circuit breaker, bulkhead

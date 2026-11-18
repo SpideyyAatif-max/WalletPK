@@ -137,8 +137,8 @@ public class BankTransferTests(PaymentsFactory factory) : IAsyncLifetime
 
         // Status events for the customer's apps.
         var events = factory.ReadUntil(KafkaTopics.PaymentsEvents, read =>
-            read.Any(e => e.Payload.GetProperty("transferId").GetGuid() == id && e.Payload.GetProperty("status").GetString() == "Completed"));
-        events.Where(e => e.Payload.GetProperty("transferId").GetGuid() == id).Select(e => e.Payload.GetProperty("status").GetString())
+            read.Any(e => e.EventType == "payments.bank_transfer_changed" && e.Payload.GetProperty("transferId").GetGuid() == id && e.Payload.GetProperty("status").GetString() == "Completed"));
+        events.Where(e => e.EventType == "payments.bank_transfer_changed" && e.Payload.GetProperty("transferId").GetGuid() == id).Select(e => e.Payload.GetProperty("status").GetString())
             .ShouldBe(["Processing", "Completed"]);
     }
 
@@ -236,8 +236,8 @@ public class BankTransferTests(PaymentsFactory factory) : IAsyncLifetime
         }
 
         var events = factory.ReadUntil(KafkaTopics.PaymentsEvents, read =>
-            read.Count(e => e.Payload.GetProperty("transferId").GetGuid() == queued[0]) >= 4);
-        events.Where(e => e.Payload.GetProperty("transferId").GetGuid() == queued[0]).Select(e => e.Payload.GetProperty("status").GetString())
+            read.Count(e => e.EventType == "payments.bank_transfer_changed" && e.Payload.GetProperty("transferId").GetGuid() == queued[0]) >= 4);
+        events.Where(e => e.EventType == "payments.bank_transfer_changed" && e.Payload.GetProperty("transferId").GetGuid() == queued[0]).Select(e => e.Payload.GetProperty("status").GetString())
             .ShouldBe(["Processing", "Queued", "Processing", "Completed"]);
 
         using (var banks = await client.GetAsync(new Uri("/api/payments/banks", UriKind.Relative), Cancel))

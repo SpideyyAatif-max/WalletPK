@@ -179,6 +179,23 @@ curl -X DELETE localhost:5200/admin/faults/bank:HBL -H "X-Admin-Key: dev-only-pr
 
 Account numbers ending `0000` are closed accounts: the bank refuses the transfer and the money comes back.
 
+## Sending, Requesting and Splitting (Wallet to Wallet)
+
+Wallet payments also go through Payments, and the money still moves in one Ledger journal, so it is
+instant and all-or-nothing:
+
+- **Send**: `POST /api/payments/p2p-transfers` (Idempotency-Key) starts a small Saga that asks the Ledger
+  to transfer (`TransferFunds` on Kafka). The transfer ID is the journal ID, and the Ledger remembers a
+  refusal, so a resend after a lost answer never pays twice or after a "no".
+- **Request money**: `POST /api/payments/requests` asks another number for an amount. They see it under
+  `GET /api/payments/requests?direction=incoming` and can **pay**, **decline**, or let it **expire**; the
+  requester can **cancel**. A failed payment (not enough balance) leaves the request open to try again.
+- **Split a bill**: `POST /api/payments/splits` with a title, a total and the people; equal shares (or
+  your own amounts) become one request each, and `GET /api/payments/splits/{id}` shows who has paid.
+
+In the web app (http://localhost:3000/wallet): **Send**, **Bank** (lookup, send, live tracker, bank status)
+and **Requests** (to pay, I asked, split bills).
+
 ## Service Ports
 
 | Service | Local port (`dotnet run`) | Gateway path |

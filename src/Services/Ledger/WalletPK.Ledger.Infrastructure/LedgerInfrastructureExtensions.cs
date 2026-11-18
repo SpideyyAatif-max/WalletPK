@@ -108,6 +108,8 @@ public static class LedgerInfrastructureExtensions
         services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.PlaceHold, HoldCommandHandlers>();
         services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.CaptureHold, HoldCommandHandlers>();
         services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.ReleaseHold, HoldCommandHandlers>();
+        services.AddScoped<ITransferRejections, TransferRejections>();
+        services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.TransferFunds, TransferCommandHandler>();
 
         services.AddKafkaConsumer(LedgerConsumerGroup, KafkaTopics.IdentityEvents, KafkaTopics.LedgerCommands);
 

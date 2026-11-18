@@ -1,9 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
@@ -12,13 +12,17 @@ import { formatDay, formatTime } from "@/lib/dates";
 import { formatMoney, formatPaisa, parseRupees } from "@/lib/money";
 import { formatLocal, toE164 } from "@/lib/phone";
 import { useSession } from "@/lib/session";
-import type { TransferReceipt } from "@/lib/types";
+import { isFinal, paymentKeys, paymentsApi } from "@/lib/payments";
 import { queryKeys, walletApi } from "@/lib/wallet-api";
 import { useBalance } from "@/lib/wallet-queries";
 
-type Draft = { to: string; amountPaisa: number; idempotencyKey: string };
+type Draft = { to: string; amountPaisa: number; note: string; idempotencyKey: string };
 
-/** Send money to another WalletPK number: enter → review the fee → send → receipt. */
+/**
+ * Send money to another WalletPK number: enter → review the fee → send → receipt. The send goes through
+ * Payments (M6.1), which asks the Ledger to move the money in one journal; the answer comes back in a
+ * moment, so the receipt waits for it.
+ */
 export default function SendMoney() {
   const { user } = useSession();
   const balance = useBalance();
@@ -26,9 +30,10 @@ export default function SendMoney() {
 
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
+  const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
-  const [receipt, setReceipt] = useState<TransferReceipt | null>(null);
+  const [sentId, setSentId] = useState<string | null>(null);
 
   const quote = useQuery({
     queryKey: queryKeys.quote(draft?.amountPaisa ?? 0),
@@ -38,13 +43,26 @@ export default function SendMoney() {
 
   const send = useMutation({
     // The same key for every retry of this review screen: the server sends the money at most once.
-    mutationFn: (current: Draft) => walletApi.transfer(current.to, current.amountPaisa, current.idempotencyKey),
+    mutationFn: (current: Draft) =>
+      paymentsApi.send({ toWalletNumber: current.to, amountPaisa: current.amountPaisa, note: current.note || undefined }, current.idempotencyKey),
     onSuccess: (result) => {
-      setReceipt(result);
+      setSentId(result.id);
       setDraft(null);
-      void queryClient.invalidateQueries({ queryKey: queryKeys.wallet });
     },
   });
+
+  // The Ledger's answer: poll until the transfer is final, then refresh the balance and history.
+  const sent = useQuery({
+    queryKey: paymentKeys.p2pTransfer(sentId ?? ""),
+    queryFn: () => paymentsApi.p2pTransfer(sentId!),
+    enabled: !!sentId,
+    refetchInterval: (query) => (query.state.data && isFinal(query.state.data.status) ? false : 500),
+  });
+  const receipt = sent.data && isFinal(sent.data.status) ? sent.data : null;
+  const finishedId = receipt?.id;
+  useEffect(() => {
+    if (finishedId) void queryClient.invalidateQueries({ queryKey: queryKeys.wallet });
+  }, [finishedId, queryClient]);
 
   function review(event: FormEvent) {
     event.preventDefault();
@@ -56,29 +74,58 @@ export default function SendMoney() {
     if (paisa < 100) return setError("The smallest transfer is Rs. 1.");
     setError(null);
     send.reset();
-    setDraft({ to: e164, amountPaisa: paisa, idempotencyKey: newIdempotencyKey() });
+    if (note.length > 140) return setError("The note is at most 140 characters.");
+    setDraft({ to: e164, amountPaisa: paisa, note: note.trim(), idempotencyKey: newIdempotencyKey() });
+  }
+
+  if (sentId && !receipt) {
+    return (
+      <Card className="space-y-4 text-center">
+        <Loader2 className="mx-auto h-12 w-12 animate-spin text-brand-600" aria-hidden />
+        <p className="text-sm text-ink-600">Sending…</p>
+        {sent.error && <Alert>{sent.error.message}</Alert>}
+      </Card>
+    );
+  }
+
+  if (receipt && receipt.status === "Failed") {
+    return (
+      <Card className="space-y-5 text-center">
+        <XCircle className="mx-auto h-14 w-14 text-red-600" aria-hidden />
+        <div>
+          <p className="text-lg font-semibold">Not sent</p>
+          <p className="mt-1 text-sm text-ink-600">{receipt.failureReason}</p>
+          <p className="mt-1 text-xs text-ink-400">No money left your wallet.</p>
+        </div>
+        <Button variant="outline" className="w-full" onClick={() => setSentId(null)}>
+          Try again
+        </Button>
+      </Card>
+    );
   }
 
   if (receipt) {
+    const total = receipt.amountPaisa + receipt.feePaisa + receipt.taxPaisa;
     return (
       <Card className="space-y-5 text-center">
         <CheckCircle2 className="mx-auto h-14 w-14 text-brand-600" aria-hidden />
         <div>
           <p className="text-sm text-ink-500">Sent to {formatLocal(receipt.toWalletNumber)}</p>
-          <p className="tabular mt-1 text-3xl font-bold">{formatMoney(receipt.amount)}</p>
+          <p className="tabular mt-1 text-3xl font-bold">{formatPaisa(receipt.amountPaisa)}</p>
           <p className="mt-1 text-xs text-ink-500">
-            {formatDay(receipt.postedAt)}, {formatTime(receipt.postedAt)}
+            {formatDay(receipt.completedAt ?? receipt.updatedAt)}, {formatTime(receipt.completedAt ?? receipt.updatedAt)}
           </p>
         </div>
         <dl className="space-y-2 rounded-xl bg-ink-50 p-4 text-left text-sm">
-          <Row label="Fee" value={formatMoney(receipt.fee)} />
-          <Row label="Tax on fee" value={formatMoney(receipt.tax)} />
-          <Row label="Total debited" value={formatMoney(receipt.totalDebited)} strong />
-          <Row label="Balance now" value={formatMoney(receipt.balanceAfter)} />
-          <Row label="Transaction ID" value={<span className="font-mono text-xs">{receipt.transactionId}</span>} />
+          <Row label="Fee" value={receipt.feePaisa === 0 ? "Free" : formatPaisa(receipt.feePaisa)} />
+          {receipt.feePaisa > 0 && <Row label="Tax on fee" value={formatPaisa(receipt.taxPaisa)} />}
+          <Row label="Total debited" value={formatPaisa(total)} strong />
+          {balance.data && <Row label="Balance now" value={formatMoney(balance.data.balance)} />}
+          {receipt.note && <Row label="Note" value={receipt.note} />}
+          <Row label="Transaction ID" value={<span className="font-mono text-xs">{receipt.id}</span>} />
         </dl>
         <div className="grid grid-cols-2 gap-3">
-          <Button variant="outline" onClick={() => { setReceipt(null); setAmount(""); }}>
+          <Button variant="outline" onClick={() => { setSentId(null); setAmount(""); setNote(""); }}>
             Send again
           </Button>
           <Link href="/wallet" className="inline-flex h-11 items-center justify-center rounded-xl bg-brand-600 text-sm font-semibold text-white hover:bg-brand-700">
@@ -100,6 +147,7 @@ export default function SendMoney() {
         </div>
         <dl className="space-y-2 rounded-xl bg-ink-50 p-4 text-sm">
           <Row label="Amount" value={formatPaisa(draft.amountPaisa)} />
+          {draft.note && <Row label="Note" value={draft.note} />}
           <Row label="Fee" value={quote.data ? (quote.data.isFree ? "Free" : formatMoney(quote.data.fee)) : "…"} />
           {quote.data && !quote.data.isFree && <Row label="Tax on fee (16%)" value={formatMoney(quote.data.tax)} />}
           <Row label="Total" value={quote.data ? formatMoney(quote.data.totalDebit) : "…"} strong />
@@ -134,6 +182,9 @@ export default function SendMoney() {
         </Field>
         <Field label="Amount (Rs.)" htmlFor="amount" hint="Free up to Rs. 1,000; above that a small fee plus 16% tax.">
           <Input id="amount" inputMode="decimal" autoComplete="off" placeholder="0.00" value={amount} onChange={(event) => setAmount(event.target.value)} className="tabular text-lg" />
+        </Field>
+        <Field label="Note (optional)" htmlFor="note">
+          <Input id="note" autoComplete="off" maxLength={140} placeholder="Rent, lunch…" value={note} onChange={(event) => setNote(event.target.value)} />
         </Field>
         {error && <Alert>{error}</Alert>}
         <Button type="submit" size="lg" className="w-full">

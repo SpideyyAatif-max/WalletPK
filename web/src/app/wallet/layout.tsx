@@ -1,6 +1,6 @@
 "use client";
 
-import { History, Home, Loader2, LogOut, Send } from "lucide-react";
+import { Building2, HandCoins, History, Home, Loader2, LogOut, Send } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -16,6 +16,8 @@ import { WalletContext } from "./wallet-context";
 const nav = [
   { href: "/wallet", label: "Home", icon: Home },
   { href: "/wallet/send", label: "Send", icon: Send },
+  { href: "/wallet/bank", label: "Bank", icon: Building2 },
+  { href: "/wallet/requests", label: "Requests", icon: HandCoins },
   { href: "/wallet/history", label: "History", icon: History },
 ];
 

@@ -100,7 +100,7 @@ public sealed class PaymentsFactory : WebApplicationFactory<Program>, IAsyncLife
     public string MockConnectionString => _mockPostgres.GetConnectionString();
 
     /// <summary>An access token like the Identity service issues, valid around both the real time and the service's clock.</summary>
-    public string CreateToken(Guid userId, string deviceId = "0193f1c4-0000-7000-8000-000000000001")
+    public string CreateToken(Guid userId, string? phoneNumber = null, string deviceId = "0193f1c4-0000-7000-8000-000000000001")
     {
         var now = DateTime.UtcNow;
         var clock = Clock.GetUtcNow().UtcDateTime;
@@ -117,18 +117,22 @@ public sealed class PaymentsFactory : WebApplicationFactory<Program>, IAsyncLife
                 ["device_id"] = deviceId,
                 ["kyc_tier"] = "L1",
                 ["role"] = "customer",
-                ["phone_number"] = "+923001234567",
+                ["phone_number"] = phoneNumber ?? PhoneOf(userId),
             },
             SigningCredentials = new SigningCredentials(SigningKey, SecurityAlgorithms.RsaSha256),
         });
     }
 
-    public HttpClient ClientFor(Guid userId)
+    public HttpClient ClientFor(Guid userId, string? phoneNumber = null)
     {
         var client = CreateClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateToken(userId));
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateToken(userId, phoneNumber));
         return client;
     }
+
+    /// <summary>Each test user's own mobile number (+92300 and 7 digits from the user ID).</summary>
+    public static string PhoneOf(Guid userId) =>
+        "+92300" + (Math.Abs(BitConverter.ToInt32(userId.ToByteArray(), 0)) % 10_000_000).ToString("0000000", CultureInfo.InvariantCulture);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

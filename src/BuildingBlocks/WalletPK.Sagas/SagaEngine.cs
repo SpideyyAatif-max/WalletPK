@@ -30,6 +30,12 @@ public interface ISagaEngine
 
     /// <summary>Gives Saga <paramref name="sagaId"/> a message (a reply, a callback).</summary>
     Task<SagaHandleOutcome> HandleAsync(Guid sagaId, object message, string? causationId, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Runs <paramref name="work"/> in one database transaction (or the caller's), so several Sagas can be
+    /// started or moved on together: all of them, or none.
+    /// </summary>
+    Task<T> InTransactionAsync<T>(Func<Task<T>> work, CancellationToken cancellationToken);
 }
 
 /// <summary>A Saga claimed for a timer step: the row as it was when taken, and its version then.</summary>
@@ -334,7 +340,7 @@ public sealed partial class SagaEngine<TDbContext>(
     }
 
     /// <summary>Joins the caller's transaction (the inbox's) if there is one, otherwise runs in its own.</summary>
-    private async Task<T> InTransactionAsync<T>(Func<Task<T>> work, CancellationToken cancellationToken)
+    public async Task<T> InTransactionAsync<T>(Func<Task<T>> work, CancellationToken cancellationToken)
     {
         if (db.Database.CurrentTransaction is not null)
         {

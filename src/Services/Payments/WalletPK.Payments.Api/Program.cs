@@ -28,6 +28,7 @@ app.UseAuthorization();
 await app.MigrateDatabaseIfConfiguredAsync();
 
 app.MapBankTransferEndpoints();
+app.MapWalletPaymentEndpoints();
 app.MapRaastWebhookEndpoints();
 
 await app.RunAsync();

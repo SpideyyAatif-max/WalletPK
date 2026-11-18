@@ -19,6 +19,8 @@ public sealed class FakeLedger : IAsyncDisposable
     private readonly ConcurrentDictionary<Guid, (string Code, string Reason)> _refusals = new();
     private readonly ConcurrentDictionary<Guid, bool> _failCaptures = new();
     private readonly ConcurrentDictionary<Guid, int> _silent = new();
+    private readonly ConcurrentDictionary<Guid, (string Code, string Reason)> _transferRefusals = new();
+    private readonly ConcurrentDictionary<Guid, (string Code, string Reason)> _rejectedTransfers = new();
     private readonly ConcurrentDictionary<Guid, Guid> _holdOwners = new();
     private readonly ConcurrentDictionary<Guid, string> _holdStates = new();
     private readonly CancellationTokenSource _stop = new();
@@ -35,6 +37,17 @@ public sealed class FakeLedger : IAsyncDisposable
     public ConcurrentDictionary<Guid, ConcurrentQueue<IntegrationEvent>> Commands { get; } = new();
 
     public void Refuse(Guid userId, string code, string reason) => _refusals[userId] = (code, reason);
+
+    /// <summary>Refuses the user's wallet transfers (TransferFunds) until <see cref="AllowTransfers"/>.</summary>
+    public void RefuseTransfers(Guid userId, string code, string reason) => _transferRefusals[userId] = (code, reason);
+
+    public void AllowTransfers(Guid userId) => _transferRefusals.TryRemove(userId, out _);
+
+    /// <summary>The fee and tax every wallet transfer is charged.</summary>
+    public (long Fee, long Tax) TransferCharges { get; set; } = (1_000, 160);
+
+    /// <summary>Transfers that moved money, by transfer ID (each at most once).</summary>
+    public ConcurrentDictionary<Guid, TransferFunds> Transferred { get; } = new();
 
     public void FailCaptures(Guid userId) => _failCaptures[userId] = true;
 
@@ -96,6 +109,11 @@ public sealed class FakeLedger : IAsyncDisposable
 
     private IntegrationEvent? Answer(IntegrationEvent command)
     {
+        if (command is TransferFunds transfer)
+        {
+            return AnswerTransfer(transfer);
+        }
+
         var holdId = command switch
         {
             PlaceHold place => place.HoldId,
@@ -145,6 +163,30 @@ public sealed class FakeLedger : IAsyncDisposable
             default:
                 return null;
         }
+    }
+
+    /// <summary>As the real Ledger: one journal per transfer ID, and a refusal is final.</summary>
+    private IntegrationEvent? AnswerTransfer(TransferFunds transfer)
+    {
+        Commands.GetOrAdd(transfer.TransferId, _ => new()).Enqueue(transfer);
+        if (_silent.TryGetValue(transfer.SenderUserId, out var remaining) && remaining > 0 && _silent.TryUpdate(transfer.SenderUserId, remaining - 1, remaining))
+        {
+            return null;
+        }
+
+        if (_rejectedTransfers.TryGetValue(transfer.TransferId, out var rejected))
+        {
+            return new FundsTransferRejected(transfer.TransferId, transfer.ReplyTo, rejected.Code, rejected.Reason);
+        }
+
+        if (!Transferred.ContainsKey(transfer.TransferId) && _transferRefusals.TryGetValue(transfer.SenderUserId, out var refusal))
+        {
+            _rejectedTransfers[transfer.TransferId] = refusal;
+            return new FundsTransferRejected(transfer.TransferId, transfer.ReplyTo, refusal.Code, refusal.Reason);
+        }
+
+        Transferred.TryAdd(transfer.TransferId, transfer);
+        return new FundsTransferred(transfer.TransferId, transfer.ReplyTo, transfer.AmountPaisa, TransferCharges.Fee, TransferCharges.Tax, transfer.ToWalletNumber, DateTimeOffset.UtcNow);
     }
 
     public async ValueTask DisposeAsync()

@@ -17,7 +17,7 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.14")
+                .HasAnnotation("ProductVersion", "10.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -883,6 +883,34 @@ namespace WalletPK.Ledger.Infrastructure.Persistence.Migrations
                         {
                             t.HasCheckConstraint("ck_idempotency_keys_state", "state IN ('InProgress', 'Completed')");
                         });
+                });
+
+            modelBuilder.Entity("WalletPK.Ledger.Infrastructure.Persistence.TransferRejectionRecord", b =>
+                {
+                    b.Property<Guid>("TransactionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("transaction_id");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("code");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<DateTimeOffset>("RejectedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rejected_at");
+
+                    b.HasKey("TransactionId")
+                        .HasName("pk_transfer_rejections");
+
+                    b.ToTable("transfer_rejections", (string)null);
                 });
 
             modelBuilder.Entity("WalletPK.Persistence.Inbox.InboxMessage", b =>

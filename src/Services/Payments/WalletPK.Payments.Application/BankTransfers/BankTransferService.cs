@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using WalletPK.Common.Primitives;
 using WalletPK.Common.Results;
 using WalletPK.Payments.Application.Raast;
@@ -54,10 +52,33 @@ public sealed record SentBankTransfer(BankTransferView Transfer, bool Created);
 /// <summary>The beneficiary a lookup found.</summary>
 public sealed record Beneficiary(string Iban, string MaskedIban, string Bank, string BankName, string Title, string AccountStatus, bool CanReceive);
 
-/// <summary>Port for listing a customer's transfers (a query over saga_instances).</summary>
-public interface IBankTransferQueries
+/// <summary>Which data field a list is filtered by (each has an index on saga_instances).</summary>
+public enum SagaListField
 {
-    Task<IReadOnlyList<SagaSnapshot<BankTransferData>>> ListAsync(Guid userId, int limit, DateTimeOffset? before, CancellationToken cancellationToken);
+    /// <summary>Bank transfers: the sender.</summary>
+    UserId,
+
+    /// <summary>Wallet transfers: the sender.</summary>
+    SenderUserId,
+
+    /// <summary>Money requests: who asked.</summary>
+    RequesterUserId,
+
+    /// <summary>Money requests: who is asked to pay.</summary>
+    PayerWalletNumber,
+
+    /// <summary>Money requests: the split bill.</summary>
+    SplitId,
+}
+
+/// <summary>Port: lists of Sagas of one type, newest first, by a field of their data (queries over saga_instances).</summary>
+public interface ISagaQueries
+{
+    Task<IReadOnlyList<SagaSnapshot<TData>>> ListAsync<TData>(string sagaType, SagaListField field, string value, int limit, DateTimeOffset? before, CancellationToken cancellationToken)
+        where TData : class;
+
+    /// <summary>The split bills a customer created, newest first.</summary>
+    Task<IReadOnlyList<Guid>> SplitIdsAsync(Guid requesterUserId, int limit, CancellationToken cancellationToken);
 }
 
 public static class BankTransferErrors
@@ -83,7 +104,7 @@ public sealed class BankTransferService(
     ISagaEngine engine,
     ISagaReader reader,
     BankTransferSaga definition,
-    IBankTransferQueries queries,
+    ISagaQueries queries,
     IRaastGateway raast,
     TimeProvider timeProvider)
 {
@@ -161,7 +182,7 @@ public sealed class BankTransferService(
     /// <summary>The customer's transfers, newest first.</summary>
     public async Task<IReadOnlyList<BankTransferView>> ListAsync(Guid userId, int? limit, DateTimeOffset? before, CancellationToken cancellationToken)
     {
-        var sagas = await queries.ListAsync(userId, Math.Clamp(limit ?? 20, 1, 100), before, cancellationToken);
+        var sagas = await queries.ListAsync<BankTransferData>(BankTransferSaga.SagaName, SagaListField.UserId, userId.ToString(), Math.Clamp(limit ?? 20, 1, 100), before, cancellationToken);
         return [.. sagas.Select(saga => ToView(saga, withTimeline: false))];
     }
 
@@ -223,13 +244,7 @@ public sealed class BankTransferService(
     public static Guid TransferIdFor(Guid userId, string idempotencyKey)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(idempotencyKey);
-
-        Span<byte> hash = stackalloc byte[32];
-        SHA256.HashData(Encoding.UTF8.GetBytes($"walletpk:payments:bank-transfer:{userId}:{idempotencyKey}"), hash);
-        var bytes = hash[..16];
-        bytes[6] = (byte)((bytes[6] & 0x0F) | 0x80); // version 8 (custom)
-        bytes[8] = (byte)((bytes[8] & 0x3F) | 0x80); // RFC 9562 variant
-        return new Guid(bytes, bigEndian: true);
+        return SagaIds.From("bank-transfer", userId, idempotencyKey);
     }
 
     internal static BankTransferView ToView(SagaSnapshot<BankTransferData> saga, bool withTimeline)

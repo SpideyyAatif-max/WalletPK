@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WalletPK.Payments.Application.BankTransfers;
+using WalletPK.Payments.Application.Wallets;
 using WalletPK.Persistence.Inbox;
 using WalletPK.Persistence.Outbox;
 using WalletPK.Sagas;
@@ -21,28 +22,51 @@ public sealed class PaymentsDbContext(DbContextOptions<PaymentsDbContext> option
     }
 }
 
-/// <summary>A customer's transfers, newest first (served by ix_saga_instances_bank_transfer_user).</summary>
-internal sealed class BankTransferQueries(PaymentsDbContext db) : IBankTransferQueries
+/// <summary>Lists over saga_instances; every field has a partial expression index (see the migrations).</summary>
+internal sealed class SagaQueries(PaymentsDbContext db) : ISagaQueries
 {
-    public async Task<IReadOnlyList<SagaSnapshot<BankTransferData>>> ListAsync(Guid userId, int limit, DateTimeOffset? before, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<SagaSnapshot<TData>>> ListAsync<TData>(
+        string sagaType,
+        SagaListField field,
+        string value,
+        int limit,
+        DateTimeOffset? before,
+        CancellationToken cancellationToken)
+        where TData : class
     {
-        var user = userId.ToString();
-        var sagaType = BankTransferSaga.SagaName;
-        var query = before is { } cursor
-            ? db.Set<SagaInstance>().FromSql($"""
-                SELECT * FROM saga_instances
-                 WHERE saga_type = {sagaType} AND data->>'userId' = {user} AND created_at < {cursor}
-                 ORDER BY created_at DESC
-                 LIMIT {limit}
-                """)
-            : db.Set<SagaInstance>().FromSql($"""
-                SELECT * FROM saga_instances
-                 WHERE saga_type = {sagaType} AND data->>'userId' = {user}
-                 ORDER BY created_at DESC
-                 LIMIT {limit}
-                """);
+        // The JSON key is one of a fixed set (never caller text), so it is written into the SQL, where the
+        // planner can match it to the expression index; everything else is a parameter.
+        var key = field switch
+        {
+            SagaListField.UserId => "userId",
+            SagaListField.SenderUserId => "senderUserId",
+            SagaListField.RequesterUserId => "requesterUserId",
+            SagaListField.PayerWalletNumber => "payerWalletNumber",
+            SagaListField.SplitId => "splitId",
+            _ => throw new ArgumentOutOfRangeException(nameof(field)),
+        };
 
-        var rows = await query.AsNoTracking().ToListAsync(cancellationToken);
-        return [.. rows.Select(row => SagaReader<PaymentsDbContext>.ToSnapshot<BankTransferData>(row, []))];
+        var sql = $"SELECT * FROM saga_instances WHERE saga_type = {{0}} AND data->>'{key}' = {{1}}"
+            + (before is null ? "" : " AND created_at < {3}")
+            + " ORDER BY created_at DESC LIMIT {2}";
+        object[] parameters = before is { } cursor ? [sagaType, value, limit, cursor] : [sagaType, value, limit];
+
+        var rows = await db.Set<SagaInstance>().FromSqlRaw(sql, parameters).AsNoTracking().ToListAsync(cancellationToken);
+        return [.. rows.Select(row => SagaReader<PaymentsDbContext>.ToSnapshot<TData>(row, []))];
+    }
+
+    public async Task<IReadOnlyList<Guid>> SplitIdsAsync(Guid requesterUserId, int limit, CancellationToken cancellationToken)
+    {
+        var user = requesterUserId.ToString();
+        var sagaType = MoneyRequestSaga.SagaName;
+        var ids = await db.Database.SqlQuery<Guid>($"""
+            SELECT (data->>'splitId')::uuid AS "Value"
+              FROM saga_instances
+             WHERE saga_type = {sagaType} AND data->>'requesterUserId' = {user} AND data->>'splitId' IS NOT NULL
+             GROUP BY data->>'splitId'
+             ORDER BY MIN(created_at) DESC
+             LIMIT {limit}
+            """).ToListAsync(cancellationToken);
+        return ids;
     }
 }

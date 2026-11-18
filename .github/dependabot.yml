@@ -81,3 +81,10 @@ updates:
       # Stay on the Prometheus 3.13 long-term-support line (patch updates only).
       - dependency-name: prom/prometheus
         update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # PostgreSQL 18 changes the data directory layout: existing dev volumes need a dump and restore,
+      # and the tests (Testcontainers) run 17. Move deliberately, not through a weekly PR.
+      - dependency-name: postgres
+        update-types: ["version-update:semver-major"]
+      # Redis 8 is a major release under a new licence; 7.4 covers everything WalletPK uses.
+      - dependency-name: redis
+        update-types: ["version-update:semver-major"]
