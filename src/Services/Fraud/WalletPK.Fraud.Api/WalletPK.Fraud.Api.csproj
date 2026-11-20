@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Fraud.Api</RootNamespace>
+    <Description>WalletPK Fraud &amp; Risk service: real-time risk scores over gRPC, JSON rules with hot reload, mule-ring detection, freezes, alerts, cases and the hash-chained audit log.</Description>
+    <UserSecretsId>walletpk-fraud</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Needed only by the dotnet-ef tool (migrations); not shipped with the app. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Hosts the internal gRPC risk service; the .proto contract lives in WalletPK.Contracts. -->
+    <PackageReference Include="Grpc.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Fraud.Infrastructure\WalletPK.Fraud.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Observability\WalletPK.Observability.csproj" />
+  </ItemGroup>
+
+</Project>

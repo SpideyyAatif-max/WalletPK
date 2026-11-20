@@ -148,6 +148,7 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<GetProfileHandler>();
         services.AddScoped<ListDevicesHandler>();
         services.AddScoped<RevokeDeviceHandler>();
+        services.AddScoped<PaymentStepUpHandler>();
         services.AddScoped<SubmitKycHandler>();
         services.AddScoped<GetKycStatusHandler>();
         services.AddScoped<LimitService>();

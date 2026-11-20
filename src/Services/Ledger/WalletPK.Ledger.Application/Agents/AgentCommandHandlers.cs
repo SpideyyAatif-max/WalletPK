@@ -159,7 +159,7 @@ public sealed partial class AgentCommandHandlers(
         LimitDecisionResult decision;
         try
         {
-            decision = await limits.ReserveAsync(transactionId, new UserId(command.CustomerUserId), JournalType.CashOut, total, command.DeviceId, cancellationToken);
+            decision = await limits.ReserveAsync(transactionId, new UserId(command.CustomerUserId), JournalType.CashOut, total, command.DeviceId, agent.Alias, cancellationToken);
         }
         catch (LimitsUnavailableException)
         {

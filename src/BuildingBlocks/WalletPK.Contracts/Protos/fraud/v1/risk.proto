@@ -1,0 +1,48 @@
+// Real-time risk scoring, owned by the Fraud service and called by the Ledger before every customer
+// debit, right after the limits (M10.4). Internal only: served on the Fraud service's gRPC port.
+// Contract rules: add fields with new numbers; never renumber, rename or reuse a field.
+syntax = "proto3";
+
+package walletpk.fraud.v1;
+
+option csharp_namespace = "WalletPK.Contracts.Fraud.V1";
+
+service Risk {
+  // Scores one debit from the user's recent behaviour (Redis feature windows) and the rules.
+  // Idempotent per transaction_id: a retry gets the first answer and counts nothing twice.
+  rpc Score (ScoreRequest) returns (ScoreResponse);
+}
+
+message ScoreRequest {
+  string transaction_id = 1;
+  string user_id = 2;
+  // The device the payment came from, when known.
+  string device_id = 3;
+  // The journal type: "P2PTransfer", "BankTransfer", "BillPayment", "MobileTopup", "MerchantPayment", "CashOut".
+  string transaction_type = 4;
+  int64 amount_paisa = 5;
+  // Who gets the money: a wallet number (E.164), an IBAN, a biller reference, a merchant or agent; empty when unknown.
+  string counterparty = 6;
+}
+
+enum RiskAction {
+  RISK_ACTION_UNSPECIFIED = 0;
+  RISK_ACTION_ALLOW = 1;
+  // Not now: the payment is refused and a case is opened for a compliance officer.
+  RISK_ACTION_REVIEW = 2;
+  // Refused, and the user's wallets are frozen.
+  RISK_ACTION_BLOCK = 3;
+  // Refused until the user confirms it with a one-time code (Identity: POST /api/identity/step-up), then
+  // allowed once when sent again from the same device.
+  RISK_ACTION_STEP_UP = 4;
+}
+
+message ScoreResponse {
+  RiskAction action = 1;
+  // 0 (no risk) to 100.
+  int32 score = 2;
+  // The rules that matched, for example "velocity-burst".
+  repeated string rules = 3;
+  // A sentence for the customer when the action is not ALLOW.
+  string reason = 4;
+}

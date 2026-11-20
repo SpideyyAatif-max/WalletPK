@@ -227,11 +227,22 @@ public sealed class Account : AggregateRoot<AccountId>
         UpdatedAt = now;
     }
 
+    /// <summary>Stops money leaving the account (it can still receive). Idempotent.</summary>
     public void Freeze(DateTimeOffset now)
     {
         if (Status == AccountStatus.Active)
         {
             Status = AccountStatus.Frozen;
+            UpdatedAt = now;
+        }
+    }
+
+    /// <summary>Lets money leave a frozen account again. Idempotent; a closed account stays closed.</summary>
+    public void Unfreeze(DateTimeOffset now)
+    {
+        if (Status == AccountStatus.Frozen)
+        {
+            Status = AccountStatus.Active;
             UpdatedAt = now;
         }
     }

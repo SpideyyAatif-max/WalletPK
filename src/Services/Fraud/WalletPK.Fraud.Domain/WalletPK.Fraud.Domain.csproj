@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Fraud.Domain</RootNamespace>
+    <Description>Fraud and risk domain: the feature catalog, JSON risk rules (parse, validate, evaluate), the scoring policy and the built-in rules. No infrastructure dependencies.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Common\WalletPK.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Fraud.UnitTests" />
+  </ItemGroup>
+
+</Project>

@@ -31,7 +31,7 @@ internal sealed partial class IdentityLimitsGateway(
     ILogger<IdentityLimitsGateway> logger) : ILimitsGateway
 {
     public async Task<LimitDecisionResult> ReserveAsync(
-        TransactionId transactionId, UserId userId, JournalType type, Money amount, string? deviceId, CancellationToken cancellationToken)
+        TransactionId transactionId, UserId userId, JournalType type, Money amount, string? deviceId, string? counterparty, CancellationToken cancellationToken)
     {
         var request = new ReserveLimitRequest
         {

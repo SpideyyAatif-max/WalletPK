@@ -137,6 +137,16 @@ public sealed class User : AggregateRoot<UserId>
             _ => false,
         };
 
+    /// <summary>
+    /// Records that the user confirmed a stepped-up payment with a one-time code (M10.4); the fraud engine
+    /// lets one such payment from <paramref name="deviceId"/> through within <paramref name="validFor"/>.
+    /// </summary>
+    public void ConfirmPaymentStepUp(Guid? deviceId, DateTimeOffset now, TimeSpan validFor)
+    {
+        UpdatedAt = now;
+        Raise(new PaymentStepUpConfirmed(Id, deviceId, now, now + validFor));
+    }
+
     /// <summary>Raises the KYC tier after verification. Tiers only go up; asking for the same or a lower tier fails.</summary>
     public Result UpgradeKycTier(KycTier newTier, DateTimeOffset now)
     {

@@ -41,6 +41,7 @@ services:
       ReverseProxy__Clusters__bills__Destinations__d1__Address: http://bills:8080/
       ReverseProxy__Clusters__topup-merchant__Destinations__d1__Address: http://topup-merchant:8080/
       ReverseProxy__Clusters__agents__Destinations__d1__Address: http://agents:8080/
+      ReverseProxy__Clusters__fraud__Destinations__d1__Address: http://fraud:8080/
     ports:
       - "${GATEWAY_PORT:-5000}:8080"
     depends_on:
@@ -103,6 +104,8 @@ services:
       # Access tokens are validated with Identity's published keys; limits are checked over Identity's gRPC port.
       Jwt__Authority: http://identity:8080/
       Services__IdentityGrpc__Address: http://identity:8081
+      # Every customer debit is scored here after the limits (M10.4); if it does not answer, payments go on (FailOpen).
+      Services__FraudGrpc__Address: http://fraud:8081
       # Publishes ledger.events, consumes identity.events (opens a wallet for every new user).
       Kafka__BootstrapServers: kafka:9092
       Observability__SeqUrl: http://seq:5341
@@ -249,6 +252,39 @@ services:
         condition: service_completed_successfully
       ledger:
         condition: service_started
+
+  # Fraud & Risk (M10): real-time risk scores over gRPC for the Ledger (internal port 8081), JSON rules with
+  # hot reload, mule-ring detection, freezes, alerts on fraud.alerts, cases and the hash-chained audit log.
+  fraud:
+    <<: *dotnet-service
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: src/Services/Fraud/WalletPK.Fraud.Api/Dockerfile
+    image: walletpk/fraud:dev
+    container_name: walletpk-fraud
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__FraudDb: Host=postgres;Port=5432;Database=walletpk_fraud;Username=${POSTGRES_USER:-walletpk};Password=${POSTGRES_PASSWORD:-walletpk_dev}
+      ConnectionStrings__Redis: redis:6379,password=${REDIS_PASSWORD:-walletpk_dev},abortConnect=false
+      # REST on 8080 (compliance API, via the gateway), internal gRPC on 8081 (risk scores for the Ledger)
+      Kestrel__Endpoints__Http__Url: http://+:8080
+      Kestrel__Endpoints__Grpc__Url: http://+:8081
+      Jwt__Authority: http://identity:8080/
+      Kafka__BootstrapServers: kafka:9092
+      Observability__SeqUrl: http://seq:5341
+      Observability__OtlpTracesEndpoint: http://jaeger:4317
+      Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
+    ports:
+      - "${FRAUD_PORT:-5107}:8080"
+      - "${FRAUD_GRPC_PORT:-5207}:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   # Mock external providers (M5): Raast and banks, billers, telcos, NADRA, with runtime faults and
   # settlement files. Internal: services call it on the compose network; port 5200 is for you and tests.

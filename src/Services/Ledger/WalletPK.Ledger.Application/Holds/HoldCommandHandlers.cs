@@ -87,7 +87,7 @@ public sealed partial class HoldCommandHandlers(
             LimitDecisionResult decision;
             try
             {
-                decision = await limits.ReserveAsync(limitKey, new UserId(command.UserId), purpose, amount, command.DeviceId, cancellationToken);
+                decision = await limits.ReserveAsync(limitKey, new UserId(command.UserId), purpose, amount, command.DeviceId, command.Reference, cancellationToken);
             }
             catch (LimitsUnavailableException)
             {

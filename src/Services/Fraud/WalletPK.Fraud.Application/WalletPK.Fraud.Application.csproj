@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Fraud.Application</RootNamespace>
+    <Description>Fraud and risk use cases: real-time scoring, rule management with hot reload, mule-ring detection, alerts, freezes, cases and the hash-chained audit log, written against ports.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Fraud.Domain\WalletPK.Fraud.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Contracts\WalletPK.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Fraud.UnitTests" />
+    <InternalsVisibleTo Include="WalletPK.Fraud.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

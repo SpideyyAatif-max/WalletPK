@@ -103,6 +103,7 @@ public class EncryptionAndEventTests
         var bound = IdentityIntegrationEvents.FromDomainEvent(new DeviceTrusted(deviceId, userId, _now, _now.AddHours(24)));
         var upgraded = IdentityIntegrationEvents.FromDomainEvent(new KycUpgraded(userId, KycTier.L0, KycTier.L1, _now));
         var lockedOut = IdentityIntegrationEvents.FromDomainEvent(new UserLockedOut(userId, _now, _now.AddMinutes(30)));
+        var stepUp = IdentityIntegrationEvents.FromDomainEvent(new PaymentStepUpConfirmed(userId, deviceId.Value, _now, _now.AddMinutes(5)));
 
         var user = registered.ShouldBeOfType<IdentityContracts.UserRegistered>();
         user.PhoneNumber.ShouldBe("+923001234567");
@@ -111,6 +112,9 @@ public class EncryptionAndEventTests
         bound.ShouldBeOfType<IdentityContracts.DeviceBound>().CoolingOffUntil.ShouldBe(_now.AddHours(24));
         upgraded.ShouldBeOfType<IdentityContracts.KycUpgraded>().NewTier.ShouldBe("L1");
         lockedOut.ShouldBeNull(); // internal only
+        var confirmed = stepUp.ShouldBeOfType<IdentityContracts.PaymentStepUpConfirmed>();
+        confirmed.DeviceId.ShouldBe(deviceId.Value);
+        confirmed.ValidUntil.ShouldBe(_now.AddMinutes(5));
     }
 
     [Fact]
@@ -136,7 +140,7 @@ public class EncryptionAndEventTests
             IdentityIntegrationEvents.FromDomainEvent(new KycUpgraded(userId, KycTier.L0, KycTier.L1, _now))!,
             correlationId: "corr-1");
 
-        registry.EventTypes.Count.ShouldBe(3);
+        registry.EventTypes.Count.ShouldBe(4);
         envelope.EventType.ShouldBe("identity.kyc_upgraded");
         envelope.Topic.ShouldBe(KafkaTopics.IdentityEvents);
         envelope.PartitionKey.ShouldBe(userId.ToString());

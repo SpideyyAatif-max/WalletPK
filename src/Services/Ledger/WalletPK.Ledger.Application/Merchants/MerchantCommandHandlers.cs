@@ -88,7 +88,7 @@ public sealed partial class MerchantCommandHandlers(
         LimitDecisionResult decision;
         try
         {
-            decision = await limits.ReserveAsync(transactionId, new UserId(command.PayerUserId), JournalType.MerchantPayment, amount, command.DeviceId, cancellationToken);
+            decision = await limits.ReserveAsync(transactionId, new UserId(command.PayerUserId), JournalType.MerchantPayment, amount, command.DeviceId, merchant.Alias, cancellationToken);
         }
         catch (LimitsUnavailableException)
         {

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Bookmark, ChevronRight, Flame, Phone, Trash2, Zap } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { StatusPill, Timeline } from "@/components/payment-status";
+import { StepUpPrompt } from "@/components/step-up-prompt";
 import { Button } from "@/components/ui/button";
 import { Alert, Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
@@ -11,7 +12,7 @@ import { billKeys, billsApi, cleanConsumerNumber, dueLabel, isBillFinal, isConsu
 import { dayKey, formatDay, formatTime } from "@/lib/dates";
 import { formatMoney, formatPaisa } from "@/lib/money";
 import { cn } from "@/lib/utils";
-import { queryKeys } from "@/lib/wallet-api";
+import { needsStepUp, queryKeys } from "@/lib/wallet-api";
 import { useBalance } from "@/lib/wallet-queries";
 
 const icons: Record<string, React.ReactNode> = {
@@ -271,7 +272,8 @@ function Tracker({ id, onBack }: { id: string; onBack: () => void }) {
             <Alert tone="info">{data.billerName} has not confirmed the payment yet. Your money stays reserved; it is either paid to the biller or returned to you, never both.</Alert>
           )}
           {data.status === "UnderReview" && <Alert tone="info">Our team is checking this payment with {data.billerName}. Your money stays reserved until it is resolved.</Alert>}
-          {data.status === "Failed" && <Alert>{data.failureReason} The reserved money is back in your wallet.</Alert>}
+          {data.status === "Failed" && needsStepUp(data.failureCode) && <StepUpPrompt reason={data.failureReason} />}
+          {data.status === "Failed" && !needsStepUp(data.failureCode) && <Alert>{data.failureReason} The reserved money is back in your wallet.</Alert>}
           {data.timeline && <Timeline steps={data.timeline} status={data.status} />}
           <dl className="space-y-2 rounded-xl bg-ink-50 p-4 text-sm">
             {data.billerReference && <Row label="Biller reference" value={<span className="font-mono text-xs">{data.billerReference}</span>} />}

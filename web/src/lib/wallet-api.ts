@@ -46,6 +46,23 @@ export const walletApi = {
     api<TransferReceipt>("/api/wallets/transfers", { method: "POST", body: { toWalletNumber, amountPaisa }, idempotencyKey }),
 };
 
+// ---- Step-up OTP (M10.4): confirming a payment the fraud engine asked to step up ----
+
+/** The error code a payment fails with when it needs a one-time code first. */
+export const STEP_UP_REQUIRED = "fraud.step_up_required";
+
+export const needsStepUp = (failureCode: string | null | undefined): boolean => failureCode === STEP_UP_REQUIRED;
+
+export type StepUpCode = { expiresInSeconds: number; resendAfterSeconds: number };
+export type StepUpConfirmation = { validUntil: string };
+
+export const stepUpApi = {
+  /** Texts a code to the signed-in user's phone. */
+  start: () => api<StepUpCode>("/api/identity/step-up", { method: "POST" }),
+  /** Checks it; the next payment from this device that needs a code then goes through (within 5 minutes). */
+  verify: (code: string) => api<StepUpConfirmation>("/api/identity/step-up/verify", { method: "POST", body: { code } }),
+};
+
 // ---- Developer tools (services in Development only) ----
 
 export const devTools = {

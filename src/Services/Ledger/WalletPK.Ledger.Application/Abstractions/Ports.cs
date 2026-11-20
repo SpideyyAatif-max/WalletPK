@@ -77,23 +77,44 @@ public interface IAccountLockLease : IAsyncDisposable
     IReadOnlyDictionary<AccountId, long> FencingTokens { get; }
 }
 
-/// <summary>The Identity service's answer to "may this user debit this much now?".</summary>
+/// <summary>The answer to "may this user debit this much now?": the Identity service's limits, then the Fraud service's risk score.</summary>
 /// <param name="Allowed">True when the debit fits and has been counted against the limits.</param>
-/// <param name="Decision">For example "Allowed", "ExceedsDaily", "CoolingOff".</param>
+/// <param name="Decision">For example "Allowed", "ExceedsDaily", "CoolingOff", or "RiskReview" / "RiskBlocked" from the risk score.</param>
 /// <param name="Reason">Customer-facing explanation.</param>
 public sealed record LimitDecisionResult(bool Allowed, string Decision, string Reason);
 
 /// <summary>
-/// Transaction limits, owned by the Identity service and called over gRPC (M2.6). The Ledger reserves
-/// before every customer debit and releases if the debit then fails.
+/// Transaction limits, owned by the Identity service and called over gRPC (M2.6), and the real-time risk
+/// score from the Fraud service (M10.4) right after them. The Ledger reserves before every customer debit
+/// and releases if the debit then fails.
 /// </summary>
 public interface ILimitsGateway
 {
+    /// <param name="transactionId">The debit (limits and scores are idempotent by it).</param>
+    /// <param name="userId">Who pays.</param>
+    /// <param name="type">What kind of payment.</param>
+    /// <param name="amount">What leaves the wallet.</param>
+    /// <param name="deviceId">The device it came from, when known.</param>
+    /// <param name="counterparty">Who gets the money (a wallet number, IBAN, merchant or agent code), when known: for the risk score.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
     /// <exception cref="LimitsUnavailableException">The Identity service could not be reached; the debit must not go ahead.</exception>
-    Task<LimitDecisionResult> ReserveAsync(TransactionId transactionId, UserId userId, Domain.Journals.JournalType type, Money amount, string? deviceId, CancellationToken cancellationToken);
+    Task<LimitDecisionResult> ReserveAsync(TransactionId transactionId, UserId userId, Domain.Journals.JournalType type, Money amount, string? deviceId, string? counterparty, CancellationToken cancellationToken);
 
     /// <summary>Best effort; a release that fails is reconciled later (the reservation simply expires with the day).</summary>
     Task ReleaseAsync(TransactionId transactionId, CancellationToken cancellationToken);
+}
+
+/// <summary>The <see cref="LimitDecisionResult.Decision"/> values the risk score adds (M10.4).</summary>
+public static class RiskDecisions
+{
+    /// <summary>Refused until the user confirms it with a one-time code; then it can be sent again.</summary>
+    public const string StepUp = "RiskStepUp";
+
+    /// <summary>Refused for now; a compliance officer reviews it.</summary>
+    public const string Review = "RiskReview";
+
+    /// <summary>Refused, and the user's wallets are being frozen.</summary>
+    public const string Blocked = "RiskBlocked";
 }
 
 /// <summary>The limits service did not answer. Payments fail closed: no answer means no payment.</summary>

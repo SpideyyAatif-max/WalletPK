@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Fraud.Infrastructure</RootNamespace>
+    <Description>Fraud adapters: Redis feature windows and the rules change channel, PostgreSQL (EF Core) for rules, alerts, cases, freezes and the audit chain, Kafka (outbox, inbox) for identity and ledger events and freeze commands.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+    <PackageReference Include="StackExchange.Redis" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Fraud.Application\WalletPK.Fraud.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Persistence\WalletPK.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Messaging.Kafka\WalletPK.Messaging.Kafka.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Fraud.UnitTests" />
+    <InternalsVisibleTo Include="WalletPK.Fraud.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

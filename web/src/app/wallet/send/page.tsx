@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
+import { StepUpPrompt } from "@/components/step-up-prompt";
 import { Button } from "@/components/ui/button";
 import { Alert, Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { formatMoney, formatPaisa, parseRupees } from "@/lib/money";
 import { formatLocal, toE164 } from "@/lib/phone";
 import { useSession } from "@/lib/session";
 import { isFinal, paymentKeys, paymentsApi } from "@/lib/payments";
-import { queryKeys, walletApi } from "@/lib/wallet-api";
+import { needsStepUp, queryKeys, walletApi } from "@/lib/wallet-api";
 import { useBalance } from "@/lib/wallet-queries";
 
 type Draft = { to: string; amountPaisa: number; note: string; idempotencyKey: string };
@@ -21,7 +22,8 @@ type Draft = { to: string; amountPaisa: number; note: string; idempotencyKey: st
 /**
  * Send money to another WalletPK number: enter → review the fee → send → receipt. The send goes through
  * Payments (M6.1), which asks the Ledger to move the money in one journal; the answer comes back in a
- * moment, so the receipt waits for it.
+ * moment, so the receipt waits for it. If the fraud engine wants it confirmed (step-up OTP), the user types the
+ * code texted to them and the same transfer is sent again (with a new key: the refused one is final).
  */
 export default function SendMoney() {
   const { user } = useSession();
@@ -78,13 +80,27 @@ export default function SendMoney() {
     setDraft({ to: e164, amountPaisa: paisa, note: note.trim(), idempotencyKey: newIdempotencyKey() });
   }
 
-  if (sentId && !receipt) {
+  if ((sentId && !receipt) || (send.isPending && !draft)) {
     return (
       <Card className="space-y-4 text-center">
         <Loader2 className="mx-auto h-12 w-12 animate-spin text-brand-600" aria-hidden />
         <p className="text-sm text-ink-600">Sending…</p>
         {sent.error && <Alert>{sent.error.message}</Alert>}
       </Card>
+    );
+  }
+
+  if (receipt && receipt.status === "Failed" && needsStepUp(receipt.failureCode) && send.variables) {
+    const refused = send.variables;
+    return (
+      <StepUpPrompt
+        reason={receipt.failureReason}
+        onCancel={() => setSentId(null)}
+        onConfirmed={() => {
+          setSentId(null);
+          send.mutate({ ...refused, idempotencyKey: newIdempotencyKey() });
+        }}
+      />
     );
   }
 

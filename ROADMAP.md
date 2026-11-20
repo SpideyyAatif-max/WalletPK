@@ -272,13 +272,13 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M9.4 Commissions (COMMISSION_EXPENSE / COMMISSION_PAYABLE; paid to the float nightly, less 12% withholding)
 
 ### M10 — Fraud & Risk Engine (weeks 10–11)
-- [ ] M10.1 Redis feature windows
-- [ ] M10.2 JSON rules engine with hot reload
-- [ ] M10.3 Built-in rules (velocity, new device, mule pattern, odd hours, new recipient)
-- [ ] M10.4 Synchronous gRPC score (< 20 ms)
-- [ ] M10.5 Async ring detection on Kafka
-- [ ] M10.6 Freeze/unfreeze and alerts
-- [ ] M10.7 Case management API
+- [x] M10.1 Redis feature windows (new Fraud & Risk service, port 5107, gRPC 5207): payments per user over 60 s / 1 h / 24 h, device and account age, known recipients, fan-in per recipient, a flag after a refusal
+- [x] M10.2 JSON rules engine with hot reload (rules in Postgres, edited through the API; Redis pub/sub plus polling; dry-run endpoint)
+- [x] M10.3 Built-in rules (velocity, new device, SIM-swap drain, mule fan-in, odd hours, new recipient, repeat after a hold or block)
+- [x] M10.4 Synchronous gRPC score (< 20 ms; called by the Ledger after the limits check, fails open past 250 ms) with four actions: allow, step-up OTP (Identity `/api/identity/step-up`, one payment per code, prompt in the web app), hold for review, block and freeze
+- [x] M10.5 Async ring detection on Kafka (ledger.events credits and scored transfers; 5+ senders in 10 minutes, 3+ of them held or blocked); scenario S6 (20 accounts, 3 mules) frozen and alerted in under 1 s
+- [x] M10.6 Freeze/unfreeze and alerts (freeze commands to the Ledger, confirmed on ledger.replies; alerts on fraud.alerts; hash-chained audit log with verify)
+- [x] M10.7 Case management API (list, open, assign, note, close as confirmed fraud or false positive with unfreeze)
 
 ### M11 — Notifications & Realtime (weeks 6, 11)
 - [ ] M11.1 SignalR WalletHub and OpsHub with Redis backplane

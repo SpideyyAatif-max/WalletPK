@@ -265,6 +265,46 @@ customers turn cash into e-money and back:
 
 Set `Agents__CashOutCodeKey` (32+ characters) outside development; docker compose reads `CASH_OUT_CODE_KEY`.
 
+## Fraud and Risk
+
+The Fraud & Risk service (port 5107, `/api/fraud/*`; gRPC on 5207, internal only) scores every payment before
+the Ledger moves money, and gives compliance staff the tools to act:
+
+1. **Scoring:** the Ledger asks `Risk.Score` (gRPC) after the Identity limits check, for wallet transfers,
+   Raast and bill holds, merchant QR payments and agent cash-outs. Features come from Redis windows: payments in the
+   last 60 seconds, hour and 24 hours, the device's and account's age, whether the recipient is known, how many
+   wallets paid the recipient in the last hour, and whether the user was held or blocked recently. The four
+   answers (FR-5.1): below 30 the payment goes through; 30 or more needs a one-time code
+   (`fraud.step_up_required`, see below); 60 or more holds it for review (`fraud.review`); 90 or more blocks it
+   (`fraud.blocked`) and freezes the user's wallets. A typical score takes 1-3 ms. If the service is down or
+   slow (past 250 ms), the Ledger lets payments through and logs it (`Services:FraudGrpc:FailOpen`).
+2. **Step-up OTP:** the app asks for a code with `POST /api/identity/step-up` (texted to the user's phone),
+   checks it with `POST /api/identity/step-up/verify` `{"code": "123456"}`, and sends the payment again with a
+   new Idempotency-Key. The confirmation reaches the Fraud service on `identity.events` in about a second and
+   lets one such payment from the same phone through within 5 minutes; it never lifts a hold or a block. In the
+   web app the send-money screen asks for the code and sends again by itself; bank, bill, top-up and QR payments
+   ask for the code and the user sends again.
+3. **Rules:** seven built-in rules (velocity burst, a large payment from a new device, SIM-swap drain, mule fan-in,
+   odd hours, a large payment to a new recipient, a repeat after a hold or block) are JSON, stored in the database
+   and editable without a redeploy: `POST /api/fraud/rules`, `PUT /api/fraud/rules/{id}` (`{"enabled": false}`
+   switches one off). Every instance reloads within a second (Redis pub/sub, with a poll as a fallback).
+   `POST /api/fraud/rules/test` tries a rule on feature values without saving it; `GET /api/fraud/features`
+   lists what rules can test.
+4. **Rings:** credits on `ledger.events` and scored transfers feed a ring detector. When five or more wallets
+   pay one wallet within 10 minutes and three of them were held or blocked, it opens a Ring case, freezes the mule and
+   the refused senders, and raises a High alert on `fraud.alerts`.
+5. **Freezes, alerts and cases:** `POST /api/fraud/accounts/{userId}/freeze` and `/unfreeze` with a reason;
+   the Ledger confirms on `ledger.replies`. Held and blocked payments raise alerts and open a case per user;
+   `/api/fraud/cases` lists them, and `/{id}/assign`, `/notes` and `/close` (`ConfirmedFraud`, or
+   `FalsePositive` with `"unfreeze": true`) work them.
+6. **Audit log:** every rule change, freeze and case decision is written to a hash-chained log
+   (`GET /api/fraud/audit`). `GET /api/fraud/audit/verify` recomputes the chain and reports the first entry
+   that was changed.
+
+Scenario S6 (20 compromised accounts draining into 3 mule wallets) is an integration test: every account and
+mule is frozen and alerted in under a second, against the proposal's 2 seconds. The compliance API needs the
+`compliance` or `admin` role. The fraud queue and rule editor screens come with the Ops console (M14.C4).
+
 ## Service Ports
 
 | Service | Local port (`dotnet run`) | Gateway path |
@@ -276,7 +316,7 @@ Set `Agents__CashOutCodeKey` (32+ characters) outside development; docker compos
 | Bill Payment | 5104 | `/api/bills/*`, `/webhooks/billers/*` |
 | Top-up & Merchant | 5105 | `/api/topups/*`, `/api/merchants/*` |
 | Agent Network | 5106 | `/api/agents/*` |
-| Fraud & Risk | 5107 | `/api/fraud/*` (staff only) |
+| Fraud & Risk | 5107 (gRPC: 5207, internal only) | `/api/fraud/*` (compliance staff only) |
 | Notifications | 5108 | `/api/notifications/*`, `/hubs/*` (except `/hubs/wallet`) |
 | Reconciliation | 5109 | `/api/reconciliation/*` (staff only) |
 | Simulation | 5110 | `/api/simulation/*` (staff only) |

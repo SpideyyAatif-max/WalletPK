@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { dayKey, formatDay } from "./dates";
 import { deviceName } from "./device";
 import { readClaims } from "./jwt";
+import { needsStepUp } from "./wallet-api";
 
 describe("readClaims", () => {
   const encode = (value: object) => Buffer.from(JSON.stringify(value)).toString("base64url");
@@ -38,5 +39,14 @@ describe("deviceName", () => {
     expect(deviceName("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0 Safari/537.36")).toBe("Chrome on Windows");
     expect(deviceName("Mozilla/5.0 (Windows NT 10.0) AppleWebKit/537.36 Chrome/142.0 Safari/537.36 Edg/142.0")).toBe("Edge on Windows");
     expect(deviceName("Mozilla/5.0 (Linux; Android 15) Gecko/20100101 Firefox/145.0")).toBe("Firefox on Android");
+  });
+});
+
+describe("needsStepUp", () => {
+  it("is true only for the fraud engine's step-up code", () => {
+    expect(needsStepUp("fraud.step_up_required")).toBe(true);
+    expect(needsStepUp("fraud.review")).toBe(false);
+    expect(needsStepUp(null)).toBe(false);
+    expect(needsStepUp(undefined)).toBe(false);
   });
 });

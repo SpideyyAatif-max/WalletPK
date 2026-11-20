@@ -38,3 +38,17 @@ public sealed record KycUpgraded(Guid UserId, string PreviousTier, string NewTie
 {
     public override string GetPartitionKey() => UserId.ToString();
 }
+
+/// <summary>
+/// The user confirmed a stepped-up payment with a one-time code (M10.4). The Fraud service lets the user's
+/// next payment from <paramref name="DeviceId"/> that would need a code through, until <paramref name="ValidUntil"/>.
+/// </summary>
+/// <param name="UserId">Who confirmed.</param>
+/// <param name="DeviceId">The device they confirmed on (the payment must come from it), if known.</param>
+/// <param name="ConfirmedAt">When the code was checked.</param>
+/// <param name="ValidUntil">When the confirmation lapses unused.</param>
+[IntegrationEvent("identity.payment_step_up_confirmed", KafkaTopics.IdentityEvents)]
+public sealed record PaymentStepUpConfirmed(Guid UserId, Guid? DeviceId, DateTimeOffset ConfirmedAt, DateTimeOffset ValidUntil) : IntegrationEvent
+{
+    public override string GetPartitionKey() => UserId.ToString();
+}

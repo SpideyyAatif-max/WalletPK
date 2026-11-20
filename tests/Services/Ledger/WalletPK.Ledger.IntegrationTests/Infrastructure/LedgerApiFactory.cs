@@ -200,7 +200,7 @@ public sealed class FakeLimitsGateway : ILimitsGateway
     public void MakeAvailable(UserId userId) => _unavailable.TryRemove(userId, out _);
 
     public Task<LimitDecisionResult> ReserveAsync(
-        TransactionId transactionId, UserId userId, JournalType type, Money amount, string? deviceId, CancellationToken cancellationToken)
+        TransactionId transactionId, UserId userId, JournalType type, Money amount, string? deviceId, string? counterparty, CancellationToken cancellationToken)
     {
         if (_unavailable.ContainsKey(userId))
         {

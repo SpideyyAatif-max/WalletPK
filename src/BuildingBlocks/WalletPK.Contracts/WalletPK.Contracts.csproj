@@ -16,8 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Both: the server base class (Identity hosts it) and the client (the Ledger calls it). -->
+    <!-- Both: the server base classes (Identity and Fraud host them) and the clients (the Ledger calls them). -->
     <Protobuf Include="Protos\identity\v1\limits.proto" ProtoRoot="Protos" GrpcServices="Both" />
+    <Protobuf Include="Protos\fraud\v1\risk.proto" ProtoRoot="Protos" GrpcServices="Both" />
   </ItemGroup>
 
   <ItemGroup>

@@ -45,7 +45,13 @@ public static class WalletErrors
     public static Error LimitExceeded(LimitDecisionResult decision)
     {
         ArgumentNullException.ThrowIfNull(decision);
-        return Error.BusinessRule("wallet.limit_exceeded", decision.Reason);
+        return decision.Decision switch
+        {
+            RiskDecisions.StepUp => Error.BusinessRule("fraud.step_up_required", decision.Reason),
+            RiskDecisions.Review => Error.BusinessRule("fraud.review", decision.Reason),
+            RiskDecisions.Blocked => Error.BusinessRule("fraud.blocked", decision.Reason),
+            _ => Error.BusinessRule("wallet.limit_exceeded", decision.Reason),
+        };
     }
 }
 
@@ -178,7 +184,7 @@ public sealed class WalletService(
         LimitDecisionResult decision;
         try
         {
-            decision = await limits.ReserveAsync(command.TransactionId, command.SenderId, JournalType.P2PTransfer, command.Amount, command.DeviceId, cancellationToken);
+            decision = await limits.ReserveAsync(command.TransactionId, command.SenderId, JournalType.P2PTransfer, command.Amount, command.DeviceId, recipientNumber, cancellationToken);
         }
         catch (LimitsUnavailableException)
         {

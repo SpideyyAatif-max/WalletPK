@@ -4,13 +4,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Camera, CheckCircle2, ChevronRight, Loader2, Store, XCircle } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { StatusPill } from "@/components/payment-status";
+import { StepUpPrompt } from "@/components/step-up-prompt";
 import { Button } from "@/components/ui/button";
 import { Alert, Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/input";
 import { formatDay, formatTime } from "@/lib/dates";
 import { countdown, isQrPayload, merchantKeys, merchantsApi, secondsLeft, type QrPreview } from "@/lib/merchants";
 import { formatMoney, formatPaisa } from "@/lib/money";
-import { queryKeys } from "@/lib/wallet-api";
+import { needsStepUp, queryKeys } from "@/lib/wallet-api";
 import { useBalance } from "@/lib/wallet-queries";
 
 /**
@@ -277,7 +278,8 @@ function Receipt({ id, onBack }: { id: string; onBack: () => void }) {
             <p className="text-lg font-semibold">{data.merchantName}</p>
             <p className="tabular text-3xl font-bold">{formatPaisa(data.amountPaisa)}</p>
           </div>
-          {data.status === "Failed" && <Alert>{data.failureReason}</Alert>}
+          {data.status === "Failed" && needsStepUp(data.failureCode) && <StepUpPrompt reason={data.failureReason} />}
+          {data.status === "Failed" && !needsStepUp(data.failureCode) && <Alert>{data.failureReason}</Alert>}
           <dl className="space-y-2 rounded-xl bg-ink-50 p-4 text-left text-sm">
             {data.reference && <Row label="Reference" value={data.reference} />}
             <Row label="Merchant" value={data.merchantCode} />

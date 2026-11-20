@@ -13,6 +13,7 @@ namespace WalletPK.Identity.Application.Events;
 /// <item><see cref="UserRegistered"/> → <c>identity.user_registered</c></item>
 /// <item><see cref="DeviceTrusted"/> → <c>identity.device_bound</c></item>
 /// <item><see cref="KycUpgraded"/> → <c>identity.kyc_upgraded</c></item>
+/// <item><see cref="PaymentStepUpConfirmed"/> → <c>identity.payment_step_up_confirmed</c></item>
 /// <item>Lockouts and device removals stay internal for now (Fraud may subscribe in M10).</item>
 /// </list>
 /// The integration event reuses the domain event's ID and time, so it can be traced back to it.
@@ -34,6 +35,8 @@ public static class IdentityIntegrationEvents
                 trusted.UserId.Value, trusted.DeviceId.Value, trusted.CoolingOffUntil, trusted.TrustedAt),
             KycUpgraded upgraded => new IdentityContracts.KycUpgraded(
                 upgraded.UserId.Value, upgraded.PreviousTier.ToString(), upgraded.NewTier.ToString(), upgraded.UpgradedAt),
+            PaymentStepUpConfirmed confirmed => new IdentityContracts.PaymentStepUpConfirmed(
+                confirmed.UserId.Value, confirmed.DeviceId, confirmed.ConfirmedAt, confirmed.ValidUntil),
             _ => null,
         };
 

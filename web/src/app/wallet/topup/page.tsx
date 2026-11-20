@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight, Smartphone } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { StatusPill, Timeline } from "@/components/payment-status";
+import { StepUpPrompt } from "@/components/step-up-prompt";
 import { Button } from "@/components/ui/button";
 import { Alert, Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { formatLocal, toE164 } from "@/lib/phone";
 import { airtimeProblem, isTopUpFinal, networkOf, quickAirtime, topUpKeys, topUpStepNames, topUpsApi, validity, type Bundle } from "@/lib/topups";
 import { useSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
-import { queryKeys } from "@/lib/wallet-api";
+import { needsStepUp, queryKeys } from "@/lib/wallet-api";
 import { useBalance } from "@/lib/wallet-queries";
 
 /**
@@ -235,7 +236,8 @@ function Tracker({ id, onBack }: { id: string; onBack: () => void }) {
             <StatusPill status={data.status} />
           </div>
           {data.status === "UnderReview" && <Alert tone="info">{data.networkName} has not confirmed this top-up. Our team is checking it; your money stays reserved until it is resolved.</Alert>}
-          {data.status === "Failed" && <Alert>{data.failureReason}. The reserved money is back in your wallet.</Alert>}
+          {data.status === "Failed" && needsStepUp(data.failureCode) && <StepUpPrompt reason={data.failureReason} />}
+          {data.status === "Failed" && !needsStepUp(data.failureCode) && <Alert>{data.failureReason}. The reserved money is back in your wallet.</Alert>}
           {data.timeline && <Timeline steps={data.timeline} status={data.status} names={topUpStepNames} />}
           <dl className="space-y-2 rounded-xl bg-ink-50 p-4 text-sm">
             {data.telcoReference && <Row label="Network reference" value={<span className="font-mono text-xs">{data.telcoReference}</span>} />}

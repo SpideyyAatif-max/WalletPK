@@ -7,6 +7,9 @@ public enum OtpPurpose
 {
     Registration = 0,
     DeviceVerification = 1,
+
+    /// <summary>Confirming a payment the fraud engine asked to step up (M10.4).</summary>
+    PaymentStepUp = 2,
 }
 
 /// <summary>An outstanding one-time password: only its keyed hash is stored, never the code.</summary>

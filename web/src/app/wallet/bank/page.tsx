@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Building2, ChevronRight } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { StatusPill, Timeline } from "@/components/payment-status";
+import { StepUpPrompt } from "@/components/step-up-prompt";
 import { Button } from "@/components/ui/button";
 import { Alert, Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
@@ -14,7 +15,7 @@ import { formatMoney, formatPaisa, parseRupees } from "@/lib/money";
 import { isFinal, paymentKeys, paymentsApi, type Bank, type Beneficiary } from "@/lib/payments";
 import { toE164 } from "@/lib/phone";
 import { cn } from "@/lib/utils";
-import { queryKeys } from "@/lib/wallet-api";
+import { needsStepUp, queryKeys } from "@/lib/wallet-api";
 import { useBalance } from "@/lib/wallet-queries";
 
 type Draft = { beneficiary: Beneficiary; amountPaisa: number; note: string; idempotencyKey: string };
@@ -249,7 +250,8 @@ function Tracker({ id, onBack }: { id: string; onBack: () => void }) {
           {data.status === "Queued" && (
             <Alert tone="info">{data.toBankName} is unavailable. Your transfer is queued and will be sent automatically when the bank is back; the money stays reserved.</Alert>
           )}
-          {data.status === "Failed" && <Alert>{data.failureReason} No money left your wallet.</Alert>}
+          {data.status === "Failed" && needsStepUp(data.failureCode) && <StepUpPrompt reason={data.failureReason} />}
+          {data.status === "Failed" && !needsStepUp(data.failureCode) && <Alert>{data.failureReason} No money left your wallet.</Alert>}
           {data.timeline && <Timeline steps={data.timeline} status={data.status} />}
           <dl className="space-y-2 rounded-xl bg-ink-50 p-4 text-sm">
             {data.raastReference && <Row label="Raast reference" value={<span className="font-mono text-xs">{data.raastReference}</span>} />}

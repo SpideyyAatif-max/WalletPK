@@ -5,12 +5,17 @@ using WalletPK.Web.Identity;
 
 namespace WalletPK.Identity.Api.Endpoints;
 
+/// <param name="Code">The six-digit code from the SMS.</param>
+public sealed record StepUpCodeRequest(string? Code);
+
 /// <summary>
 /// The signed-in user's own account; every endpoint needs a valid access token:
 /// <list type="bullet">
 /// <item>GET    /api/identity/me                   profile + current device</item>
 /// <item>GET    /api/identity/devices              all devices</item>
 /// <item>DELETE /api/identity/devices/{deviceId}   remove a device and end its sessions</item>
+/// <item>POST   /api/identity/step-up              send a code to confirm a payment the fraud engine stepped up</item>
+/// <item>POST   /api/identity/step-up/verify       check it; the payment can then be sent again</item>
 /// </list>
 /// </summary>
 public static class AccountEndpoints
@@ -33,6 +38,12 @@ public static class AccountEndpoints
             var result = await handler.HandleAsync(currentUser.GetRequiredId(), new DeviceId(deviceId), cancellationToken);
             return result.ToHttpResult();
         });
+
+        group.MapPost("/step-up", async (ICurrentUser currentUser, PaymentStepUpHandler handler, CancellationToken cancellationToken) =>
+            (await handler.StartAsync(currentUser.GetRequiredId(), cancellationToken)).ToHttpResult());
+
+        group.MapPost("/step-up/verify", async (StepUpCodeRequest request, ICurrentUser currentUser, PaymentStepUpHandler handler, CancellationToken cancellationToken) =>
+            (await handler.VerifyAsync(currentUser.GetRequiredId(), CurrentDevice(currentUser)?.Value, request.Code, cancellationToken)).ToHttpResult());
 
         return endpoints;
     }

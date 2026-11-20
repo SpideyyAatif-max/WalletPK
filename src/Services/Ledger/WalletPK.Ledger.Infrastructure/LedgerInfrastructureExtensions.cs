@@ -16,6 +16,7 @@ using WalletPK.Ledger.Application.Merchants;
 using WalletPK.Ledger.Application.Invariants;
 using WalletPK.Ledger.Application.Posting;
 using WalletPK.Ledger.Application.ReadModels;
+using WalletPK.Ledger.Application.Risk;
 using WalletPK.Ledger.Application.Wallets;
 using WalletPK.Ledger.Infrastructure.Audit;
 using WalletPK.Ledger.Infrastructure.Idempotency;
@@ -25,6 +26,7 @@ using WalletPK.Ledger.Infrastructure.Maintenance;
 using WalletPK.Ledger.Infrastructure.Persistence;
 using WalletPK.Ledger.Infrastructure.ReadModels;
 using WalletPK.Ledger.Infrastructure.Redis;
+using WalletPK.Ledger.Infrastructure.Risk;
 using WalletPK.Messaging;
 using WalletPK.Messaging.Dispatching;
 using WalletPK.Messaging.Kafka;
@@ -75,6 +77,10 @@ public static class LedgerInfrastructureExtensions
             .BindConfiguration(IdentityGrpcOptions.SectionName)
             .Validate(options => options.Address is { IsAbsoluteUri: true } && options.TimeoutMilliseconds >= 100, "Services:IdentityGrpc: Address must be an absolute URI and TimeoutMilliseconds >= 100.")
             .ValidateOnStart();
+        services.AddOptions<FraudGrpcOptions>()
+            .BindConfiguration(FraudGrpcOptions.SectionName)
+            .Validate(options => options.IsValid(), "Services:FraudGrpc: Address must be an absolute URI (or empty for no risk scoring) and TimeoutMilliseconds >= 10.")
+            .ValidateOnStart();
         services.AddOptions<AuditOptions>()
             .BindConfiguration(AuditOptions.SectionName)
             .Validate(options => options.SealIntervalMilliseconds >= 100 && options.BatchSize >= 1 && options.MaxUnsealedAgeSeconds >= 10, "Ledger:Audit: SealIntervalMilliseconds >= 100, BatchSize >= 1, MaxUnsealedAgeSeconds >= 10.")
@@ -88,6 +94,7 @@ public static class LedgerInfrastructureExtensions
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<WalletLockOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<FeeOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<IdentityGrpcOptions>>().Value);
+        services.AddSingleton(provider => provider.GetRequiredService<IOptions<FraudGrpcOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<IdempotencyOptions>>().Value);
         services.AddSingleton(provider => provider.GetRequiredService<IOptions<MaintenanceOptions>>().Value);
 
@@ -120,6 +127,8 @@ public static class LedgerInfrastructureExtensions
         services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.AgentCashOut, AgentCommandHandlers>();
         services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.MoveAgentFloat, AgentCommandHandlers>();
         services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.PayAgentCommission, AgentCommandHandlers>();
+        services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.FreezeWallets, FreezeCommandHandlers>();
+        services.AddIntegrationEventHandler<WalletPK.Contracts.Ledger.UnfreezeWallets, FreezeCommandHandlers>();
 
         services.AddKafkaConsumer(LedgerConsumerGroup, KafkaTopics.IdentityEvents, KafkaTopics.LedgerCommands);
 
@@ -168,7 +177,24 @@ public static class LedgerInfrastructureExtensions
         // ---- Identity's limits API (gRPC, internal port) ----
         services.AddGrpcClient<WalletPK.Contracts.Identity.V1.Limits.LimitsClient>((provider, options) =>
             options.Address = provider.GetRequiredService<IdentityGrpcOptions>().Address);
-        services.AddScoped<ILimitsGateway, IdentityLimitsGateway>();
+        services.AddScoped<IdentityLimitsGateway>();
+
+        // ---- The Fraud service's risk score (gRPC, internal port), right after the limits (M10.4) ----
+        services.AddGrpcClient<WalletPK.Contracts.Fraud.V1.Risk.RiskClient>((provider, options) =>
+            options.Address = provider.GetRequiredService<FraudGrpcOptions>().Address ?? new Uri("http://localhost"));
+        services.AddScoped<ILimitsGateway>(provider =>
+        {
+            var identity = provider.GetRequiredService<IdentityLimitsGateway>();
+            var fraud = provider.GetRequiredService<FraudGrpcOptions>();
+            return fraud.Enabled
+                ? new RiskCheckedLimitsGateway(
+                    identity,
+                    provider.GetRequiredService<WalletPK.Contracts.Fraud.V1.Risk.RiskClient>(),
+                    fraud,
+                    provider.GetRequiredService<System.Diagnostics.Metrics.IMeterFactory>(),
+                    provider.GetRequiredService<Microsoft.Extensions.Logging.ILogger<RiskCheckedLimitsGateway>>())
+                : identity;
+        });
 
         // ---- Use cases ----
         services.AddScoped<WalletConcurrency>();
