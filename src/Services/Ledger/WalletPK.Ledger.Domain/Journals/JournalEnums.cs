@@ -28,4 +28,10 @@ public enum JournalType
 
     /// <summary>Manual correction by operations, always with a reason.</summary>
     Adjustment = 8,
+
+    /// <summary>An agent's accrued commissions paid to its float.</summary>
+    CommissionPayout = 9,
+
+    /// <summary>Money between an agent's own wallet and its float.</summary>
+    FloatTransfer = 10,
 }

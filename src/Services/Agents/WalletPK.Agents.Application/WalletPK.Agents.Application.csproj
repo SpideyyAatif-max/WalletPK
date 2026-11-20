@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Agents.Application</RootNamespace>
+    <Description>Agent network use cases: onboarding and approval, the agent transaction Saga (cash-in, cash-out, float moves), one-time cash-out codes and commission payouts, written against ports.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Agents.Domain\WalletPK.Agents.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Contracts\WalletPK.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Sagas\WalletPK.Sagas.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Agents.UnitTests" />
+    <InternalsVisibleTo Include="WalletPK.Agents.IntegrationTests" />
+  </ItemGroup>
+
+</Project>

@@ -118,8 +118,12 @@ public sealed class WalletService(
         return new OpenWalletResult(WalletView.From(wallet), Created: true);
     }
 
-    public async Task<Result<WalletView>> GetAsync(UserId ownerId, CancellationToken cancellationToken) =>
-        await accounts.GetWalletByOwnerAsync(ownerId, AccountType.CustomerWallet, cancellationToken) is { } wallet
+    public Task<Result<WalletView>> GetAsync(UserId ownerId, CancellationToken cancellationToken) =>
+        GetAsync(ownerId, AccountType.CustomerWallet, cancellationToken);
+
+    /// <summary>The owner's wallet of <paramref name="type"/>: their customer wallet, merchant wallet (M8) or agent float (M9).</summary>
+    public async Task<Result<WalletView>> GetAsync(UserId ownerId, AccountType type, CancellationToken cancellationToken) =>
+        await accounts.GetWalletByOwnerAsync(ownerId, type, cancellationToken) is { } wallet
             ? WalletView.From(wallet)
             : WalletErrors.WalletNotFound;
 
@@ -287,7 +291,7 @@ public sealed class WalletService(
     /// <summary>
     /// The wallet's balance from the balance read model, with the sequence of the newest entry it
     /// includes, so a live view can tell whether a pushed update is newer. For the authoritative balance
-    /// with holds, use <see cref="GetAsync"/>.
+    /// with holds, use <see cref="GetAsync(UserId, CancellationToken)"/>.
     /// </summary>
     public async Task<Result<WalletBalance>> BalanceAsync(UserId ownerId, CancellationToken cancellationToken)
     {

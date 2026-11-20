@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Agents.Api</RootNamespace>
+    <Description>WalletPK Agent Network service: agent onboarding and approval, agent floats, cash-in, cash-out with one-time codes, and nightly commission payouts.</Description>
+    <UserSecretsId>walletpk-agents</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Needed only by the dotnet-ef tool (migrations); not shipped with the app. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Agents.Infrastructure\WalletPK.Agents.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Observability\WalletPK.Observability.csproj" />
+  </ItemGroup>
+
+</Project>

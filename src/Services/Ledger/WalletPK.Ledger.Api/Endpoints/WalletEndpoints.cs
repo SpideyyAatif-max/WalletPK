@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using WalletPK.Common.Primitives;
 using WalletPK.Common.Results;
 using WalletPK.Ledger.Application.Wallets;
+using WalletPK.Ledger.Domain.Accounts;
 using WalletPK.Web.Errors;
 using WalletPK.Web.Idempotency;
 using WalletPK.Web.Identity;
@@ -14,6 +15,8 @@ namespace WalletPK.Ledger.Api.Endpoints;
 /// <list type="bullet">
 /// <item>POST /api/wallets                        open my wallet (201; 200 if it already exists)</item>
 /// <item>GET  /api/wallets/me                     balance, held and available</item>
+/// <item>GET  /api/wallets/me/merchant            my merchant wallet (M8), when I have a shop</item>
+/// <item>GET  /api/wallets/me/agent               my agent float (M9), when I am an agent</item>
 /// <item>GET  /api/wallets/me/balance             balance from the read model, with the sequence of the newest entry in it</item>
 /// <item>GET  /api/wallets/me/transactions        statement, newest first (?limit=20&amp;before={nextBefore}&amp;type=P2PTransfer&amp;direction=out&amp;from=&amp;to=)</item>
 /// <item>GET  /api/wallets/transfers/quote        fee and tax for ?amountPaisa=</item>
@@ -36,6 +39,13 @@ public static class WalletEndpoints
 
         group.MapGet("/me", async (ICurrentUser currentUser, WalletService wallets, CancellationToken cancellationToken) =>
             (await wallets.GetAsync(currentUser.GetRequiredId(), cancellationToken)).ToHttpResult());
+
+        // The owner's merchant wallet (M8) and agent float (M9): opened by those services, read here.
+        group.MapGet("/me/merchant", async (ICurrentUser currentUser, WalletService wallets, CancellationToken cancellationToken) =>
+            (await wallets.GetAsync(currentUser.GetRequiredId(), AccountType.MerchantWallet, cancellationToken)).ToHttpResult());
+
+        group.MapGet("/me/agent", async (ICurrentUser currentUser, WalletService wallets, CancellationToken cancellationToken) =>
+            (await wallets.GetAsync(currentUser.GetRequiredId(), AccountType.AgentWallet, cancellationToken)).ToHttpResult());
 
         group.MapGet("/me/balance", async (ICurrentUser currentUser, WalletService wallets, CancellationToken cancellationToken) =>
             (await wallets.BalanceAsync(currentUser.GetRequiredId(), cancellationToken)).ToHttpResult());

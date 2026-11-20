@@ -266,10 +266,10 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M8.5 Nightly merchant settlement (merchant wallet → BANK_FLOAT per merchant and day; refused ones retried the next night)
 
 ### M9 — Agent Network (week 9)
-- [ ] M9.1 Agent profile and float
-- [ ] M9.2 Cash-in
-- [ ] M9.3 Cash-out
-- [ ] M9.4 Commissions
+- [x] M9.1 Agent profile and float (new Agent Network service, port 5106): apply (KYC L1+), operations approve, the Ledger opens the float; float moves to and from the agent's wallet; low-float alerts
+- [x] M9.2 Cash-in (float → customer wallet, free for the customer, commission accrued in the same journal)
+- [x] M9.3 Cash-out (the customer's one-time six-digit code, 15 minutes, locked after 5 wrong tries; fee and tax on top)
+- [x] M9.4 Commissions (COMMISSION_EXPENSE / COMMISSION_PAYABLE; paid to the float nightly, less 12% withholding)
 
 ### M10 — Fraud & Risk Engine (weeks 10–11)
 - [ ] M10.1 Redis feature windows

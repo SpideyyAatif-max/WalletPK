@@ -40,6 +40,7 @@ services:
       ReverseProxy__Clusters__payments__Destinations__d1__Address: http://payments:8080/
       ReverseProxy__Clusters__bills__Destinations__d1__Address: http://bills:8080/
       ReverseProxy__Clusters__topup-merchant__Destinations__d1__Address: http://topup-merchant:8080/
+      ReverseProxy__Clusters__agents__Destinations__d1__Address: http://agents:8080/
     ports:
       - "${GATEWAY_PORT:-5000}:8080"
     depends_on:
@@ -218,6 +219,35 @@ services:
       ledger:
         condition: service_started
       mock-providers:
+        condition: service_started
+
+  # Agent Network (M9): agent onboarding and floats, cash-in, cash-out with one-time codes, and nightly
+  # commission payouts. Talks to the Ledger over Kafka. Development approves new agents at once.
+  agents:
+    <<: *dotnet-service
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: src/Services/Agents/WalletPK.Agents.Api/Dockerfile
+    image: walletpk/agents:dev
+    container_name: walletpk-agents
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__AgentsDb: Host=postgres;Port=5432;Database=walletpk_agents;Username=${POSTGRES_USER:-walletpk};Password=${POSTGRES_PASSWORD:-walletpk_dev}
+      Jwt__Authority: http://identity:8080/
+      Kafka__BootstrapServers: kafka:9092
+      Agents__CashOutCodeKey: ${CASH_OUT_CODE_KEY:-dev-only-cash-out-code-key-change-me-in-production}
+      Observability__SeqUrl: http://seq:5341
+      Observability__OtlpTracesEndpoint: http://jaeger:4317
+      Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
+    ports:
+      - "${AGENTS_PORT:-5106}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      ledger:
         condition: service_started
 
   # Mock external providers (M5): Raast and banks, billers, telcos, NADRA, with runtime faults and

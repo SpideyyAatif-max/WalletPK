@@ -43,12 +43,20 @@ public static class ChartOfAccounts
         "TELCO_SETTLEMENT", "Telco settlement", NormalBalance.Credit, 4,
         "Mobile top-ups collected but not yet paid out to the networks. Liability.");
 
+    public static SystemAccountDefinition CommissionExpense { get; } = new(
+        "COMMISSION_EXPENSE", "Commission expense", NormalBalance.Debit, 4,
+        "Commissions earned by agents for cash-ins and cash-outs. Expense.");
+
+    public static SystemAccountDefinition CommissionPayable { get; } = new(
+        "COMMISSION_PAYABLE", "Commission payable", NormalBalance.Credit, 4,
+        "Agent commissions accrued but not yet paid to their float. Liability.");
+
     public static SystemAccountDefinition Suspense { get; } = new(
         "SUSPENSE", "Suspense", NormalBalance.Debit, 1,
         "Money whose destination is not known yet (failed or unmatched transfers); cleared by reconciliation.");
 
     public static IReadOnlyList<SystemAccountDefinition> SystemAccounts { get; } =
-        [BankFloat, FeeIncome, TaxPayable, BillerSettlement, TelcoSettlement, Suspense];
+        [BankFloat, FeeIncome, TaxPayable, BillerSettlement, TelcoSettlement, CommissionExpense, CommissionPayable, Suspense];
 
     public static SystemAccountDefinition Get(string code) =>
         SystemAccounts.FirstOrDefault(definition => definition.Code == code)

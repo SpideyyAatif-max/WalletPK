@@ -20,6 +20,7 @@ const types = [
   { value: "P2PTransfer", label: "Wallet transfers" },
   { value: "CashIn", label: "Cash-in" },
   { value: "CashOut", label: "Cash-out" },
+  { value: "FloatTransfer", label: "Agent float" },
 ];
 
 /** The full statement, newest first, with filters; pages load on demand (keyset paging on the API). */

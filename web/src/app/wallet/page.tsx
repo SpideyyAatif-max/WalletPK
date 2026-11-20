@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight, Building2, FlaskConical, HandCoins, Receipt, ScanLine, Smartphone, Store } from "lucide-react";
+import { ArrowUpRight, Banknote, Briefcase, Building2, FlaskConical, HandCoins, Receipt, ScanLine, Smartphone, Store } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { LiveBadge } from "@/components/live-badge";
@@ -52,6 +52,8 @@ export default function WalletHome() {
         <QuickAction href="/wallet/topup" label="Mobile load" icon={<Smartphone className="h-5 w-5" />} />
         <QuickAction href="/wallet/pay" label="Scan & pay" icon={<ScanLine className="h-5 w-5" />} />
         <QuickAction href="/wallet/shop" label="My shop" icon={<Store className="h-5 w-5" />} />
+        <QuickAction href="/wallet/cash-out" label="Cash out" icon={<Banknote className="h-5 w-5" />} />
+        <QuickAction href="/wallet/agent" label="Agent mode" icon={<Briefcase className="h-5 w-5" />} />
         {devToolsEnabled && <DevTopUp />}
       </div>
 

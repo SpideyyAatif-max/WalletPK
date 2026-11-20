@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Agents.Domain</RootNamespace>
+    <Description>Agent network domain: agents and their statuses, the commission plan (cash-in commission, cash-out fee and the agent's share, withholding tax), one-time cash-out codes. No infrastructure dependencies.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Common\WalletPK.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Agents.UnitTests" />
+  </ItemGroup>
+
+</Project>

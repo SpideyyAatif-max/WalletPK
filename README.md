@@ -194,7 +194,8 @@ instant and all-or-nothing:
   your own amounts) become one request each, and `GET /api/payments/splits/{id}` shows who has paid.
 
 In the web app (http://localhost:3000/wallet): **Send**, **Bank** (lookup, send, live tracker, bank status),
-**Requests** (to pay, I asked, split bills), **Bills**, **Mobile load**, **Scan & pay** and **My shop**.
+**Requests** (to pay, I asked, split bills), **Bills**, **Mobile load**, **Scan & pay**, **My shop**, **Cash out**
+and **Agent mode**.
 
 ## Paying Bills
 
@@ -239,6 +240,30 @@ The Top-up & Merchant service (port 5105, `/api/topups/*`, `/api/merchants/*`):
    Operations can run it now: `POST /api/merchants/ops/settlements/run?date=2026-11-18`.
 
 Set `Merchants__Qr__SigningKey` (32+ characters) outside development; docker compose reads `QR_SIGNING_KEY`.
+
+## Agents: Cash-in and Cash-out
+
+The Agent Network service (port 5106, `/api/agents/*`) runs WalletPK's retail agents, the shops where
+customers turn cash into e-money and back:
+
+1. **Becoming an agent:** `POST /api/agents` `{"shopName": "Bismillah Easy Cash", "city": "Multan"}` (KYC L1 or
+   above). Operations approve it (`/api/agents/ops/{id}/approve`; in Development it is approved at once) and
+   the Ledger opens the agent's **float**, a wallet of its own (`WPKA` and six digits, read at
+   `/api/wallets/me/agent`). The agent loads it from its own wallet, and moves it back, with
+   `POST /api/agents/me/float` `{"direction": "ToFloat", "amountPaisa": 500000}`.
+2. **Cash-in:** the agent takes the customer's cash and sends `POST /api/agents/me/cash-ins`
+   `{"customerNumber": "0300 1234567", "amountPaisa": 200000}`: the float pays the customer's wallet, free for
+   the customer. Below the agent's alert level (Rs. 5,000 by default) `agents.float_low` is sent.
+3. **Cash-out:** the customer asks for cash at the agent in the app (`POST /api/agents/cash-outs`
+   `{"agentCode": "WPKA123456", "amountPaisa": 100000}`) and gets a six-digit code, good for 15 minutes. The agent
+   types it (`POST /api/agents/me/cash-outs`): the customer's wallet pays the amount plus a 1% fee (Rs. 10 to
+   Rs. 300) and 16% tax on it, the float gets the amount, and the agent hands over the cash. Five wrong codes
+   lock the request; two tries at once pay out once.
+4. **Commissions:** 0.4% of each cash-in (Rs. 2 to Rs. 40) and 60% of each cash-out fee, accrued in the same
+   Ledger journal (`COMMISSION_EXPENSE` / `COMMISSION_PAYABLE`) and paid to the float every night less 12%
+   withholding tax. Operations can pay now: `POST /api/agents/ops/payouts/run?date=2026-11-20`.
+
+Set `Agents__CashOutCodeKey` (32+ characters) outside development; docker compose reads `CASH_OUT_CODE_KEY`.
 
 ## Service Ports
 
