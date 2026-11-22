@@ -328,7 +328,11 @@ public class BankTransferTests(PaymentsFactory factory) : IAsyncLifetime
         var id = await StartAsync(client, TestIbans.NewActive("HABB"));
         await WaitForStepAsync(client, id, "Completed");
 
-        factory.Ledger.CommandsFor(id).OfType<PlaceHold>().Count().ShouldBe(2);
+        // Asked again at least once (more on a slow machine, where a reply can take longer than the 3-second
+        // timeout the tests use); always for the same hold, so the Ledger places it once.
+        var holds = factory.Ledger.CommandsFor(id).OfType<PlaceHold>().ToList();
+        holds.Count.ShouldBeGreaterThanOrEqualTo(2);
+        holds.Select(hold => hold.HoldId).Distinct().Count().ShouldBe(1);
     }
 
     [Fact]

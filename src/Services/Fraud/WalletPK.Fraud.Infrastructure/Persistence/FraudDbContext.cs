@@ -130,6 +130,12 @@ internal sealed class AuditEntryConfiguration : IEntityTypeConfiguration<AuditEn
 
 internal sealed class FraudStore(FraudDbContext db, JsonEventSerializer serializer, TimeProvider timeProvider) : IFraudStore
 {
+    /// <summary>Audit entries of the current transaction, written onto the chain just before it commits.</summary>
+    private readonly List<(string Actor, string Action, string Subject, string Details, DateTimeOffset At)> _pendingAudit = [];
+
+    /// <summary>Inside a transaction <see cref="InTransactionAsync"/> started, which writes the audit entries at its end.</summary>
+    private bool _deferAudit;
+
     /// <summary>One audit writer at a time (a transaction-scoped advisory lock), so the chain never forks.</summary>
     private const long AuditLock = 0x5750_4B41_5544_4954;
 
@@ -186,23 +192,51 @@ internal sealed class FraudStore(FraudDbContext db, JsonEventSerializer serializ
 
     public async Task AuditAsync(string actor, string action, string subject, string details, DateTimeOffset at, CancellationToken cancellationToken)
     {
+        _pendingAudit.Add((actor, action, subject, details, AuditChain.Truncate(at)));
+        if (_deferAudit)
+        {
+            return;
+        }
+
+        if (db.Database.CurrentTransaction is null)
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+            await AppendAuditAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        else
+        {
+            // Someone else's transaction: write it now, so it commits (or rolls back) with theirs.
+            await AppendAuditAsync(cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Writes the transaction's audit entries onto the chain, last thing before the commit: the chain's lock
+    /// serialises every writer, so it is held only for this read, these inserts and the commit (20 accounts
+    /// frozen at once no longer queue behind each other's whole transactions).
+    /// </summary>
+    private async Task AppendAuditAsync(CancellationToken cancellationToken)
+    {
+        if (_pendingAudit.Count == 0)
+        {
+            return;
+        }
+
         await db.Database.ExecuteSqlAsync($"SELECT pg_advisory_xact_lock({AuditLock})", cancellationToken);
         var previous = await db.Set<AuditEntry>().AsNoTracking().OrderByDescending(entry => entry.Sequence).Select(entry => entry.Hash).FirstOrDefaultAsync(cancellationToken)
             ?? AuditChain.Genesis;
-        var when = AuditChain.Truncate(at);
-        db.Add(new AuditEntry
+        foreach (var (actor, action, subject, details, when) in _pendingAudit)
         {
-            Actor = actor,
-            Action = action,
-            Subject = subject,
-            Details = details,
-            At = when,
-            PreviousHash = previous,
-            Hash = AuditChain.Hash(previous, actor, action, subject, details, when),
-        });
+            var hash = AuditChain.Hash(previous, actor, action, subject, details, when);
+            db.Add(new AuditEntry { Actor = actor, Action = action, Subject = subject, Details = details, At = when, PreviousHash = previous, Hash = hash });
 
-        // Saved now, inside the caller's transaction, so a second entry in the same transaction chains onto it.
-        await db.SaveChangesAsync(cancellationToken);
+            // One at a time, so the sequence numbers follow the chain.
+            await db.SaveChangesAsync(cancellationToken);
+            previous = hash;
+        }
+
+        _pendingAudit.Clear();
     }
 
     public async Task LockUsersAsync(IEnumerable<Guid> userIds, CancellationToken cancellationToken)
@@ -239,11 +273,22 @@ internal sealed class FraudStore(FraudDbContext db, JsonEventSerializer serializ
             return await work();
         }
 
-        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-        var result = await work();
-        await db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        return result;
+        _pendingAudit.Clear();
+        _deferAudit = true;
+        try
+        {
+            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+            var result = await work();
+            await db.SaveChangesAsync(cancellationToken);
+            await AppendAuditAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return result;
+        }
+        finally
+        {
+            _deferAudit = false;
+            _pendingAudit.Clear();
+        }
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken) => db.SaveChangesAsync(cancellationToken);
