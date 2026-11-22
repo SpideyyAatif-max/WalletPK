@@ -3,8 +3,8 @@ using WalletPK.MockProviders.Storage;
 using WalletPK.Observability;
 using WalletPK.Web;
 
-// WalletPK mock external providers (M5): Raast and four banks, four billers, four mobile networks and
-// NADRA, each controllable at runtime (latency, errors, timeouts, outages) and producing settlement files.
+// WalletPK mock external providers (M5, M11): Raast and four banks, four billers, four mobile networks,
+// NADRA and SMS and email gateways, each controllable at runtime (latency, errors, timeouts, outages) and producing settlement files.
 // Internal only: services call it directly; it is not routed through the gateway.
 var builder = WebApplication.CreateBuilder(args);
 

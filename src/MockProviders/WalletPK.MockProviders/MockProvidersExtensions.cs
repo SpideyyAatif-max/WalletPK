@@ -4,6 +4,7 @@ using WalletPK.MockProviders.Banks;
 using WalletPK.MockProviders.Billers;
 using WalletPK.MockProviders.Callbacks;
 using WalletPK.MockProviders.Faults;
+using WalletPK.MockProviders.Messaging;
 using WalletPK.MockProviders.Nadra;
 using WalletPK.MockProviders.Security;
 using WalletPK.MockProviders.Settlement;
@@ -58,6 +59,7 @@ public static class MockProvidersExtensions
                 "GET  /telcos, /telcos/{code}/bundles; POST /telcos/{code}/topups; GET /telcos/{code}/topups/{topUpId}",
                 "POST /nadra/v1/verifications",
                 "GET  /settlement/{banks|billers|telcos}/{code}/{yyyy-MM-dd}",
+                "POST /sms/v1/messages, /email/v1/messages; GET /sms/v1/messages?to=, /email/v1/messages?to=",
             },
             control = new[]
             {
@@ -78,6 +80,7 @@ public static class MockProvidersExtensions
         app.MapTelcoEndpoints();
         app.MapNadraEndpoints();
         app.MapSettlementEndpoints();
+        app.MapMessagingEndpoints();
         return app;
     }
 }

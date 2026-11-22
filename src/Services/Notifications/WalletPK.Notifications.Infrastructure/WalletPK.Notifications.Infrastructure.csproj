@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Notifications.Infrastructure</RootNamespace>
+    <Description>Notifications adapters: Kafka consumers for every service's events (inbox), PostgreSQL (EF Core) for notifications, settings and deliveries, the SMS and email gateway client with its resilience pipeline, and the background sender.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Notifications.Application\WalletPK.Notifications.Application.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Persistence\WalletPK.Persistence.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Messaging.Kafka\WalletPK.Messaging.Kafka.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Resilience\WalletPK.Resilience.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Notifications.UnitTests" />
+    <InternalsVisibleTo Include="WalletPK.Notifications.IntegrationTests" />
+  </ItemGroup>
+</Project>

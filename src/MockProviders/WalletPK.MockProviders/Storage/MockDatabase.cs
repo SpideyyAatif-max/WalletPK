@@ -52,6 +52,7 @@ public sealed class MockDatabase(NpgsqlDataSource dataSource)
         );
         CREATE UNIQUE INDEX IF NOT EXISTS ux_operations_reference ON mock.operations (reference);
         CREATE INDEX IF NOT EXISTS ix_operations_due ON mock.operations (process_after) WHERE status = 'Pending';
+        CREATE INDEX IF NOT EXISTS ix_operations_counterparty ON mock.operations (provider, counterparty, created_at DESC);
         CREATE INDEX IF NOT EXISTS ix_operations_settlement ON mock.operations (settlement_party, completed_at) WHERE status = 'Completed';
         -- A bill can be paid once per billing month, even under concurrent payments.
         CREATE UNIQUE INDEX IF NOT EXISTS ux_operations_bill_paid

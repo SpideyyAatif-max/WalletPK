@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The Notifications service end to end: real PostgreSQL, Redis (the SignalR backplane) and Kafka
+    (Testcontainers), the real mock SMS and email gateways in-process (with their faults), and browsers
+    connected to the hubs over WebSockets.
+  -->
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.Redis" />
+    <PackageReference Include="Testcontainers.Kafka" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\Services\Notifications\WalletPK.Notifications.Api\WalletPK.Notifications.Api.csproj" />
+    <!-- Both services have a Program class: the mock's is reached through the alias "mock". -->
+    <ProjectReference Include="..\..\..\..\src\MockProviders\WalletPK.MockProviders\WalletPK.MockProviders.csproj" Aliases="mock" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Shouldly" />
+  </ItemGroup>
+
+</Project>

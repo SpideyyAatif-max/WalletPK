@@ -281,11 +281,11 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M10.7 Case management API (list, open, assign, note, close as confirmed fraud or false positive with unfreeze)
 
 ### M11 — Notifications & Realtime (weeks 6, 11)
-- [ ] M11.1 SignalR WalletHub and OpsHub with Redis backplane
-- [ ] M11.2 Event consumers
-- [ ] M11.3 English/Urdu templates
-- [ ] M11.4 In-app, simulated SMS and email
-- [ ] M11.5 Idempotent sends
+- [x] M11.1 SignalR WalletHub and OpsHub with Redis backplane (new Notifications service, port 5108; the live balance moved here from the Ledger)
+- [x] M11.2 Event consumers (identity, ledger, payments, bills, top-up, agents, fraud and dead-letter events; Ledger wallet entries announce every payment once)
+- [x] M11.3 English/Urdu templates (the user's language choice; the notification centre re-renders older messages)
+- [x] M11.4 In-app, simulated SMS and email (mock SMS and email gateways; notification centre, settings and bell in the web app)
+- [x] M11.5 Idempotent sends (one notification per subject; the delivery ID is the gateway's idempotency key; retries with backoff)
 
 ### M12 — Reconciliation & Reporting (week 14)
 - [ ] M12.1 Settlement file ingestion

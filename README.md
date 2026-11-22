@@ -305,19 +305,49 @@ Scenario S6 (20 compromised accounts draining into 3 mule wallets) is an integra
 mule is frozen and alerted in under a second, against the proposal's 2 seconds. The compliance API needs the
 `compliance` or `admin` role. The fraud queue and rule editor screens come with the Ops console (M14.C4).
 
+## Notifications and Live Updates
+
+The Notifications service (port 5108, `/api/notifications/*`, hubs at `/hubs/wallet` and `/hubs/ops`) tells
+users and staff what happens, as it happens (M11):
+
+1. **From every service's events:** it reads `identity.events`, `ledger.events`, `payments.events`,
+   `bills.events`, `topup.events`, `agents.events`, `fraud.alerts` and the dead-letter topics. Money in and out
+   comes from the Ledger's wallet entries, so every kind of payment is announced once; the payment services add
+   failures, money requests and status changes. A new device, a KYC upgrade, a bill falling due, an agent's float
+   running low and a wallet put on hold or released are announced too. A frozen customer is never told why.
+2. **In English and Urdu:** each message exists in both; the user picks one in
+   `PUT /api/notifications/settings` (`{"language": "ur"}`). The notification centre is written in the chosen
+   language even for older messages, and SMS and email go out in it.
+3. **Three channels:** every notification is in the app (`GET /api/notifications`, unread count, mark read).
+   Payments, requests and bills are also texted to the wallet's number; account news goes by email when the user
+   adds an address. Both can be turned off, except security messages (a new device, a wallet on hold). Texts and
+   emails go to the simulated gateways in the mock providers service; in development,
+   `GET /api/notifications/dev/messages` (and the settings page in the app) shows what was sent.
+4. **Exactly once:** a redelivered event, or a second event about the same payment, makes one notification. Each
+   SMS and email has its own ID that the gateway uses as an idempotency key, so a retry after a lost answer is
+   not sent twice. Failed sends are retried with growing waits and reported on `notifications.events`. Events
+   more than an hour old (after an outage) show in the app but are not texted.
+5. **Live:** `/hubs/wallet` pushes new balances, new notifications and payment status changes to the user's
+   open tabs; `/hubs/ops` (staff only) pushes fraud alerts, freezes, cases, stuck payments and low agent float.
+   A Redis backplane delivers each push to whichever instance holds the browser's connection, so the service can
+   run as several instances. The live balance moved here from the Ledger, which no longer serves a hub.
+
+The web app has a bell with the unread count, a notification centre, and notification settings (language, SMS,
+email). The Ops live dashboard that reads `/hubs/ops` comes with the Ops console (M14).
+
 ## Service Ports
 
 | Service | Local port (`dotnet run`) | Gateway path |
 | --- | --- | --- |
 | API Gateway | 5000 | `/` |
 | Identity & KYC | 5101 (gRPC: 5201, internal only) | `/api/identity/*` |
-| Wallet & Ledger | 5102 | `/api/wallets/*`, `/api/ledger/*` (staff only), `/hubs/wallet` (live balance) |
+| Wallet & Ledger | 5102 | `/api/wallets/*`, `/api/ledger/*` (staff only) |
 | Payments | 5103 | `/api/payments/*`, `/webhooks/raast/*` |
 | Bill Payment | 5104 | `/api/bills/*`, `/webhooks/billers/*` |
 | Top-up & Merchant | 5105 | `/api/topups/*`, `/api/merchants/*` |
 | Agent Network | 5106 | `/api/agents/*` |
 | Fraud & Risk | 5107 (gRPC: 5207, internal only) | `/api/fraud/*` (compliance staff only) |
-| Notifications | 5108 | `/api/notifications/*`, `/hubs/*` (except `/hubs/wallet`) |
+| Notifications | 5108 | `/api/notifications/*`, `/hubs/wallet` (live updates), `/hubs/ops` (staff only) |
 | Reconciliation | 5109 | `/api/reconciliation/*` (staff only) |
 | Simulation | 5110 | `/api/simulation/*` (staff only) |
 | Mock Providers | 5200 | not exposed through the gateway ([README](src/MockProviders/README.md)) |

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Notifications.Domain</RootNamespace>
+    <Description>Notifications domain: the message templates in English and Urdu, which channels each uses, and rendering. No infrastructure dependencies.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Notifications.UnitTests" />
+  </ItemGroup>
+</Project>

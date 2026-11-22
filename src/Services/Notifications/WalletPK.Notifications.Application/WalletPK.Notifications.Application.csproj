@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Notifications.Application</RootNamespace>
+    <Description>Notification use cases: turning events into notifications, the notification centre and settings, sending SMS and email exactly once, and live pushes, written against ports.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Notifications.Domain\WalletPK.Notifications.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Contracts\WalletPK.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Common\WalletPK.Common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Notifications.UnitTests" />
+    <InternalsVisibleTo Include="WalletPK.Notifications.IntegrationTests" />
+  </ItemGroup>
+</Project>

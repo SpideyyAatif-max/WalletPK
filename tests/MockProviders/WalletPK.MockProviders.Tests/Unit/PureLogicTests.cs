@@ -151,7 +151,7 @@ public sealed class FaultTests
     [Fact]
     public void Provider_keys_cover_every_party()
     {
-        Providers.All.Count.ShouldBe(14);
+        Providers.All.Count.ShouldBe(16);
         Providers.IsKnown("bank:MEEZAN").ShouldBeTrue();
         Providers.IsKnown("bank:meezan").ShouldBeFalse();
     }

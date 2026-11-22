@@ -99,6 +99,17 @@ public sealed class OperationStore(MockDatabase database)
             cancellationToken: cancellationToken));
     }
 
+    /// <summary>The latest operations of a provider for one counterparty (messages sent to a number or address), newest first.</summary>
+    public async Task<IReadOnlyList<Operation>> RecentToAsync(string provider, string counterparty, int limit, CancellationToken cancellationToken)
+    {
+        await using var connection = await database.OpenAsync(cancellationToken);
+        var rows = await connection.QueryAsync<Operation>(new CommandDefinition(
+            $"SELECT {Columns} FROM mock.operations WHERE provider = @Provider AND counterparty = @Counterparty ORDER BY created_at DESC LIMIT @Limit",
+            new { Provider = provider, Counterparty = counterparty, Limit = limit },
+            cancellationToken: cancellationToken));
+        return [.. rows];
+    }
+
     /// <summary>The completed bill payment for this consumer and month, if any.</summary>
     public async Task<Operation?> FindPaidBillAsync(string provider, string consumerNumber, string billingMonth, CancellationToken cancellationToken)
     {

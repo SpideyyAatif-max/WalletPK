@@ -141,7 +141,7 @@ public sealed class FaultInjectionTests(MockProvidersFactory factory) : IAsyncLi
         var listed = (await admin.GetJsonAsync("/admin/faults")).EnumerateArray().ToList();
         listed.Select(item => item.GetProperty("provider").GetString()).ShouldBe(
             ["raast", "bank:HBL", "bank:MEEZAN", "bank:UBL", "bank:MCB", "biller:KE", "biller:LESCO", "biller:SNGPL", "biller:PTCL",
-             "telco:JAZZ", "telco:ZONG", "telco:TELENOR", "telco:UFONE", "nadra"]);
+             "telco:JAZZ", "telco:ZONG", "telco:TELENOR", "telco:UFONE", "nadra", "sms", "email"]);
         listed.Single(item => item.GetProperty("provider").GetString() == "bank:HBL")
             .GetProperty("faults").GetProperty("settings").GetProperty("errorRate").GetDouble().ShouldBe(0.25);
 

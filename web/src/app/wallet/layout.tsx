@@ -5,11 +5,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Brand } from "@/components/brand";
+import { NotificationBell } from "@/components/notification-bell";
 import { useToast } from "@/components/toast";
+import { worthAToast, type LiveNotification } from "@/lib/notifications";
 import { formatLocal } from "@/lib/phone";
 import { useSession } from "@/lib/session";
 import type { LiveWalletEntry } from "@/lib/types";
-import { describeIncoming, useWalletHub } from "@/lib/use-wallet-hub";
+import { useWalletHub } from "@/lib/use-wallet-hub";
 import { cn } from "@/lib/utils";
 import { WalletContext } from "./wallet-context";
 
@@ -49,8 +51,6 @@ function WalletShell({ children, phoneNumber, onLogout }: { children: ReactNode;
 
   const onEntry = useCallback(
     (live: LiveWalletEntry) => {
-      const incoming = describeIncoming(live);
-      if (incoming) toast("Money received", incoming);
       setFresh((current) => new Set(current).add(live.entry.sequence));
       setTimeout(() => setFresh((current) => {
         const next = new Set(current);
@@ -58,9 +58,16 @@ function WalletShell({ children, phoneNumber, onLogout }: { children: ReactNode;
         return next;
       }), 2_000);
     },
+    [],
+  );
+  // Pop-ups come from notifications (M11): in the user's language, and for more than money arriving.
+  const onNotification = useCallback(
+    (live: LiveNotification) => {
+      if (worthAToast(live.notification)) toast(live.notification.title, live.notification.body);
+    },
     [toast],
   );
-  const live = useWalletHub(onEntry);
+  const live = useWalletHub(onEntry, onNotification);
   const context = useMemo(() => ({ live, freshSequences: fresh }), [live, fresh]);
 
   return (
@@ -70,6 +77,7 @@ function WalletShell({ children, phoneNumber, onLogout }: { children: ReactNode;
           <Brand />
           <div className="flex items-center gap-2">
             {phoneNumber && <span className="text-xs text-ink-500">{formatLocal(phoneNumber)}</span>}
+            <NotificationBell active={pathname.startsWith("/wallet/notifications")} />
             <button onClick={() => void onLogout()} className="grid h-9 w-9 place-items-center rounded-full text-ink-600 hover:bg-ink-100" aria-label="Log out" title="Log out">
               <LogOut className="h-4.5 w-4.5" />
             </button>

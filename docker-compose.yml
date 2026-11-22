@@ -42,6 +42,7 @@ services:
       ReverseProxy__Clusters__topup-merchant__Destinations__d1__Address: http://topup-merchant:8080/
       ReverseProxy__Clusters__agents__Destinations__d1__Address: http://agents:8080/
       ReverseProxy__Clusters__fraud__Destinations__d1__Address: http://fraud:8080/
+      ReverseProxy__Clusters__notifications__Destinations__d1__Address: http://notifications:8080/
     ports:
       - "${GATEWAY_PORT:-5000}:8080"
     depends_on:
@@ -286,7 +287,42 @@ services:
       kafka-init:
         condition: service_completed_successfully
 
-  # Mock external providers (M5): Raast and banks, billers, telcos, NADRA, with runtime faults and
+  # Notifications (M11): notifications from every service's events in English and Urdu, in the app, by
+  # SMS and email (through the mock gateways), and the live SignalR hubs /hubs/wallet and /hubs/ops.
+  notifications:
+    <<: *dotnet-service
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: src/Services/Notifications/WalletPK.Notifications.Api/Dockerfile
+    image: walletpk/notifications:dev
+    container_name: walletpk-notifications
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__NotificationsDb: Host=postgres;Port=5432;Database=walletpk_notifications;Username=${POSTGRES_USER:-walletpk};Password=${POSTGRES_PASSWORD:-walletpk_dev}
+      # The SignalR backplane: pushes reach a browser whichever instance it is connected to.
+      ConnectionStrings__Redis: redis:6379,password=${REDIS_PASSWORD:-walletpk_dev},abortConnect=false
+      Kestrel__Endpoints__Http__Url: http://+:8080
+      Jwt__Authority: http://identity:8080/
+      Kafka__BootstrapServers: kafka:9092
+      Providers__Messaging__BaseUrl: http://mock-providers:8080/
+      Providers__Messaging__ApiKey: dev-only-provider-client-key
+      Observability__SeqUrl: http://seq:5341
+      Observability__OtlpTracesEndpoint: http://jaeger:4317
+      Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
+    ports:
+      - "${NOTIFICATIONS_PORT:-5108}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      mock-providers:
+        condition: service_started
+
+  # Mock external providers (M5, M11): Raast and banks, billers, telcos, NADRA, SMS and email, with runtime faults and
   # settlement files. Internal: services call it on the compose network; port 5200 is for you and tests.
   # Control API example:  curl -X PUT localhost:5200/admin/faults/biller:KE -H "X-Admin-Key: dev-only-provider-admin-key"
   #                            -H "Content-Type: application/json" -d '{"timeoutRate": 1}'

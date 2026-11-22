@@ -27,7 +27,7 @@ public class GatewayRoutingAndAuthTests(GatewayFactory factory) : IClassFixture<
         var info = await client.GetFromJsonAsync<JsonElement>(new Uri("/", UriKind.Relative), Cancel);
 
         info.GetProperty("service").GetString().ShouldBe("WalletPK API Gateway");
-        info.GetProperty("routes").GetArrayLength().ShouldBe(18); // 17 + the Development-only SMS inbox
+        info.GetProperty("routes").GetArrayLength().ShouldBe(17); // 16 + the Development-only SMS inbox
     }
 
     [Fact]
@@ -128,7 +128,7 @@ public class GatewayRoutingAndAuthTests(GatewayFactory factory) : IClassFixture<
     }
 
     [Fact]
-    public async Task The_wallet_hub_takes_its_token_from_the_query_string_like_a_browser_websocket()
+    public async Task The_hubs_take_their_token_from_the_query_string_like_a_browser_websocket()
     {
         using var client = factory.CreateClient();
         var token = factory.CreateToken("user-ws");

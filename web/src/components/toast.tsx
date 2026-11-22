@@ -9,7 +9,7 @@ const ToastContext = createContext<((title: string, body?: string) => void) | nu
 
 let nextId = 1;
 
-/** Small notifications in the corner, for money that arrives while you look at the app. */
+/** Small pop-ups at the top, for notifications that arrive while you look at the app. */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
@@ -33,8 +33,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <div key={toast.id} className="pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-2xl bg-ink-900 px-4 py-3 text-white shadow-lg">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-brand-400" aria-hidden />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold">{toast.title}</p>
-              {toast.body && <p className="text-sm text-ink-300">{toast.body}</p>}
+              <p dir="auto" className="text-sm font-semibold">{toast.title}</p>
+              {toast.body && <p dir="auto" className="text-sm text-ink-300">{toast.body}</p>}
             </div>
             <button onClick={() => dismiss(toast.id)} className="text-ink-400 hover:text-white" aria-label="Dismiss">
               <X className="h-4 w-4" />
