@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <RootNamespace>WalletPK.Web</RootNamespace>
-    <Description>WalletPK web building blocks: correlation IDs, ProblemDetails errors, global exception handling, health endpoints, JWT validation, idempotency keys and the current user.</Description>
+    <Description>WalletPK web building blocks: correlation IDs, ProblemDetails errors, global exception handling, health endpoints, JWT validation, idempotency keys, the current user and OpenAPI documents.</Description>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
   </ItemGroup>
 
   <ItemGroup>

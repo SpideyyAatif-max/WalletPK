@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using WalletPK.Messaging.Abstractions;
@@ -44,7 +45,19 @@ public sealed partial class KafkaEventPublisher : IEventPublisher, IDisposable
     public async Task PublishAsync(EventEnvelope envelope, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(envelope);
-        await _producer.ProduceAsync(envelope.Topic, KafkaMessages.ToMessage(envelope), cancellationToken);
+
+        // A producer span in the trace of the work that wrote the event; the consumer's span hangs under it.
+        using var activity = MessagingTelemetry.StartPublish(envelope);
+        var traced = activity is null ? envelope : envelope with { TraceParent = activity.Id };
+        try
+        {
+            await _producer.ProduceAsync(envelope.Topic, KafkaMessages.ToMessage(traced), cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
+            throw;
+        }
     }
 
     /// <summary>Safe to call more than once (the container may hold this instance under two service types).</summary>

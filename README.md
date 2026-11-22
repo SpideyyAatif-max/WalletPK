@@ -335,6 +335,56 @@ users and staff what happens, as it happens (M11):
 The web app has a bell with the unread count, a notification centre, and notification settings (language, SMS,
 email). The Ops live dashboard that reads `/hubs/ops` comes with the Ops console (M14).
 
+## Confirming Payments with the MPIN
+
+Sending money asks for the MPIN on the confirmation screen (proposal 12.1). The app sends the MPIN and the
+payment's Idempotency-Key to `POST /api/identity/mpin/confirm` and gets a token that is valid for five minutes,
+for that user, that device and that one payment. The payment carries it in the `X-Mpin-Confirmation` header.
+Without it, `POST /api/payments/p2p-transfers`, `POST /api/payments/bank-transfers`,
+`POST /api/payments/requests/{id}/pay` (confirmed for `money-request:{id}`) and the Ledger's
+`POST /api/wallets/transfers` answer 403 `auth.mpin_confirmation_required`. A refusal is not stored against the
+Idempotency-Key, so the same payment can be sent again once confirmed. Wrong MPINs count towards the same
+lockout as at login (5 in a row: 30 minutes). Set `MpinConfirmation__Required=false` to turn it off, for
+example for load tests.
+
+## Operations APIs
+
+For the `ops`, `compliance`, `finance` and `admin` roles:
+
+- **Saga explorer** (`/api/payments/ops/sagas`, and the same under `/api/bills`, `/api/topups` and
+  `/api/agents`): search by type, state, user, correlation ID or how long a Saga has been stuck; open one to see
+  its data and full timeline. Each step records the trace it ran in, so it opens in Jaeger
+  (http://localhost:16686/trace/{traceId}). `/ops/sagas/counts` shows how many are in each state.
+- **Dead-letter queues:** bills at `/api/bills/ops/dead-letters`, top-ups at `/api/topups/ops/dead-letters`
+  (FR-4.3). A dead-lettered top-up can be **replayed** (the step that was given up on runs again), **refunded**
+  (only if the network is not known to have applied it) or **confirmed** with the network's reference from its
+  settlement file.
+
+## Observability
+
+- **Traces:** one trace follows a payment from the gateway through every service, across Kafka (each event
+  carries a W3C `traceparent` header, also kept in the outbox) and through each Saga step. Jaeger:
+  http://localhost:16686.
+- **Metrics:** services push to Prometheus over OTLP (http://localhost:9090): HTTP, Kafka consumption, Saga
+  states, timers and transitions, Ledger postings, fraud decisions, provider calls and circuit breakers.
+- **Dashboards:** Grafana (http://localhost:3001, admin / walletpk_dev) loads three from `ops/grafana/dashboards`:
+  *Operations overview* (transactions per second, success rate, p95 latency per service, active Sagas by state,
+  fraud decisions, Ledger health), *Sagas* and *Providers*.
+- **API documents:** every service serves its OpenAPI document at `/openapi/v1.json` (for example
+  http://localhost:5103/openapi/v1.json), with response and error schemas and the bearer token.
+
+## Tests
+
+`dotnet test` runs unit, integration (Testcontainers: PostgreSQL, Redis, Kafka), architecture and contract tests:
+
+- **Architecture** (`tests/Architecture`, NetArchTest): Domain and Application stay free of frameworks and
+  infrastructure, endpoints go through the application layer, no service uses another service's code, and the
+  building blocks know no service.
+- **Contracts** (`tests/BuildingBlocks/WalletPK.Contracts.Tests`): every Kafka event and gRPC message is recorded
+  in `Snapshots/`. A recorded event may only gain optional fields; removing, renaming or retyping a field, or
+  adding a required one, needs a higher `Version`. After a deliberate, compatible change, record it with
+  `$env:WALLETPK_UPDATE_CONTRACTS=1; dotnet test --project tests/BuildingBlocks/WalletPK.Contracts.Tests` and commit the snapshot.
+
 ## Service Ports
 
 | Service | Local port (`dotnet run`) | Gateway path |

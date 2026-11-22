@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using WalletPK.Common.Results;
+using WalletPK.Web.OpenApi;
 
 namespace WalletPK.Web.Errors;
 
@@ -36,18 +37,18 @@ public static class ResultHttpExtensions
             extensions: extensions);
     }
 
-    /// <summary>Success becomes 204 No Content; failure becomes ProblemDetails.</summary>
-    public static IResult ToHttpResult(this Result result)
+    /// <summary>Success becomes 204 No Content; failure becomes ProblemDetails. Documented in OpenAPI.</summary>
+    public static ApiResult ToHttpResult(this Result result)
     {
         ArgumentNullException.ThrowIfNull(result);
-        return result.IsSuccess ? TypedResults.NoContent() : result.Error.ToProblem();
+        return new(result.IsSuccess ? TypedResults.NoContent() : result.Error.ToProblem());
     }
 
-    /// <summary>Success becomes 200 OK with the value; failure becomes ProblemDetails.</summary>
-    public static IResult ToHttpResult<T>(this Result<T> result)
+    /// <summary>Success becomes 200 OK with the value; failure becomes ProblemDetails. Documented in OpenAPI.</summary>
+    public static ApiResult<T> ToHttpResult<T>(this Result<T> result)
     {
         ArgumentNullException.ThrowIfNull(result);
-        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.Error.ToProblem();
+        return new(result.IsSuccess ? TypedResults.Ok(result.Value) : result.Error.ToProblem());
     }
 
     /// <summary>Success uses a custom response (for example 201 Created); failure becomes ProblemDetails.</summary>

@@ -10,7 +10,7 @@ internal static class SagaTelemetry
 
     public static readonly ActivitySource Source = new(Name);
 
-    private static readonly Meter Meter = new(Name);
+    public static readonly Meter Meter = new(Name);
 
     /// <summary>Sagas started, by type.</summary>
     public static readonly Counter<long> Started = Meter.CreateCounter<long>("walletpk.sagas.started");

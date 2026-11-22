@@ -1,3 +1,4 @@
+using System.Diagnostics.Metrics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Npgsql;
@@ -40,7 +41,12 @@ public sealed class LedgerDbContext(DbContextOptions<LedgerDbContext> options) :
     {
         try
         {
+            var posted = ChangeTracker.Entries<JournalTransaction>()
+                .Where(entry => entry.State == EntityState.Added)
+                .Select(entry => (entry.Entity.Type, entry.Entity.Amount))
+                .ToList();
             await SaveChangesAsync(cancellationToken);
+            PostingMetrics.Record(posted);
         }
         catch (DbUpdateConcurrencyException exception)
         {
@@ -91,4 +97,27 @@ internal sealed class JoinedTransaction : ILedgerTransaction
     public Task CommitAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+}
+
+/// <summary>
+/// Postings (meter "WalletPK.Ledger.Postings"), for the operations dashboard's transactions per second:
+/// <c>walletpk.ledger.journals.posted</c> (journals, by type) and <c>walletpk.ledger.amount.posted</c> (paisa, by type).
+/// </summary>
+internal static class PostingMetrics
+{
+    private static readonly Meter Meter = new("WalletPK.Ledger.Postings");
+
+    private static readonly Counter<long> Journals = Meter.CreateCounter<long>("walletpk.ledger.journals.posted", description: "Journals posted");
+
+    private static readonly Counter<long> Amount = Meter.CreateCounter<long>("walletpk.ledger.amount.posted", unit: "paisa", description: "Money moved by posted journals");
+
+    public static void Record(IReadOnlyList<(JournalType Type, long Amount)> posted)
+    {
+        foreach (var (type, amount) in posted)
+        {
+            var tag = new KeyValuePair<string, object?>("type", type.ToString());
+            Journals.Add(1, tag);
+            Amount.Add(amount, tag);
+        }
+    }
 }

@@ -319,6 +319,121 @@ public class TopUpTests(TopupMerchantFactory factory) : IAsyncLifetime
         message.Payload.GetProperty("lastState").GetString().ShouldBe("Verifying");
     }
 
+    /// <summary>Two top-ups Ufone never answers for, dead-lettered from Verifying.</summary>
+    private async Task<(Guid First, Guid Second)> TwoDeadLetteredAsync(HttpClient client)
+    {
+        await SetFaultAsync("telco:UFONE", new { timeoutRate = 1.0, timeoutMs = 2000 });
+        var first = await StartAsync(client, Number("336"), 15_000);
+        var second = await StartAsync(client, Number("337"), 20_000);
+        await WaitForStepAsync(client, first, "Verifying");
+        await WaitForStepAsync(client, second, "Verifying");
+        factory.Clock.Advance(TimeSpan.FromHours(25));
+        await WaitForStepAsync(client, first, "DeadLettered");
+        await WaitForStepAsync(client, second, "DeadLettered");
+        return (first, second);
+    }
+
+    [Fact]
+    public async Task Operations_see_the_dead_letter_queue_and_resolve_top_ups_by_refund_or_replay()
+    {
+        using var client = factory.ClientFor(Guid.NewGuid());
+        using var ops = factory.ClientFor(Guid.NewGuid(), role: "ops");
+        var (refunded, replayed) = await TwoDeadLetteredAsync(client);
+
+        using (var forbidden = await client.GetAsync(new Uri("/api/topups/ops/dead-letters", UriKind.Relative), Cancel))
+        {
+            forbidden.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+        }
+
+        using (var queue = await ops.GetAsync(new Uri("/api/topups/ops/dead-letters", UriKind.Relative), Cancel))
+        {
+            queue.StatusCode.ShouldBe(HttpStatusCode.OK);
+            var entries = (await JsonAsync(queue)).EnumerateArray().Where(e => e.GetProperty("id").GetGuid() == refunded || e.GetProperty("id").GetGuid() == replayed).ToList();
+            entries.Count.ShouldBe(2);
+            entries.ShouldAllBe(e => e.GetProperty("deadLetteredFrom").GetString() == "Verifying" && e.GetProperty("canRefund").GetBoolean() && e.GetProperty("canConfirm").GetBoolean());
+            entries[0].GetProperty("reason").GetString()!.ShouldContain("has not confirmed or denied");
+        }
+
+        // Refund: the money comes back.
+        using (var refund = await ops.PostAsJsonAsync(new Uri($"/api/topups/ops/{refunded}/refund", UriKind.Relative), new { reason = "Ufone settlement file does not have it" }, Cancel))
+        {
+            refund.StatusCode.ShouldBe(HttpStatusCode.OK, await refund.Content.ReadAsStringAsync(Cancel));
+        }
+
+        var failed = await WaitForStepAsync(client, refunded, "Failed");
+        failed.GetProperty("failureCode").GetString().ShouldBe("topup.refunded_by_operator");
+        factory.Ledger.HoldState(refunded).ShouldBe("Released");
+
+        // Replay: Ufone is back, never received it, so it is sent again and goes through.
+        await ClearFaultAsync("telco:UFONE");
+        using (var replay = await ops.PostAsync(new Uri($"/api/topups/ops/{replayed}/replay", UriKind.Relative), null, Cancel))
+        {
+            replay.StatusCode.ShouldBe(HttpStatusCode.OK, await replay.Content.ReadAsStringAsync(Cancel));
+        }
+
+        var completed = await WaitForStepAsync(client, replayed, "Completed");
+        // (Before the dead letter the timeline may also show Retrying, if Ufone's circuit opened.)
+        Steps(completed).SkipWhile(step => step != "DeadLettered").ShouldBe(["DeadLettered", "Verifying", "ToppingUp", "Settling", "Completed"]);
+        factory.Ledger.HoldState(replayed).ShouldBe("Captured");
+
+        // Resolved top-ups leave the queue and cannot be resolved again.
+        using (var again = await ops.PostAsync(new Uri($"/api/topups/ops/{replayed}/replay", UriKind.Relative), null, Cancel))
+        {
+            again.StatusCode.ShouldBe(HttpStatusCode.Conflict);
+            (await JsonAsync(again)).GetProperty("code").GetString().ShouldBe("topup.not_resolvable");
+        }
+
+        using var after = await ops.GetAsync(new Uri("/api/topups/ops/dead-letters", UriKind.Relative), Cancel);
+        (await JsonAsync(after)).EnumerateArray().ShouldNotContain(e => e.GetProperty("id").GetGuid() == refunded || e.GetProperty("id").GetGuid() == replayed);
+    }
+
+    [Fact]
+    public async Task Operations_confirm_a_top_up_seen_in_the_settlement_file_and_the_saga_explorer_shows_its_trace()
+    {
+        using var client = factory.ClientFor(Guid.NewGuid());
+        using var ops = factory.ClientFor(Guid.NewGuid(), role: "ops");
+        var (confirmed, _) = await TwoDeadLetteredAsync(client);
+
+        using (var missing = await ops.PostAsJsonAsync(new Uri($"/api/topups/ops/{confirmed}/confirm", UriKind.Relative), new { telcoReference = " " }, Cancel))
+        {
+            missing.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        }
+
+        using (var confirm = await ops.PostAsJsonAsync(new Uri($"/api/topups/ops/{confirmed}/confirm", UriKind.Relative), new { telcoReference = "UF-SETTLED-42" }, Cancel))
+        {
+            confirm.StatusCode.ShouldBe(HttpStatusCode.OK, await confirm.Content.ReadAsStringAsync(Cancel));
+        }
+
+        var completed = await WaitForStepAsync(client, confirmed, "Completed");
+        completed.GetProperty("telcoReference").GetString().ShouldBe("UF-SETTLED-42");
+        factory.Ledger.HoldState(confirmed).ShouldBe("Captured");
+
+        // The explorer finds it among the finished top-ups and opens its timeline, each step traced.
+        using (var search = await ops.GetAsync(new Uri("/api/topups/ops/sagas?type=topup&active=false&limit=200", UriKind.Relative), Cancel))
+        {
+            search.StatusCode.ShouldBe(HttpStatusCode.OK);
+            (await JsonAsync(search)).EnumerateArray().ShouldContain(saga => saga.GetProperty("id").GetGuid() == confirmed);
+        }
+
+        using var detail = await ops.GetAsync(new Uri($"/api/topups/ops/sagas/{confirmed}", UriKind.Relative), Cancel);
+        detail.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var saga = await JsonAsync(detail);
+        saga.GetProperty("data").GetProperty("resolvedBy").GetString()!.ShouldEndWith(": confirmed");
+        var timeline = saga.GetProperty("timeline").EnumerateArray().ToList();
+        timeline.Last().GetProperty("state").GetString().ShouldBe("Completed");
+        timeline.ShouldAllBe(step => step.GetProperty("traceId").GetString()!.Length == 32);
+
+        using var counts = await ops.GetAsync(new Uri("/api/topups/ops/sagas/counts", UriKind.Relative), Cancel);
+        (await JsonAsync(counts)).EnumerateArray().ShouldContain(count => count.GetProperty("type").GetString() == "topup" && count.GetProperty("state").GetString() == "Completed");
+
+        using var unknown = await ops.GetAsync(new Uri($"/api/topups/ops/sagas/{Guid.NewGuid()}", UriKind.Relative), Cancel);
+        unknown.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+        (await JsonAsync(unknown)).GetProperty("code").GetString().ShouldBe("saga.not_found");
+
+        using var customer = await client.GetAsync(new Uri("/api/topups/ops/sagas", UriKind.Relative), Cancel);
+        customer.StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+    }
+
     [Fact]
     public async Task Another_customers_top_up_is_not_found()
     {

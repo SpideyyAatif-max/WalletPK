@@ -27,6 +27,8 @@ public sealed record Unrelated(Guid TransferId);
 
 public sealed class TestTransferData
 {
+    public Guid UserId { get; set; }
+
     public long Amount { get; set; }
 
     public int Count { get; set; }

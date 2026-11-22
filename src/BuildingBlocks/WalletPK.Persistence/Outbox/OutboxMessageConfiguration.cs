@@ -21,6 +21,7 @@ public sealed class OutboxMessageConfiguration : IEntityTypeConfiguration<Outbox
         builder.Property(message => message.Payload).HasColumnType("jsonb").IsRequired();
         builder.Property(message => message.CorrelationId).HasMaxLength(64);
         builder.Property(message => message.CausationId).HasMaxLength(64);
+        builder.Property(message => message.TraceParent).HasMaxLength(55);
         builder.Property(message => message.LastError).HasMaxLength(2000);
 
         // The relay reads "oldest unpublished first"; a partial index keeps that fast however

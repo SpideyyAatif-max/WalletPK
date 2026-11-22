@@ -11,6 +11,8 @@
 
   <ItemGroup Label="ASP.NET Core and EF Core">
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.15" />
+    <!-- OpenAPI documents for every service (M14.A2, M16.4). -->
+    <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.15" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <!-- EF Core core packages must share one version -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.15" />
@@ -71,6 +73,7 @@
     <!-- xUnit v3 4.x runs on Microsoft Testing Platform v2 (opted in via global.json "test.runner") -->
     <PackageVersion Include="xunit.v3" Version="4.0.3" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
+    <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
     <!-- Property-based tests (M3.12); the core library only, run from plain xUnit facts. -->
     <PackageVersion Include="FsCheck" Version="3.6.0" />
     <PackageVersion Include="Microsoft.AspNetCore.TestHost" Version="10.0.15" />

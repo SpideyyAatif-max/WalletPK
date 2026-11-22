@@ -8,6 +8,10 @@ namespace WalletPK.Identity.Api.Endpoints;
 /// <param name="Code">The six-digit code from the SMS.</param>
 public sealed record StepUpCodeRequest(string? Code);
 
+/// <param name="Mpin">The user's five-digit MPIN.</param>
+/// <param name="IdempotencyKey">The Idempotency-Key the payment will be sent with (for paying a money request: "money-request:{id}").</param>
+public sealed record ConfirmMpinRequest(string? Mpin, string? IdempotencyKey);
+
 /// <summary>
 /// The signed-in user's own account; every endpoint needs a valid access token:
 /// <list type="bullet">
@@ -16,6 +20,7 @@ public sealed record StepUpCodeRequest(string? Code);
 /// <item>DELETE /api/identity/devices/{deviceId}   remove a device and end its sessions</item>
 /// <item>POST   /api/identity/step-up              send a code to confirm a payment the fraud engine stepped up</item>
 /// <item>POST   /api/identity/step-up/verify       check it; the payment can then be sent again</item>
+/// <item>POST   /api/identity/mpin/confirm         MPIN for one payment: a token to send as X-Mpin-Confirmation</item>
 /// </list>
 /// </summary>
 public static class AccountEndpoints
@@ -44,6 +49,9 @@ public static class AccountEndpoints
 
         group.MapPost("/step-up/verify", async (StepUpCodeRequest request, ICurrentUser currentUser, PaymentStepUpHandler handler, CancellationToken cancellationToken) =>
             (await handler.VerifyAsync(currentUser.GetRequiredId(), CurrentDevice(currentUser)?.Value, request.Code, cancellationToken)).ToHttpResult());
+
+        group.MapPost("/mpin/confirm", async (ConfirmMpinRequest request, ICurrentUser currentUser, ConfirmMpinHandler handler, CancellationToken cancellationToken) =>
+            (await handler.HandleAsync(currentUser.GetRequiredId(), CurrentDevice(currentUser), request.Mpin, request.IdempotencyKey, cancellationToken)).ToHttpResult());
 
         return endpoints;
     }

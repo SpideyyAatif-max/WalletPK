@@ -36,7 +36,8 @@ public static class IdempotencyExtensions
 /// <item>Missing or malformed key → 400.</item>
 /// <item>Same key, same body, first request still running → 409 (try again shortly).</item>
 /// <item>Same key, different body → 422 (a client bug: keys must not be reused).</item>
-/// <item>A 5xx response is not saved, so the client can genuinely retry.</item>
+/// <item>A 5xx response is not saved, so the client can genuinely retry. Nor are 401 and 403: the request
+/// was not allowed to run (no MPIN confirmation yet, say), so the same key may be sent again once it is.</item>
 /// </list>
 /// Keys are scoped per user and route, so two users can never collide.
 /// </summary>
@@ -105,7 +106,7 @@ public sealed class IdempotencyMiddleware(RequestDelegate next)
         buffer.Position = 0;
         await buffer.CopyToAsync(originalBody, context.RequestAborted);
 
-        if (context.Response.StatusCode >= StatusCodes.Status500InternalServerError)
+        if (context.Response.StatusCode is >= StatusCodes.Status500InternalServerError or StatusCodes.Status401Unauthorized or StatusCodes.Status403Forbidden)
         {
             await store.AbandonAsync(key, CancellationToken.None);
             return;

@@ -128,6 +128,7 @@ public static class IdentityInfrastructureExtensions
         services.AddSingleton<IMpinHasher, Argon2MpinHasher>();
         services.AddSingleton<SigningKeyProvider>();
         services.AddSingleton<IAccessTokenIssuer, JwtAccessTokenIssuer>();
+        services.AddSingleton<IMpinConfirmationIssuer, JwtMpinConfirmationIssuer>();
         services.AddSingleton<DevSmsInbox>();
         services.AddSingleton<ISmsSender, LoggingSmsSender>();
         services.AddSingleton<IFieldEncryptor, AesGcmFieldEncryptor>();
@@ -149,6 +150,7 @@ public static class IdentityInfrastructureExtensions
         services.AddScoped<ListDevicesHandler>();
         services.AddScoped<RevokeDeviceHandler>();
         services.AddScoped<PaymentStepUpHandler>();
+        services.AddScoped<ConfirmMpinHandler>();
         services.AddScoped<SubmitKycHandler>();
         services.AddScoped<GetKycStatusHandler>();
         services.AddScoped<LimitService>();

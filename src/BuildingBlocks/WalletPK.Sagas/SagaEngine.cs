@@ -313,6 +313,7 @@ public sealed partial class SagaEngine<TDbContext>(
             SagaTelemetry.Completed.Add(1, new("saga_type", row.SagaType), new("state", row.State));
         }
 
+        var traceId = Activity.Current is { IdFormat: ActivityIdFormat.W3C } activity ? activity.TraceId.ToHexString() : null;
         foreach (var step in changes.Steps)
         {
             row.StepCount++;
@@ -324,6 +325,7 @@ public sealed partial class SagaEngine<TDbContext>(
                 PreviousState = step.PreviousState,
                 Trigger = Truncate(trigger, 100),
                 Detail = Truncate(step.Detail, 1000),
+                TraceId = traceId,
                 At = now,
             });
         }

@@ -1,13 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>WalletPK Saga engine (M6.3): persisted state machines for multi-step payments, driven by the outbox, inbox and Kafka, with timers.</Description>
+    <Description>WalletPK Saga engine (M6.3): persisted state machines for multi-step payments, driven by the outbox, inbox and Kafka, with timers, and the Saga explorer API.</Description>
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
-    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
   </ItemGroup>
 
   <ItemGroup>

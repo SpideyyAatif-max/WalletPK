@@ -307,24 +307,24 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 
 ### M14 — Frontend Portals (built alongside the backend)
 **M14.A Shared**
-- [ ] M14.A1 Next.js + TypeScript + Tailwind + shadcn/ui scaffold
+- [x] M14.A1 Next.js + TypeScript + Tailwind + shadcn/ui-style components (cva, tailwind-merge)
 - [ ] M14.A2 Typed API client from OpenAPI + TanStack Query
 - [ ] M14.A3 Auth flow and role-based route guards
-- [ ] M14.A4 SignalR client hook
+- [x] M14.A4 SignalR client hook (M11: /hubs/wallet, /hubs/ops)
 
 **M14.B Customer Wallet (/wallet)**
 - [ ] M14.B1 Onboarding: phone -> OTP -> MPIN -> CNIC
-- [ ] M14.B2 Home: live balance, quick actions, recent activity
-- [ ] M14.B3 Send money (wallet / bank)
-- [ ] M14.B4 Bills, top-up, QR pay
-- [ ] M14.B5 Live Saga tracker
-- [ ] M14.B6 History, statements, limits, notifications
-- [ ] M14.B7 Merchant mode and agent mode
+- [x] M14.B2 Home: live balance, quick actions, recent activity
+- [x] M14.B3 Send money (wallet / bank)
+- [x] M14.B4 Bills, top-up, QR pay
+- [x] M14.B5 Live Saga tracker
+- [ ] M14.B6 History, statements, limits, notifications (history and notifications done; limits with C2, statements with M12)
+- [x] M14.B7 Merchant mode and agent mode
 
 **M14.C Ops & Compliance (/ops)**
 - [ ] M14.C1 Live operations dashboard
-- [ ] M14.C2 Saga explorer with trace links
-- [ ] M14.C3 DLQ console
+- [ ] M14.C2 Saga explorer with trace links (API done: /api/{payments,bills,topups,agents}/ops/sagas)
+- [ ] M14.C3 DLQ console (APIs done: bills, and top-ups FR-4.3)
 - [ ] M14.C4 Fraud queue, cases, rule editor
 - [ ] M14.C5 Customer 360
 - [ ] M14.C6 Reconciliation and invariant history
@@ -339,13 +339,13 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [ ] M14.D6 Run report page and PDF export
 
 ### M15 — Observability & Testing (throughout)
-- [ ] M15.1 OpenTelemetry tracing across services, Kafka and Sagas
-- [ ] M15.2 Prometheus metrics
-- [ ] M15.3 Grafana dashboards
-- [ ] M15.4 Unit tests
-- [ ] M15.5 Integration tests (Testcontainers)
-- [ ] M15.6 Architecture tests (NetArchTest)
-- [ ] M15.7 Contract tests
+- [x] M15.1 OpenTelemetry tracing across services, Kafka (traceparent header, kept in the outbox) and Sagas (trace ID per step)
+- [x] M15.2 Prometheus metrics (OTLP push; HTTP, Kafka, Sagas incl. active-by-state gauge, Ledger postings, fraud, providers, circuits)
+- [x] M15.3 Grafana dashboards (operations overview, Sagas, providers)
+- [x] M15.4 Unit tests
+- [x] M15.5 Integration tests (Testcontainers)
+- [x] M15.6 Architecture tests (NetArchTest)
+- [x] M15.7 Contract tests (event and proto snapshots with backward-compatibility rules)
 - [ ] M15.8 k6 load tests
 
 ### M16 — Hardening, Docs & Demo (weeks 15–16)

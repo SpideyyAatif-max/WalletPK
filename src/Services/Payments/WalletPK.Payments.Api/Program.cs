@@ -2,6 +2,7 @@ using WalletPK.Observability;
 using WalletPK.Payments.Api;
 using WalletPK.Payments.Api.Endpoints;
 using WalletPK.Payments.Infrastructure;
+using WalletPK.Sagas;
 using WalletPK.Web;
 using WalletPK.Web.Authentication;
 
@@ -30,6 +31,7 @@ await app.MigrateDatabaseIfConfiguredAsync();
 app.MapBankTransferEndpoints();
 app.MapWalletPaymentEndpoints();
 app.MapRaastWebhookEndpoints();
+app.MapSagaExplorer("/api/payments", WalletPkPolicies.Operations);
 
 await app.RunAsync();
 

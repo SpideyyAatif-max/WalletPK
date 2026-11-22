@@ -6,6 +6,8 @@ using WalletPK.Web.Errors;
 using WalletPK.Web.Health;
 using WalletPK.Web.Identity;
 
+using WalletPK.Web.OpenApi;
+
 namespace WalletPK.Web;
 
 /// <summary>
@@ -34,6 +36,7 @@ public static class WalletPkWebExtensions
             options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
         services.AddWalletPkHealthChecks();
+        services.AddWalletPkOpenApi();
 
         return services;
     }
@@ -48,6 +51,7 @@ public static class WalletPkWebExtensions
         app.UseStatusCodePages();
 
         app.MapWalletPkHealthChecks();
+        app.MapWalletPkOpenApi();
 
         return app;
     }

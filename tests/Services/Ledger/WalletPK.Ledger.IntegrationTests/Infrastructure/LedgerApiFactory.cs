@@ -120,6 +120,9 @@ public sealed class LedgerApiFactory : WebApplicationFactory<Program>, IAsyncLif
             ["ConnectionStrings:LedgerDb"] = _postgres.GetConnectionString(),
             ["ConnectionStrings:Redis"] = _redis.GetConnectionString(),
             ["Database:MigrateOnStartup"] = "true",
+
+            // MPIN confirmation of transfers is tested once, in Payments (the same shared filter).
+            ["MpinConfirmation:Required"] = "false",
             ["Ledger:Maintenance:Enabled"] = "false",
             ["Ledger:Locks:WaitMilliseconds"] = "15000",
 

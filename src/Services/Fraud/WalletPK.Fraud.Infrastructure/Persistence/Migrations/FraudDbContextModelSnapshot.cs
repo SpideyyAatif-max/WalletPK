@@ -472,6 +472,11 @@ namespace WalletPK.Fraud.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("topic");
 
+                    b.Property<string>("TraceParent")
+                        .HasMaxLength(55)
+                        .HasColumnType("character varying(55)")
+                        .HasColumnName("trace_parent");
+
                     b.HasKey("Id")
                         .HasName("pk_outbox_messages");
 

@@ -43,6 +43,7 @@ public sealed class IdempotencyMiddlewareTests : IAsyncDisposable
                         }).RequireIdempotencyKey();
 
                         endpoints.MapPost("/boom", () => Results.StatusCode(StatusCodes.Status503ServiceUnavailable)).RequireIdempotencyKey();
+                        endpoints.MapPost("/unconfirmed", () => Results.StatusCode(StatusCodes.Status403Forbidden)).RequireIdempotencyKey();
                         endpoints.MapPost("/plain", () => TypedResults.Ok(Interlocked.Increment(ref _paymentsExecuted)));
                     });
                 }))
@@ -147,6 +148,19 @@ public sealed class IdempotencyMiddlewareTests : IAsyncDisposable
         (await client.SendAsync(first, Cancel)).StatusCode.ShouldBe(HttpStatusCode.ServiceUnavailable);
 
         _store.Abandoned.ShouldContain(key => key.EndsWith(":boom-key-00001", StringComparison.Ordinal));
+        _store.Completed.ShouldBeEmpty();
+    }
+
+    [Fact]
+    public async Task A_forbidden_request_is_not_remembered_so_it_can_be_sent_again_once_allowed()
+    {
+        using var client = await ClientAsync();
+
+        using var first = new HttpRequestMessage(HttpMethod.Post, new Uri("/unconfirmed", UriKind.Relative));
+        first.Headers.Add(IdempotencyMiddleware.HeaderName, "mpin-key-00001");
+        (await client.SendAsync(first, Cancel)).StatusCode.ShouldBe(HttpStatusCode.Forbidden);
+
+        _store.Abandoned.ShouldContain(key => key.EndsWith(":mpin-key-00001", StringComparison.Ordinal));
         _store.Completed.ShouldBeEmpty();
     }
 

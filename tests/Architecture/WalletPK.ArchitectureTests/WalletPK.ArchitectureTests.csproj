@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>Architecture rules (M15.4): Clean Architecture layers, service boundaries and building blocks, checked with NetArchTest.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="NetArchTest.Rules" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The Api projects bring in every layer of every service and the building blocks. -->
+    <ProjectReference Include="..\..\..\src\Services\Identity\WalletPK.Identity.Api\WalletPK.Identity.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Services\Ledger\WalletPK.Ledger.Api\WalletPK.Ledger.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Services\Payments\WalletPK.Payments.Api\WalletPK.Payments.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Services\Bills\WalletPK.Bills.Api\WalletPK.Bills.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Services\TopupMerchant\WalletPK.TopupMerchant.Api\WalletPK.TopupMerchant.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Services\Agents\WalletPK.Agents.Api\WalletPK.Agents.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Services\Fraud\WalletPK.Fraud.Api\WalletPK.Fraud.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Services\Notifications\WalletPK.Notifications.Api\WalletPK.Notifications.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Gateway\WalletPK.Gateway\WalletPK.Gateway.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Shouldly" />
+  </ItemGroup>
+
+</Project>

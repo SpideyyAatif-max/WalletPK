@@ -20,3 +20,14 @@ public interface IAccessTokenIssuer
 {
     IssuedAccessToken Issue(AccessTokenClaims claims, DateTimeOffset now);
 }
+
+public sealed record IssuedMpinConfirmation(string Token, DateTimeOffset ExpiresAt);
+
+/// <summary>
+/// Signs MPIN confirmations for payments (audience "walletpk-confirmation"; see WalletPK.Web.Security.MpinConfirmation):
+/// proof that this user typed their MPIN on this device for the one payment its binding names.
+/// </summary>
+public interface IMpinConfirmationIssuer
+{
+    IssuedMpinConfirmation Issue(UserId userId, DeviceId deviceId, string binding, DateTimeOffset now);
+}

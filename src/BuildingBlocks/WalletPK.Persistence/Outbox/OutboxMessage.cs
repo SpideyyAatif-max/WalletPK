@@ -33,6 +33,9 @@ public sealed class OutboxMessage
 
     public DateTimeOffset OccurredAt { get; private set; }
 
+    /// <summary>The W3C trace context of the work that wrote the event (M15.1).</summary>
+    public string? TraceParent { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
 
     /// <summary>Null until the relay has delivered the event to Kafka.</summary>
@@ -60,6 +63,7 @@ public sealed class OutboxMessage
             CorrelationId = envelope.CorrelationId,
             CausationId = envelope.CausationId,
             OccurredAt = envelope.OccurredAt,
+            TraceParent = envelope.TraceParent,
             CreatedAt = now,
         };
     }
@@ -81,5 +85,5 @@ public sealed class OutboxMessage
 
     /// <summary>Back to the envelope form the publisher sends.</summary>
     public EventEnvelope ToEnvelope() =>
-        new(Id, EventType, EventVersion, Topic, PartitionKey, OccurredAt, CorrelationId, CausationId, Payload);
+        new(Id, EventType, EventVersion, Topic, PartitionKey, OccurredAt, CorrelationId, CausationId, Payload, TraceParent);
 }

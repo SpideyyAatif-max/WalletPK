@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
@@ -21,6 +22,7 @@ using Testcontainers.Kafka;
 using Testcontainers.PostgreSql;
 using WalletPK.Messaging.Kafka;
 using WalletPK.Payments.Application.Raast;
+using WalletPK.Web.Security;
 using MockProgram = mock::Program;
 
 namespace WalletPK.Payments.IntegrationTests.Infrastructure;
@@ -123,6 +125,25 @@ public sealed class PaymentsFactory : WebApplicationFactory<Program>, IAsyncLife
         });
     }
 
+    /// <summary>MPIN confirmation is off for most tests; MpinConfirmationTests turns it on (read on every request).</summary>
+    public MpinConfirmationOptions MpinConfirmation { get; } = new() { Required = false };
+
+    /// <summary>What Identity's POST /api/identity/mpin/confirm returns, signed with the test key.</summary>
+    public string CreateMpinConfirmation(Guid userId, string binding, string deviceId = "0193f1c4-0000-7000-8000-000000000001", string audience = "walletpk-confirmation", TimeSpan? lifetime = null)
+    {
+        var now = Clock.GetUtcNow().UtcDateTime;
+        return new JsonWebTokenHandler().CreateToken(new SecurityTokenDescriptor
+        {
+            Issuer = "walletpk-identity",
+            Audience = audience,
+            IssuedAt = now.AddMinutes(-1),
+            NotBefore = now.AddMinutes(-1),
+            Expires = now + (lifetime ?? TimeSpan.FromMinutes(5)),
+            Claims = new Dictionary<string, object> { ["sub"] = userId.ToString(), ["device_id"] = deviceId, ["binding"] = binding },
+            SigningCredentials = new SigningCredentials(SigningKey, SecurityAlgorithms.RsaSha256),
+        });
+    }
+
     public HttpClient ClientFor(Guid userId, string? phoneNumber = null)
     {
         var client = CreateClient();
@@ -183,6 +204,7 @@ public sealed class PaymentsFactory : WebApplicationFactory<Program>, IAsyncLife
         {
             services.RemoveAll<TimeProvider>();
             services.AddSingleton<TimeProvider>(Clock);
+            services.AddSingleton<IOptions<MpinConfirmationOptions>>(Options.Create(MpinConfirmation));
 
             // Raast calls go to the in-process mock providers.
             services.AddHttpClient(nameof(IRaastGateway))

@@ -1,0 +1,84 @@
+{
+  "fraud/v1/risk.proto": {
+    "messages": {
+      "walletpk.fraud.v1.ScoreRequest": {
+        "fields": {
+          "1": "transaction_id string",
+          "2": "user_id string",
+          "3": "device_id string",
+          "4": "transaction_type string",
+          "5": "amount_paisa int64",
+          "6": "counterparty string"
+        },
+        "name": "walletpk.fraud.v1.ScoreRequest"
+      },
+      "walletpk.fraud.v1.ScoreResponse": {
+        "fields": {
+          "1": "action walletpk.fraud.v1.RiskAction",
+          "2": "score int32",
+          "3": "rules repeated string",
+          "4": "reason string"
+        },
+        "name": "walletpk.fraud.v1.ScoreResponse"
+      }
+    },
+    "methods": {
+      "Risk.Score": "walletpk.fraud.v1.ScoreRequest -\u003E walletpk.fraud.v1.ScoreResponse"
+    },
+    "name": "fraud/v1/risk.proto",
+    "package": "walletpk.fraud.v1"
+  },
+  "identity/v1/limits.proto": {
+    "messages": {
+      "walletpk.identity.v1.CheckLimitRequest": {
+        "fields": {
+          "1": "user_id string",
+          "2": "amount_paisa int64",
+          "3": "transaction_type walletpk.identity.v1.TransactionType",
+          "4": "device_id string"
+        },
+        "name": "walletpk.identity.v1.CheckLimitRequest"
+      },
+      "walletpk.identity.v1.LimitResponse": {
+        "fields": {
+          "1": "decision walletpk.identity.v1.LimitDecision",
+          "2": "reason string",
+          "3": "kyc_tier string",
+          "4": "per_transaction_limit_paisa int64",
+          "5": "daily_remaining_paisa int64",
+          "6": "monthly_remaining_paisa int64"
+        },
+        "name": "walletpk.identity.v1.LimitResponse"
+      },
+      "walletpk.identity.v1.ReleaseLimitRequest": {
+        "fields": {
+          "1": "transaction_id string"
+        },
+        "name": "walletpk.identity.v1.ReleaseLimitRequest"
+      },
+      "walletpk.identity.v1.ReleaseLimitResponse": {
+        "fields": {
+          "1": "released bool"
+        },
+        "name": "walletpk.identity.v1.ReleaseLimitResponse"
+      },
+      "walletpk.identity.v1.ReserveLimitRequest": {
+        "fields": {
+          "1": "transaction_id string",
+          "2": "user_id string",
+          "3": "amount_paisa int64",
+          "4": "transaction_type walletpk.identity.v1.TransactionType",
+          "5": "device_id string"
+        },
+        "name": "walletpk.identity.v1.ReserveLimitRequest"
+      }
+    },
+    "methods": {
+      "Limits.CheckLimit": "walletpk.identity.v1.CheckLimitRequest -\u003E walletpk.identity.v1.LimitResponse",
+      "Limits.ReleaseLimit": "walletpk.identity.v1.ReleaseLimitRequest -\u003E walletpk.identity.v1.ReleaseLimitResponse",
+      "Limits.ReserveLimit": "walletpk.identity.v1.ReserveLimitRequest -\u003E walletpk.identity.v1.LimitResponse"
+    },
+    "name": "identity/v1/limits.proto",
+    "package": "walletpk.identity.v1"
+  }
+}

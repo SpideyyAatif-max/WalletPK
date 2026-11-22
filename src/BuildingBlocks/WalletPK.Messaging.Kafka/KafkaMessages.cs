@@ -19,6 +19,9 @@ public static class KafkaMessages
     public const string CorrelationIdHeader = "correlation-id";
     public const string CausationIdHeader = "causation-id";
 
+    /// <summary>The W3C Trace Context header, as OpenTelemetry's Kafka conventions use it.</summary>
+    public const string TraceParentHeader = "traceparent";
+
     public static Message<string, string> ToMessage(EventEnvelope envelope)
     {
         ArgumentNullException.ThrowIfNull(envelope);
@@ -38,6 +41,11 @@ public static class KafkaMessages
         if (envelope.CausationId is not null)
         {
             headers.Add(CausationIdHeader, Encode(envelope.CausationId));
+        }
+
+        if (envelope.TraceParent is not null)
+        {
+            headers.Add(TraceParentHeader, Encode(envelope.TraceParent));
         }
 
         return new Message<string, string>
@@ -98,7 +106,8 @@ public static class KafkaMessages
             occurred,
             Read(message.Headers, CorrelationIdHeader),
             Read(message.Headers, CausationIdHeader),
-            message.Value);
+            message.Value,
+            Read(message.Headers, TraceParentHeader));
         problem = null;
         return true;
     }

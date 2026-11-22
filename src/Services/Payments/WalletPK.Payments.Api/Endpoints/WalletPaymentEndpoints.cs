@@ -5,6 +5,7 @@ using WalletPK.Common.Results;
 using WalletPK.Payments.Application.Wallets;
 using WalletPK.Web.Errors;
 using WalletPK.Web.Idempotency;
+using WalletPK.Web.Security;
 using WalletPK.Web.Identity;
 
 namespace WalletPK.Payments.Api.Endpoints;
@@ -62,7 +63,7 @@ public static class WalletPaymentEndpoints
             return result.ToHttpResult(sent => sent.Created
                 ? TypedResults.Accepted($"/api/payments/p2p-transfers/{sent.Transfer.Id}", sent.Transfer)
                 : TypedResults.Ok(sent.Transfer));
-        });
+        }).RequireMpinConfirmation();
 
         group.MapGet("/p2p-transfers/{id:guid}", async (Guid id, ICurrentUser currentUser, WalletPaymentsService payments, CancellationToken cancellationToken) =>
             (await payments.GetTransferAsync(CallerOf(currentUser), id, cancellationToken)).ToHttpResult());
@@ -103,7 +104,8 @@ public static class WalletPaymentEndpoints
             (await payments.GetRequestAsync(CallerOf(currentUser), id, cancellationToken)).ToHttpResult());
 
         group.MapPost("/requests/{id:guid}/pay", async (Guid id, ICurrentUser currentUser, WalletPaymentsService payments, CancellationToken cancellationToken) =>
-            (await payments.PayAsync(CallerOf(currentUser), id, cancellationToken)).ToHttpResult(view => TypedResults.Accepted($"/api/payments/requests/{id}", view)));
+            (await payments.PayAsync(CallerOf(currentUser), id, cancellationToken)).ToHttpResult(view => TypedResults.Accepted($"/api/payments/requests/{id}", view)))
+            .RequireMpinConfirmation(context => Guid.TryParse(context.Request.RouteValues["id"]?.ToString(), out var request) ? $"money-request:{request}" : null);
 
         group.MapPost("/requests/{id:guid}/decline", async (Guid id, DeclineRequest? request, ICurrentUser currentUser, WalletPaymentsService payments, CancellationToken cancellationToken) =>
             (await payments.DeclineAsync(CallerOf(currentUser), id, request?.Reason, cancellationToken)).ToHttpResult());

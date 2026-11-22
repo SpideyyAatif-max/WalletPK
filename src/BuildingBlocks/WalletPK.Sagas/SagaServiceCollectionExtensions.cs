@@ -31,8 +31,10 @@ public static class SagaServiceCollectionExtensions
         services.AddScoped<ISagaEngine>(provider => provider.GetRequiredService<SagaEngine<TDbContext>>());
         services.AddScoped<SagaReader<TDbContext>>();
         services.AddScoped<ISagaReader>(provider => provider.GetRequiredService<SagaReader<TDbContext>>());
+        services.AddScoped<ISagaExplorer, SagaExplorer<TDbContext>>();
         services.AddSingleton<SagaTimerRunner<TDbContext>>();
         services.AddHostedService<SagaTimerService<TDbContext>>();
+        services.AddHostedService<SagaGaugeService<TDbContext>>();
         return services;
     }
 

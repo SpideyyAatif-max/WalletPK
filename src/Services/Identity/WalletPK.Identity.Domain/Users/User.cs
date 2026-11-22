@@ -118,6 +118,16 @@ public sealed class User : AggregateRoot<UserId>
         return true;
     }
 
+    /// <summary>A correct MPIN outside login (a payment confirmation): the count of wrong ones starts again.</summary>
+    public void RecordCorrectMpin(DateTimeOffset now)
+    {
+        if (FailedMpinAttempts > 0)
+        {
+            FailedMpinAttempts = 0;
+            UpdatedAt = now;
+        }
+    }
+
     public void RecordSuccessfulLogin(DateTimeOffset now)
     {
         FailedMpinAttempts = 0;

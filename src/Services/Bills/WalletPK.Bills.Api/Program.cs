@@ -2,6 +2,7 @@ using WalletPK.Bills.Api;
 using WalletPK.Bills.Api.Endpoints;
 using WalletPK.Bills.Infrastructure;
 using WalletPK.Observability;
+using WalletPK.Sagas;
 using WalletPK.Web;
 using WalletPK.Web.Authentication;
 
@@ -28,6 +29,7 @@ await app.MigrateDatabaseIfConfiguredAsync();
 
 app.MapBillEndpoints();
 app.MapBillOperationsEndpoints();
+app.MapSagaExplorer("/api/bills", WalletPkPolicies.Operations);
 
 await app.RunAsync();
 

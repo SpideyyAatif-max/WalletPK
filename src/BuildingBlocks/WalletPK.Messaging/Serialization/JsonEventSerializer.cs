@@ -14,7 +14,7 @@ public sealed class JsonEventSerializer(IntegrationEventRegistry registry)
     /// <summary>The JSON settings every WalletPK event payload uses.</summary>
     public static JsonSerializerOptions Options { get; } = CreateOptions();
 
-    /// <summary>Wraps an event for the outbox / Kafka.</summary>
+    /// <summary>Wraps an event for the outbox / Kafka, with the current trace context.</summary>
     public EventEnvelope Wrap(IntegrationEvent integrationEvent, string? correlationId = null, string? causationId = null)
     {
         ArgumentNullException.ThrowIfNull(integrationEvent);
@@ -31,7 +31,8 @@ public sealed class JsonEventSerializer(IntegrationEventRegistry registry)
             integrationEvent.OccurredAt,
             correlationId,
             causationId,
-            JsonSerializer.Serialize(integrationEvent, eventType, Options));
+            JsonSerializer.Serialize(integrationEvent, eventType, Options),
+            MessagingTelemetry.CurrentTraceParent());
     }
 
     /// <summary>

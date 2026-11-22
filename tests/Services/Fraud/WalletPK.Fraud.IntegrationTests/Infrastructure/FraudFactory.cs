@@ -64,6 +64,13 @@ public sealed class FraudFactory : WebApplicationFactory<Program>, IAsyncLifetim
     {
         await Task.WhenAll(_postgres.StartAsync(), _redis.StartAsync(), _kafka.StartAsync());
         _ = Server;
+
+        // The night rule follows the wall clock (1-5 am in Pakistan), so with it on these tests would score
+        // differently at night. The unit tests cover it at fixed times.
+        await using var scope = Services.CreateAsyncScope();
+        var disabled = await scope.ServiceProvider.GetRequiredService<RuleService>()
+            .UpdateAsync("odd-hours-large", name: null, description: null, definition: null, enabled: false, "integration-tests", CancellationToken.None);
+        disabled.IsSuccess.ShouldBeTrue(disabled.IsFailure ? disabled.Error.Message : null);
     }
 
     public override async ValueTask DisposeAsync()

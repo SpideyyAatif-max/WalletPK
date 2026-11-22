@@ -5,6 +5,7 @@ using WalletPK.Payments.Application.BankTransfers;
 using WalletPK.Payments.Application.Raast;
 using WalletPK.Web.Errors;
 using WalletPK.Web.Idempotency;
+using WalletPK.Web.Security;
 using WalletPK.Web.Identity;
 
 namespace WalletPK.Payments.Api.Endpoints;
@@ -65,7 +66,7 @@ public static class BankTransferEndpoints
             return result.ToHttpResult(sent => sent.Created
                 ? TypedResults.Accepted($"/api/payments/bank-transfers/{sent.Transfer.Id}", sent.Transfer)
                 : TypedResults.Ok(sent.Transfer));
-        });
+        }).RequireMpinConfirmation();
 
         group.MapGet("/bank-transfers/{id:guid}", async (Guid id, ICurrentUser currentUser, BankTransferService transfers, CancellationToken cancellationToken) =>
             (await transfers.GetAsync(currentUser.GetRequiredId().Value, id, cancellationToken)).ToHttpResult());

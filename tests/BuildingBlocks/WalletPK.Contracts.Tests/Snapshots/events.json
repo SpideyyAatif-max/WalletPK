@@ -1,0 +1,894 @@
+{
+  "agents.agent_status_changed": {
+    "clrType": "WalletPK.Contracts.Agents.AgentStatusChanged",
+    "fields": {
+      "agentCode": "string",
+      "agentId": "uuid",
+      "changedAt": "date-time",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "ownerUserId": "uuid",
+      "reason": "string?",
+      "status": "string"
+    },
+    "name": "agents.agent_status_changed",
+    "topic": "agents.events",
+    "version": 1
+  },
+  "agents.commission_payout_changed": {
+    "clrType": "WalletPK.Contracts.Agents.AgentCommissionPayoutChanged",
+    "fields": {
+      "agentId": "uuid",
+      "businessDate": "date",
+      "changedAt": "date-time",
+      "eventId": "uuid",
+      "grossPaisa": "integer",
+      "netPaisa": "integer",
+      "occurredAt": "date-time",
+      "payoutId": "uuid",
+      "status": "string",
+      "taxPaisa": "integer",
+      "transactionCount": "integer"
+    },
+    "name": "agents.commission_payout_changed",
+    "topic": "agents.events",
+    "version": 1
+  },
+  "agents.float_low": {
+    "clrType": "WalletPK.Contracts.Agents.AgentFloatLow",
+    "fields": {
+      "agentId": "uuid",
+      "at": "date-time",
+      "eventId": "uuid",
+      "floatPaisa": "integer",
+      "occurredAt": "date-time",
+      "ownerUserId": "uuid",
+      "thresholdPaisa": "integer"
+    },
+    "name": "agents.float_low",
+    "topic": "agents.events",
+    "version": 1
+  },
+  "agents.transaction_changed": {
+    "clrType": "WalletPK.Contracts.Agents.AgentTransactionChanged",
+    "fields": {
+      "agentId": "uuid",
+      "amountPaisa": "integer",
+      "changedAt": "date-time",
+      "commissionPaisa": "integer",
+      "customerUserId": "uuid?",
+      "eventId": "uuid",
+      "failureCode": "string?",
+      "feePaisa": "integer",
+      "kind": "string",
+      "occurredAt": "date-time",
+      "status": "string",
+      "transactionId": "uuid"
+    },
+    "name": "agents.transaction_changed",
+    "topic": "agents.events",
+    "version": 1
+  },
+  "bills.bill_due_reminder": {
+    "clrType": "WalletPK.Contracts.Bills.BillDueReminder",
+    "fields": {
+      "amountPaisa": "integer",
+      "biller": "string",
+      "billingMonth": "string",
+      "consumerNumber": "string",
+      "dueDate": "date",
+      "eventId": "uuid",
+      "nickname": "string?",
+      "occurredAt": "date-time",
+      "savedBillerId": "uuid",
+      "userId": "uuid"
+    },
+    "name": "bills.bill_due_reminder",
+    "topic": "bills.events",
+    "version": 1
+  },
+  "bills.payment_changed": {
+    "clrType": "WalletPK.Contracts.Bills.BillPaymentChanged",
+    "fields": {
+      "amountPaisa": "integer",
+      "biller": "string",
+      "changedAt": "date-time",
+      "consumerNumber": "string",
+      "detail": "string",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "paymentId": "uuid",
+      "status": "string",
+      "step": "string",
+      "userId": "uuid"
+    },
+    "name": "bills.payment_changed",
+    "topic": "bills.events",
+    "version": 1
+  },
+  "bills.payment_dead_lettered": {
+    "clrType": "WalletPK.Contracts.Bills.BillPaymentDeadLettered",
+    "fields": {
+      "amountPaisa": "integer",
+      "biller": "string",
+      "consumerNumber": "string",
+      "deadLetteredAt": "date-time",
+      "eventId": "uuid",
+      "lastState": "string",
+      "occurredAt": "date-time",
+      "paymentId": "uuid",
+      "reason": "string",
+      "userId": "uuid"
+    },
+    "name": "bills.payment_dead_lettered",
+    "topic": "bills.dlq",
+    "version": 1
+  },
+  "fraud.account_freeze_changed": {
+    "clrType": "WalletPK.Contracts.Fraud.AccountFreezeChanged",
+    "fields": {
+      "by": "string",
+      "changedAt": "date-time",
+      "eventId": "uuid",
+      "frozen": "boolean",
+      "occurredAt": "date-time",
+      "reason": "string",
+      "userId": "uuid"
+    },
+    "name": "fraud.account_freeze_changed",
+    "topic": "fraud.alerts",
+    "version": 1
+  },
+  "fraud.alert_raised": {
+    "clrType": "WalletPK.Contracts.Fraud.FraudAlertRaised",
+    "fields": {
+      "action": "string",
+      "alertId": "uuid",
+      "caseId": "uuid?",
+      "eventId": "uuid",
+      "kind": "string",
+      "occurredAt": "date-time",
+      "raisedAt": "date-time",
+      "rules": "array\u003Cstring\u003E",
+      "score": "integer",
+      "severity": "string",
+      "summary": "string",
+      "transactionId": "uuid?",
+      "userId": "uuid"
+    },
+    "name": "fraud.alert_raised",
+    "topic": "fraud.alerts",
+    "version": 1
+  },
+  "fraud.case_changed": {
+    "clrType": "WalletPK.Contracts.Fraud.FraudCaseChanged",
+    "fields": {
+      "assignedTo": "string?",
+      "caseId": "uuid",
+      "changedAt": "date-time",
+      "eventId": "uuid",
+      "kind": "string",
+      "occurredAt": "date-time",
+      "resolution": "string?",
+      "status": "string",
+      "userId": "uuid"
+    },
+    "name": "fraud.case_changed",
+    "topic": "fraud.alerts",
+    "version": 1
+  },
+  "identity.device_bound": {
+    "clrType": "WalletPK.Contracts.Identity.DeviceBound",
+    "fields": {
+      "boundAt": "date-time",
+      "coolingOffUntil": "date-time?",
+      "deviceId": "uuid",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "userId": "uuid"
+    },
+    "name": "identity.device_bound",
+    "topic": "identity.events",
+    "version": 1
+  },
+  "identity.kyc_upgraded": {
+    "clrType": "WalletPK.Contracts.Identity.KycUpgraded",
+    "fields": {
+      "eventId": "uuid",
+      "newTier": "string",
+      "occurredAt": "date-time",
+      "previousTier": "string",
+      "upgradedAt": "date-time",
+      "userId": "uuid"
+    },
+    "name": "identity.kyc_upgraded",
+    "topic": "identity.events",
+    "version": 1
+  },
+  "identity.payment_step_up_confirmed": {
+    "clrType": "WalletPK.Contracts.Identity.PaymentStepUpConfirmed",
+    "fields": {
+      "confirmedAt": "date-time",
+      "deviceId": "uuid?",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "userId": "uuid",
+      "validUntil": "date-time"
+    },
+    "name": "identity.payment_step_up_confirmed",
+    "topic": "identity.events",
+    "version": 1
+  },
+  "identity.user_registered": {
+    "clrType": "WalletPK.Contracts.Identity.UserRegistered",
+    "fields": {
+      "eventId": "uuid",
+      "kycTier": "string",
+      "occurredAt": "date-time",
+      "phoneNumber": "string",
+      "registeredAt": "date-time",
+      "userId": "uuid"
+    },
+    "name": "identity.user_registered",
+    "topic": "identity.events",
+    "version": 1
+  },
+  "ledger.agent_cash_in": {
+    "clrType": "WalletPK.Contracts.Ledger.AgentCashIn",
+    "fields": {
+      "agentOwnerUserId": "uuid",
+      "amountPaisa": "integer",
+      "commissionPaisa": "integer",
+      "customerWalletNumber": "string",
+      "description": "string",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "replyTo": "uuid",
+      "transactionId": "uuid"
+    },
+    "name": "ledger.agent_cash_in",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.agent_cash_out": {
+    "clrType": "WalletPK.Contracts.Ledger.AgentCashOut",
+    "fields": {
+      "agentOwnerUserId": "uuid",
+      "amountPaisa": "integer",
+      "commissionPaisa": "integer",
+      "customerUserId": "uuid",
+      "description": "string",
+      "deviceId": "string?",
+      "eventId": "uuid",
+      "feePaisa": "integer",
+      "occurredAt": "date-time",
+      "replyTo": "uuid",
+      "taxPaisa": "integer",
+      "transactionId": "uuid"
+    },
+    "name": "ledger.agent_cash_out",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.agent_cashed_in": {
+    "clrType": "WalletPK.Contracts.Ledger.AgentCashedIn",
+    "fields": {
+      "agentBalancePaisa": "integer",
+      "amountPaisa": "integer",
+      "commissionPaisa": "integer",
+      "customerName": "string",
+      "customerUserId": "uuid",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "postedAt": "date-time",
+      "replyTo": "uuid",
+      "transactionId": "uuid"
+    },
+    "name": "ledger.agent_cashed_in",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.agent_cashed_out": {
+    "clrType": "WalletPK.Contracts.Ledger.AgentCashedOut",
+    "fields": {
+      "agentBalancePaisa": "integer",
+      "amountPaisa": "integer",
+      "commissionPaisa": "integer",
+      "eventId": "uuid",
+      "feePaisa": "integer",
+      "occurredAt": "date-time",
+      "postedAt": "date-time",
+      "replyTo": "uuid",
+      "taxPaisa": "integer",
+      "transactionId": "uuid"
+    },
+    "name": "ledger.agent_cashed_out",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.agent_commission_paid": {
+    "clrType": "WalletPK.Contracts.Ledger.AgentCommissionPaid",
+    "fields": {
+      "agentId": "uuid",
+      "eventId": "uuid",
+      "grossPaisa": "integer",
+      "netPaisa": "integer",
+      "occurredAt": "date-time",
+      "payoutId": "uuid",
+      "postedAt": "date-time",
+      "taxPaisa": "integer"
+    },
+    "name": "ledger.agent_commission_paid",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.agent_float_moved": {
+    "clrType": "WalletPK.Contracts.Ledger.AgentFloatMoved",
+    "fields": {
+      "agentBalancePaisa": "integer",
+      "amountPaisa": "integer",
+      "direction": "string",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "postedAt": "date-time",
+      "replyTo": "uuid",
+      "transferId": "uuid"
+    },
+    "name": "ledger.agent_float_moved",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.agent_wallet_opened": {
+    "clrType": "WalletPK.Contracts.Ledger.AgentWalletOpened",
+    "fields": {
+      "agentCode": "string",
+      "agentId": "uuid",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "walletId": "uuid"
+    },
+    "name": "ledger.agent_wallet_opened",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.capture_hold": {
+    "clrType": "WalletPK.Contracts.Ledger.CaptureHold",
+    "fields": {
+      "credits": "array\u003C{amountPaisa: integer, systemAccount: string}\u003E",
+      "description": "string",
+      "eventId": "uuid",
+      "holdId": "uuid",
+      "occurredAt": "date-time",
+      "purpose": "string",
+      "transactionId": "uuid"
+    },
+    "name": "ledger.capture_hold",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.freeze_wallets": {
+    "clrType": "WalletPK.Contracts.Ledger.FreezeWallets",
+    "fields": {
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "reason": "string",
+      "requestId": "uuid",
+      "userId": "uuid"
+    },
+    "name": "ledger.freeze_wallets",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.funds_transfer_rejected": {
+    "clrType": "WalletPK.Contracts.Ledger.FundsTransferRejected",
+    "fields": {
+      "code": "string",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "reason": "string",
+      "replyTo": "uuid",
+      "transferId": "uuid"
+    },
+    "name": "ledger.funds_transfer_rejected",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.funds_transferred": {
+    "clrType": "WalletPK.Contracts.Ledger.FundsTransferred",
+    "fields": {
+      "amountPaisa": "integer",
+      "eventId": "uuid",
+      "feePaisa": "integer",
+      "occurredAt": "date-time",
+      "postedAt": "date-time",
+      "replyTo": "uuid",
+      "taxPaisa": "integer",
+      "toWalletNumber": "string",
+      "transferId": "uuid"
+    },
+    "name": "ledger.funds_transferred",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.hold_capture_failed": {
+    "clrType": "WalletPK.Contracts.Ledger.HoldCaptureFailed",
+    "fields": {
+      "code": "string",
+      "eventId": "uuid",
+      "holdId": "uuid",
+      "occurredAt": "date-time",
+      "reason": "string",
+      "transactionId": "uuid"
+    },
+    "name": "ledger.hold_capture_failed",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.hold_captured": {
+    "clrType": "WalletPK.Contracts.Ledger.HoldCaptured",
+    "fields": {
+      "amountPaisa": "integer",
+      "eventId": "uuid",
+      "holdId": "uuid",
+      "occurredAt": "date-time",
+      "transactionId": "uuid"
+    },
+    "name": "ledger.hold_captured",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.hold_placed": {
+    "clrType": "WalletPK.Contracts.Ledger.HoldPlaced",
+    "fields": {
+      "amountPaisa": "integer",
+      "eventId": "uuid",
+      "expiresAt": "date-time",
+      "holdId": "uuid",
+      "occurredAt": "date-time",
+      "walletId": "uuid"
+    },
+    "name": "ledger.hold_placed",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.hold_rejected": {
+    "clrType": "WalletPK.Contracts.Ledger.HoldRejected",
+    "fields": {
+      "code": "string",
+      "eventId": "uuid",
+      "holdId": "uuid",
+      "occurredAt": "date-time",
+      "reason": "string"
+    },
+    "name": "ledger.hold_rejected",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.hold_released": {
+    "clrType": "WalletPK.Contracts.Ledger.HoldReleased",
+    "fields": {
+      "eventId": "uuid",
+      "holdId": "uuid",
+      "occurredAt": "date-time",
+      "status": "string"
+    },
+    "name": "ledger.hold_released",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.journal_posted": {
+    "clrType": "WalletPK.Contracts.Ledger.JournalPosted",
+    "fields": {
+      "amountPaisa": "integer",
+      "currency": "string",
+      "description": "string",
+      "entries": "array\u003C{accountId: uuid, amountPaisa: integer, balanceAfterPaisa: integer, direction: string}\u003E",
+      "eventId": "uuid",
+      "journalType": "string",
+      "occurredAt": "date-time",
+      "postedAt": "date-time",
+      "reference": "string?",
+      "transactionId": "uuid"
+    },
+    "name": "ledger.journal_posted",
+    "topic": "ledger.events",
+    "version": 1
+  },
+  "ledger.merchant_paid": {
+    "clrType": "WalletPK.Contracts.Ledger.MerchantPaid",
+    "fields": {
+      "amountPaisa": "integer",
+      "eventId": "uuid",
+      "feePaisa": "integer",
+      "netPaisa": "integer",
+      "occurredAt": "date-time",
+      "paymentId": "uuid",
+      "postedAt": "date-time",
+      "replyTo": "uuid",
+      "taxPaisa": "integer"
+    },
+    "name": "ledger.merchant_paid",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.merchant_settled": {
+    "clrType": "WalletPK.Contracts.Ledger.MerchantSettled",
+    "fields": {
+      "amountPaisa": "integer",
+      "eventId": "uuid",
+      "merchantId": "uuid",
+      "occurredAt": "date-time",
+      "postedAt": "date-time",
+      "settlementId": "uuid"
+    },
+    "name": "ledger.merchant_settled",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.merchant_wallet_opened": {
+    "clrType": "WalletPK.Contracts.Ledger.MerchantWalletOpened",
+    "fields": {
+      "eventId": "uuid",
+      "merchantCode": "string",
+      "merchantId": "uuid",
+      "occurredAt": "date-time",
+      "walletId": "uuid"
+    },
+    "name": "ledger.merchant_wallet_opened",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "ledger.move_agent_float": {
+    "clrType": "WalletPK.Contracts.Ledger.MoveAgentFloat",
+    "fields": {
+      "agentOwnerUserId": "uuid",
+      "amountPaisa": "integer",
+      "direction": "string",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "replyTo": "uuid",
+      "transferId": "uuid"
+    },
+    "name": "ledger.move_agent_float",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.open_agent_wallet": {
+    "clrType": "WalletPK.Contracts.Ledger.OpenAgentWallet",
+    "fields": {
+      "agentCode": "string",
+      "agentId": "uuid",
+      "eventId": "uuid",
+      "name": "string",
+      "occurredAt": "date-time",
+      "ownerUserId": "uuid"
+    },
+    "name": "ledger.open_agent_wallet",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.open_merchant_wallet": {
+    "clrType": "WalletPK.Contracts.Ledger.OpenMerchantWallet",
+    "fields": {
+      "eventId": "uuid",
+      "merchantCode": "string",
+      "merchantId": "uuid",
+      "name": "string",
+      "occurredAt": "date-time",
+      "ownerUserId": "uuid"
+    },
+    "name": "ledger.open_merchant_wallet",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.pay_agent_commission": {
+    "clrType": "WalletPK.Contracts.Ledger.PayAgentCommission",
+    "fields": {
+      "agentId": "uuid",
+      "agentOwnerUserId": "uuid",
+      "description": "string",
+      "eventId": "uuid",
+      "grossPaisa": "integer",
+      "occurredAt": "date-time",
+      "payoutId": "uuid",
+      "taxPaisa": "integer"
+    },
+    "name": "ledger.pay_agent_commission",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.pay_merchant": {
+    "clrType": "WalletPK.Contracts.Ledger.PayMerchant",
+    "fields": {
+      "amountPaisa": "integer",
+      "description": "string",
+      "deviceId": "string?",
+      "eventId": "uuid",
+      "feePaisa": "integer",
+      "merchantOwnerUserId": "uuid",
+      "occurredAt": "date-time",
+      "payerUserId": "uuid",
+      "paymentId": "uuid",
+      "replyTo": "uuid",
+      "taxPaisa": "integer"
+    },
+    "name": "ledger.pay_merchant",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.place_hold": {
+    "clrType": "WalletPK.Contracts.Ledger.PlaceHold",
+    "fields": {
+      "amountPaisa": "integer",
+      "description": "string",
+      "deviceId": "string?",
+      "eventId": "uuid",
+      "holdId": "uuid",
+      "lifetimeSeconds": "integer",
+      "occurredAt": "date-time",
+      "purpose": "string",
+      "reference": "string?",
+      "userId": "uuid"
+    },
+    "name": "ledger.place_hold",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.release_hold": {
+    "clrType": "WalletPK.Contracts.Ledger.ReleaseHold",
+    "fields": {
+      "eventId": "uuid",
+      "holdId": "uuid",
+      "occurredAt": "date-time",
+      "reason": "string"
+    },
+    "name": "ledger.release_hold",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.settle_merchant": {
+    "clrType": "WalletPK.Contracts.Ledger.SettleMerchant",
+    "fields": {
+      "amountPaisa": "integer",
+      "description": "string",
+      "eventId": "uuid",
+      "merchantId": "uuid",
+      "merchantOwnerUserId": "uuid",
+      "occurredAt": "date-time",
+      "settlementId": "uuid"
+    },
+    "name": "ledger.settle_merchant",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.transfer_funds": {
+    "clrType": "WalletPK.Contracts.Ledger.TransferFunds",
+    "fields": {
+      "amountPaisa": "integer",
+      "deviceId": "string?",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "replyTo": "uuid",
+      "senderUserId": "uuid",
+      "toWalletNumber": "string",
+      "transferId": "uuid"
+    },
+    "name": "ledger.transfer_funds",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.unfreeze_wallets": {
+    "clrType": "WalletPK.Contracts.Ledger.UnfreezeWallets",
+    "fields": {
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "reason": "string",
+      "requestId": "uuid",
+      "userId": "uuid"
+    },
+    "name": "ledger.unfreeze_wallets",
+    "topic": "ledger.commands",
+    "version": 1
+  },
+  "ledger.wallet_entry_posted": {
+    "clrType": "WalletPK.Contracts.Ledger.WalletEntryPosted",
+    "fields": {
+      "amountPaisa": "integer",
+      "balanceAfterPaisa": "integer",
+      "counterpartyWalletNumber": "string?",
+      "description": "string",
+      "direction": "string",
+      "eventId": "uuid",
+      "journalType": "string",
+      "occurredAt": "date-time",
+      "ownerId": "uuid?",
+      "postedAt": "date-time",
+      "sequence": "integer",
+      "transactionId": "uuid",
+      "walletId": "uuid",
+      "walletNumber": "string?",
+      "walletType": "string"
+    },
+    "name": "ledger.wallet_entry_posted",
+    "topic": "ledger.events",
+    "version": 1
+  },
+  "ledger.wallet_opened": {
+    "clrType": "WalletPK.Contracts.Ledger.WalletOpened",
+    "fields": {
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "openedAt": "date-time",
+      "ownerId": "uuid",
+      "walletId": "uuid",
+      "walletNumber": "string?",
+      "walletType": "string"
+    },
+    "name": "ledger.wallet_opened",
+    "topic": "ledger.events",
+    "version": 1
+  },
+  "ledger.wallets_freeze_changed": {
+    "clrType": "WalletPK.Contracts.Ledger.WalletsFreezeChanged",
+    "fields": {
+      "changedAt": "date-time",
+      "eventId": "uuid",
+      "frozen": "boolean",
+      "occurredAt": "date-time",
+      "requestId": "uuid",
+      "userId": "uuid",
+      "walletCount": "integer"
+    },
+    "name": "ledger.wallets_freeze_changed",
+    "topic": "ledger.replies",
+    "version": 1
+  },
+  "notifications.delivery_changed": {
+    "clrType": "WalletPK.Contracts.Notifications.NotificationDeliveryChanged",
+    "fields": {
+      "attempts": "integer",
+      "changedAt": "date-time",
+      "channel": "string",
+      "deliveryId": "uuid",
+      "eventId": "uuid",
+      "notificationId": "uuid",
+      "occurredAt": "date-time",
+      "status": "string",
+      "template": "string",
+      "userId": "uuid"
+    },
+    "name": "notifications.delivery_changed",
+    "topic": "notifications.events",
+    "version": 1
+  },
+  "payments.bank_transfer_changed": {
+    "clrType": "WalletPK.Contracts.Payments.BankTransferChanged",
+    "fields": {
+      "amountPaisa": "integer",
+      "changedAt": "date-time",
+      "detail": "string",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "status": "string",
+      "step": "string",
+      "toBank": "string",
+      "transferId": "uuid",
+      "userId": "uuid"
+    },
+    "name": "payments.bank_transfer_changed",
+    "topic": "payments.events",
+    "version": 1
+  },
+  "payments.money_request_changed": {
+    "clrType": "WalletPK.Contracts.Payments.MoneyRequestChanged",
+    "fields": {
+      "amountPaisa": "integer",
+      "changedAt": "date-time",
+      "detail": "string",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "payerWalletNumber": "string",
+      "requestId": "uuid",
+      "requesterUserId": "uuid",
+      "requesterWalletNumber": "string",
+      "splitId": "uuid?",
+      "status": "string"
+    },
+    "name": "payments.money_request_changed",
+    "topic": "payments.events",
+    "version": 1
+  },
+  "payments.p2p_transfer_changed": {
+    "clrType": "WalletPK.Contracts.Payments.P2PTransferChanged",
+    "fields": {
+      "amountPaisa": "integer",
+      "changedAt": "date-time",
+      "detail": "string",
+      "eventId": "uuid",
+      "occurredAt": "date-time",
+      "senderUserId": "uuid",
+      "status": "string",
+      "toWalletNumber": "string",
+      "transferId": "uuid"
+    },
+    "name": "payments.p2p_transfer_changed",
+    "topic": "payments.events",
+    "version": 1
+  },
+  "topup.merchant_payment_changed": {
+    "clrType": "WalletPK.Contracts.TopupMerchant.MerchantPaymentChanged",
+    "fields": {
+      "amountPaisa": "integer",
+      "changedAt": "date-time",
+      "eventId": "uuid",
+      "feePaisa": "integer",
+      "merchantId": "uuid",
+      "netPaisa": "integer",
+      "occurredAt": "date-time",
+      "payerUserId": "uuid",
+      "paymentId": "uuid",
+      "qrId": "uuid",
+      "reference": "string?",
+      "status": "string",
+      "taxPaisa": "integer"
+    },
+    "name": "topup.merchant_payment_changed",
+    "topic": "topup.events",
+    "version": 1
+  },
+  "topup.merchant_settled": {
+    "clrType": "WalletPK.Contracts.TopupMerchant.MerchantSettlementChanged",
+    "fields": {
+      "businessDate": "date",
+      "changedAt": "date-time",
+      "eventId": "uuid",
+      "merchantId": "uuid",
+      "netPaisa": "integer",
+      "occurredAt": "date-time",
+      "paymentCount": "integer",
+      "settlementId": "uuid",
+      "status": "string"
+    },
+    "name": "topup.merchant_settled",
+    "topic": "topup.events",
+    "version": 1
+  },
+  "topup.topup_changed": {
+    "clrType": "WalletPK.Contracts.TopupMerchant.TopUpChanged",
+    "fields": {
+      "amountPaisa": "integer",
+      "bundleCode": "string?",
+      "changedAt": "date-time",
+      "detail": "string",
+      "eventId": "uuid",
+      "msisdn": "string",
+      "network": "string",
+      "occurredAt": "date-time",
+      "status": "string",
+      "step": "string",
+      "topUpId": "uuid",
+      "userId": "uuid"
+    },
+    "name": "topup.topup_changed",
+    "topic": "topup.events",
+    "version": 1
+  },
+  "topup.topup_dead_lettered": {
+    "clrType": "WalletPK.Contracts.TopupMerchant.TopUpDeadLettered",
+    "fields": {
+      "amountPaisa": "integer",
+      "deadLetteredAt": "date-time",
+      "eventId": "uuid",
+      "lastState": "string",
+      "msisdn": "string",
+      "network": "string",
+      "occurredAt": "date-time",
+      "reason": "string",
+      "topUpId": "uuid",
+      "userId": "uuid"
+    },
+    "name": "topup.topup_dead_lettered",
+    "topic": "topup.dlq",
+    "version": 1
+  }
+}

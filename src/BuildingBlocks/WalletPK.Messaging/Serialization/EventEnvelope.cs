@@ -14,6 +14,10 @@ namespace WalletPK.Messaging.Serialization;
 /// <param name="CorrelationId">The user action this event belongs to.</param>
 /// <param name="CausationId">The ID of the event or command that caused this one, if any.</param>
 /// <param name="Payload">The event serialised as JSON.</param>
+/// <param name="TraceParent">
+/// The W3C trace context (traceparent) of the work that produced the event, so the consumer's work joins the
+/// same distributed trace (M15.1). Null when nothing was being traced.
+/// </param>
 public sealed record EventEnvelope(
     Guid EventId,
     string EventType,
@@ -23,4 +27,5 @@ public sealed record EventEnvelope(
     DateTimeOffset OccurredAt,
     string? CorrelationId,
     string? CausationId,
-    string Payload);
+    string Payload,
+    string? TraceParent = null);

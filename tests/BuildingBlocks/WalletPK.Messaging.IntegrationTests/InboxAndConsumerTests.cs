@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Confluent.Kafka;
 using Microsoft.EntityFrameworkCore;
@@ -172,6 +173,73 @@ public class InboxAndConsumerTests(PipelineFixture fixture)
         processed.Select(item => item.EventId).ShouldBe(envelopes.Select(envelope => envelope.EventId));
         attempts.Values.ShouldAllBe(count => count == 3);
         processed.ShouldAllBe(item => item.CorrelationId == "user-action-42");
+    }
+
+    [Fact]
+    public async Task An_event_continues_the_trace_of_the_work_that_wrote_it_through_Kafka_and_the_consumer()
+    {
+        using var testSource = new ActivitySource("WalletPK.Tests.Tracing");
+        var finished = new ConcurrentQueue<Activity>();
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = source => source.Name is MessagingTelemetry.SourceName or "WalletPK.Tests.Tracing",
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStopped = finished.Enqueue,
+        };
+        ActivitySource.AddActivityListener(listener);
+
+        var topic = KafkaTopics.AgentsEvents;
+        await new KafkaTopicAdmin(new KafkaOptions { BootstrapServers = fixture.KafkaBootstrapServers }, NullLogger<KafkaTopicAdmin>.Instance).EnsureTopicsAsync([topic], Cancel);
+
+        // The HTTP request (here a test span) writes an event: it carries the request's trace.
+        EventEnvelope envelope;
+        ActivityTraceId traceId;
+        using (var request = testSource.StartActivity("POST /api/test", ActivityKind.Server))
+        {
+            request.ShouldNotBeNull();
+            traceId = request.TraceId;
+            envelope = fixture.Serializer.Wrap(new SomethingHappened(Guid.NewGuid().ToString("N"), 1)) with { Topic = topic };
+        }
+
+        envelope.TraceParent.ShouldNotBeNull();
+        envelope.TraceParent.ShouldContain(traceId.ToHexString());
+        using (var publisher = new KafkaEventPublisher(new KafkaOptions { BootstrapServers = fixture.KafkaBootstrapServers }, NullLogger<KafkaEventPublisher>.Instance))
+        {
+            await publisher.PublishAsync(envelope, Cancel);
+        }
+
+        var seen = new ConcurrentQueue<(Guid EventId, ActivityTraceId TraceId, ActivityKind Kind, ActivitySpanId Parent, string? Written)>();
+        var (consumer, services) = await StartConsumerAsync($"trace-{Guid.NewGuid():N}", topic, new TracingProcessor(fixture.Serializer, seen));
+        try
+        {
+            await WaitForAsync(() => seen.Any(item => item.EventId == envelope.EventId));
+        }
+        finally
+        {
+            await consumer.StopAsync(CancellationToken.None);
+            await services.DisposeAsync();
+        }
+
+        var processed = seen.First(item => item.EventId == envelope.EventId);
+        processed.TraceId.ShouldBe(traceId, "the consumer works in the request's trace");
+        processed.Kind.ShouldBe(ActivityKind.Consumer);
+        var publish = finished.Single(activity => activity.Kind == ActivityKind.Producer && activity.TraceId == traceId);
+        processed.Parent.ShouldBe(publish.SpanId, "the consumer span hangs under the producer span");
+        publish.GetTagItem("messaging.destination.name").ShouldBe(topic);
+        processed.Written.ShouldNotBeNull();
+        processed.Written.ShouldContain(traceId.ToHexString(), Case.Sensitive, "events the handler writes stay in the trace");
+    }
+
+    /// <summary>Records the span it ran in, and writes a follow-up event as a handler would.</summary>
+    private sealed class TracingProcessor(JsonEventSerializer serializer, ConcurrentQueue<(Guid, ActivityTraceId, ActivityKind, ActivitySpanId, string?)> seen) : IEnvelopeProcessor
+    {
+        public Task ProcessAsync(EventEnvelope envelope, string consumer, CancellationToken cancellationToken)
+        {
+            var current = Activity.Current;
+            var followUp = serializer.Wrap(new SomethingHappened("follow-up", 2));
+            seen.Enqueue((envelope.EventId, current?.TraceId ?? default, current?.Kind ?? ActivityKind.Internal, current?.ParentSpanId ?? default, followUp.TraceParent));
+            return Task.CompletedTask;
+        }
     }
 
     [Fact]

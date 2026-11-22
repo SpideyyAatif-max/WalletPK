@@ -5,6 +5,7 @@ using WalletPK.Ledger.Application.Wallets;
 using WalletPK.Ledger.Domain.Accounts;
 using WalletPK.Web.Errors;
 using WalletPK.Web.Idempotency;
+using WalletPK.Web.Security;
 using WalletPK.Web.Identity;
 
 namespace WalletPK.Ledger.Api.Endpoints;
@@ -88,7 +89,7 @@ public static class WalletEndpoints
 
             var result = await wallets.TransferAsync(command, cancellationToken);
             return result.ToHttpResult();
-        }).RequireIdempotencyKey();
+        }).RequireIdempotencyKey().RequireMpinConfirmation();
 
         return endpoints;
     }

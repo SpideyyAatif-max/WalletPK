@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Confluent.Kafka;
 using Microsoft.Extensions.DependencyInjection;
@@ -5,6 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using WalletPK.Common.Correlation;
 using WalletPK.Messaging.Abstractions;
+using WalletPK.Messaging.Serialization;
 
 namespace WalletPK.Messaging.Kafka;
 
@@ -119,6 +121,9 @@ public sealed partial class KafkaConsumerService(
 
         for (var attempt = 1; ; attempt++)
         {
+            // One consumer span per attempt, in the producer's trace (M15.1); events the handlers write join it.
+            using var activity = MessagingTelemetry.StartProcess(envelope!, definition.GroupId);
+            activity?.SetTag("walletpk.attempt", attempt);
             try
             {
                 CorrelationContext.Current = envelope!.CorrelationId;
@@ -139,6 +144,7 @@ public sealed partial class KafkaConsumerService(
             }
             catch (Exception exception) when (exception is not OperationCanceledException || !stoppingToken.IsCancellationRequested)
             {
+                activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
                 var delay = TimeSpan.FromMilliseconds(Math.Min(_maxBackoff.TotalMilliseconds, 200 * Math.Pow(2, Math.Min(attempt - 1, 10))));
                 LogProcessingFailed(logger, definition.GroupId, envelope!.EventType, envelope.EventId, attempt, delay.TotalSeconds, exception);
                 Count(result.Topic, "failed");

@@ -1,4 +1,5 @@
 using WalletPK.Observability;
+using WalletPK.Sagas;
 using WalletPK.TopupMerchant.Api;
 using WalletPK.TopupMerchant.Api.Endpoints;
 using WalletPK.TopupMerchant.Infrastructure;
@@ -27,7 +28,9 @@ app.UseAuthorization();
 await app.MigrateDatabaseIfConfiguredAsync();
 
 app.MapTopUpEndpoints();
+app.MapTopUpOperationsEndpoints();
 app.MapMerchantEndpoints();
+app.MapSagaExplorer("/api/topups", WalletPkPolicies.Operations);
 
 await app.RunAsync();
 

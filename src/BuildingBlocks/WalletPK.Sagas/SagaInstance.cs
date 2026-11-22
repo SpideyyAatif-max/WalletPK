@@ -65,6 +65,9 @@ public sealed class SagaStep
     /// <summary>In words, for the timeline.</summary>
     public string Detail { get; set; } = "";
 
+    /// <summary>The W3C trace the step ran in (32 hex digits), to open it in Jaeger.</summary>
+    public string? TraceId { get; set; }
+
     public DateTimeOffset At { get; set; }
 }
 
@@ -108,6 +111,7 @@ internal sealed class SagaStepConfiguration : IEntityTypeConfiguration<SagaStep>
         builder.Property(step => step.PreviousState).HasColumnName("previous_state").HasMaxLength(64);
         builder.Property(step => step.Trigger).HasColumnName("trigger").HasMaxLength(100).IsRequired();
         builder.Property(step => step.Detail).HasColumnName("detail").HasMaxLength(1000).IsRequired();
+        builder.Property(step => step.TraceId).HasColumnName("trace_id").HasMaxLength(32);
         builder.Property(step => step.At).HasColumnName("at");
         builder.HasIndex(step => new { step.SagaId, step.Sequence }).IsUnique().HasDatabaseName("ux_saga_steps_saga_sequence");
         builder.HasOne<SagaInstance>().WithMany().HasForeignKey(step => step.SagaId).OnDelete(DeleteBehavior.Cascade).HasConstraintName("fk_saga_steps_saga_instances");

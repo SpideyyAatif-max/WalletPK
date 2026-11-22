@@ -47,7 +47,27 @@ public sealed class TopUpData
     public int LedgerResends { get; set; }
 
     public DateTimeOffset? FinishedAt { get; set; }
+
+    /// <summary>Why it was dead-lettered (topup.dlq).</summary>
+    public string? DeadLetterReason { get; set; }
+
+    public DateTimeOffset? DeadLetteredAt { get; set; }
+
+    /// <summary>The state it was dead-lettered from: what a replay goes back to.</summary>
+    public string? DeadLetteredFrom { get; set; }
+
+    /// <summary>Which operator resolved it, and how.</summary>
+    public string? ResolvedBy { get; set; }
 }
+
+/// <summary>Operations (FR-4.3): try the dead-lettered step again (ask the network, or resend the wallet command).</summary>
+public sealed record ReplayTopUp(string Operator);
+
+/// <summary>Operations: the network never applied it; return the reserved money.</summary>
+public sealed record RefundTopUp(string Operator, string Reason);
+
+/// <summary>Operations: the network applied it (seen in its settlement file); settle the money.</summary>
+public sealed record ConfirmTopUp(string Operator, string TelcoReference);
 
 /// <summary>Top-up settings, from "TopUps".</summary>
 public sealed class TopUpOptions
@@ -119,6 +139,9 @@ public sealed class TopUpSaga : SagaDefinition<TopUpData>
             }
         });
         On<HoldReleased>(OnHoldReleased);
+        On<ReplayTopUp>(OnReplay);
+        On<RefundTopUp>(OnRefund);
+        On<ConfirmTopUp>(OnConfirm);
     }
 
     public override string Name => SagaName;
@@ -166,6 +189,71 @@ public sealed class TopUpSaga : SagaDefinition<TopUpData>
         {
             Finish(saga, TopUpStates.Failed, TopUpStatus.Failed, $"Not topped up: {saga.Data.FailureReason}. The reserved money is back in your wallet");
         }
+    }
+
+    // ---- Operations (FR-4.3) ----
+
+    /// <summary>Whether an operator may return the money: not once the network is known to have applied it.</summary>
+    public static bool CanRefund(TopUpData data) => data.DeadLetteredFrom is not TopUpStates.Settling;
+
+    /// <summary>Whether an operator may settle it: not once the money is being returned.</summary>
+    public static bool CanConfirm(TopUpData data) => data.DeadLetteredFrom is not TopUpStates.Returning;
+
+    private void OnReplay(SagaContext<TopUpData> saga, ReplayTopUp replay)
+    {
+        if (saga.State != TopUpStates.DeadLettered)
+        {
+            return;
+        }
+
+        var data = saga.Data;
+        data.Status = TopUpStatus.Processing;
+        data.LedgerResends = 0;
+        switch (data.DeadLetteredFrom)
+        {
+            case TopUpStates.Settling:
+                saga.TransitionTo(TopUpStates.Settling, $"Replayed by {replay.Operator}: settling the wallet again");
+                saga.Send(CaptureHoldFor(saga));
+                saga.WakeIn(LedgerTimeout, LedgerCheck);
+                break;
+            case TopUpStates.Returning:
+                saga.TransitionTo(TopUpStates.Returning, $"Replayed by {replay.Operator}: returning the reserved money again");
+                saga.Send(new ReleaseHold(saga.Id, data.FailureReason ?? "Top-up cancelled"));
+                saga.WakeIn(LedgerTimeout, LedgerCheck);
+                break;
+            default:
+                data.VerifyingSince = saga.Now;
+                data.StatusChecks = 0;
+                saga.TransitionTo(TopUpStates.Verifying, $"Replayed by {replay.Operator}: asking {NetworkOf(data).Name} again");
+                saga.WakeNow(Verify);
+                break;
+        }
+
+        Publish(saga, "Checking the top-up again");
+    }
+
+    private void OnRefund(SagaContext<TopUpData> saga, RefundTopUp refund)
+    {
+        if (saga.State != TopUpStates.DeadLettered || !CanRefund(saga.Data))
+        {
+            return;
+        }
+
+        saga.Data.Status = TopUpStatus.Processing;
+        saga.Data.ResolvedBy = $"{refund.Operator}: refund";
+        StartReturning(saga, "topup.refunded_by_operator", $"Refunded by our team ({refund.Reason})");
+    }
+
+    private void OnConfirm(SagaContext<TopUpData> saga, ConfirmTopUp confirm)
+    {
+        if (saga.State != TopUpStates.DeadLettered || !CanConfirm(saga.Data))
+        {
+            return;
+        }
+
+        saga.Data.Status = TopUpStatus.Processing;
+        saga.Data.ResolvedBy = $"{confirm.Operator}: confirmed";
+        StartSettling(saga, confirm.TelcoReference, $"Confirmed by {confirm.Operator} ({NetworkOf(saga.Data).Name} reference {confirm.TelcoReference})");
     }
 
     protected override async Task OnWakeAsync(SagaContext<TopUpData> saga, IServiceProvider services, CancellationToken cancellationToken)
@@ -311,6 +399,9 @@ public sealed class TopUpSaga : SagaDefinition<TopUpData>
         var data = saga.Data;
         var last = saga.State;
         data.Status = TopUpStatus.UnderReview;
+        data.DeadLetterReason = reason;
+        data.DeadLetteredAt = saga.Now;
+        data.DeadLetteredFrom = last;
         saga.TransitionTo(TopUpStates.DeadLettered, $"{reason}; our team will resolve it (the money stays reserved)");
         saga.CancelWake();
         saga.Send(new TopUpDeadLettered(saga.Id, data.UserId, data.Network, data.Msisdn, data.AmountPaisa, last, reason, saga.Now));

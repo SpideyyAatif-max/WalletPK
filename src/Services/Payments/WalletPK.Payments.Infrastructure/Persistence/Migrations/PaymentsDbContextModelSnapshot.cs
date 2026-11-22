@@ -120,6 +120,11 @@ namespace WalletPK.Payments.Infrastructure.Persistence.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("topic");
 
+                    b.Property<string>("TraceParent")
+                        .HasMaxLength(55)
+                        .HasColumnType("character varying(55)")
+                        .HasColumnName("trace_parent");
+
                     b.HasKey("Id")
                         .HasName("pk_outbox_messages");
 
@@ -242,6 +247,11 @@ namespace WalletPK.Payments.Infrastructure.Persistence.Migrations
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)")
                         .HasColumnName("state");
+
+                    b.Property<string>("TraceId")
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("trace_id");
 
                     b.Property<string>("Trigger")
                         .IsRequired()

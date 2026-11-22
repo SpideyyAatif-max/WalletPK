@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using WalletPK.Web.Identity;
+using WalletPK.Web.Security;
 
 namespace WalletPK.Web.Authentication;
 
@@ -23,6 +24,8 @@ public static class WalletPkJwtBearerExtensions
         ArgumentNullException.ThrowIfNull(services);
 
         services.AddOptions<JwtOptions>().BindConfiguration(JwtOptions.SectionName);
+        services.AddOptions<MpinConfirmationOptions>().BindConfiguration(MpinConfirmationOptions.SectionName);
+        services.AddSingleton<MpinConfirmationValidator>();
 
         var authentication = services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer();
 
