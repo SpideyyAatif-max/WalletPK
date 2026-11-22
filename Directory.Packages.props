@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Data, cache and messaging">
-    <PackageVersion Include="StackExchange.Redis" Version="3.4.31" />
+    <PackageVersion Include="StackExchange.Redis" Version="3.4.35" />
     <!-- SignalR backplane (M11.1): live pushes reach a browser whichever instance it is connected to. -->
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="10.0.15" />
     <!-- Read-side SQL (M4.5): hand-written queries against the read models. -->
