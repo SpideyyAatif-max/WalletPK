@@ -36,6 +36,34 @@ public class DevToolsTests(IdentityApiFactory factory)
     }
 
     [Fact]
+    public async Task In_development_a_user_can_take_a_staff_role_and_the_next_token_carries_it()
+    {
+        using var client = factory.CreateClient();
+        var session = await TestAccounts.SignUpAndSignInAsync(factory, client, Cancel);
+
+        using (var unknown = session.Request(HttpMethod.Put, "/api/identity/dev/role", new { role = "superuser" }))
+        using (var refused = await client.SendAsync(unknown, Cancel))
+        {
+            refused.StatusCode.ShouldBe(HttpStatusCode.BadRequest);
+        }
+
+        using (var request = session.Request(HttpMethod.Put, "/api/identity/dev/role", new { role = "Ops" }))
+        using (var response = await client.SendAsync(request, Cancel))
+        {
+            response.StatusCode.ShouldBe(HttpStatusCode.OK);
+            (await response.Content.ReadFromJsonAsync<JsonElement>(Cancel)).GetProperty("role").GetString().ShouldBe("ops");
+        }
+
+        using var refreshed = await client.PostAsJsonAsync(new Uri("/api/identity/auth/refresh", UriKind.Relative), new { refreshToken = session.RefreshToken }, Cancel);
+        refreshed.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var token = (await refreshed.Content.ReadFromJsonAsync<JsonElement>(Cancel)).GetProperty("accessToken").GetString();
+        new Microsoft.IdentityModel.JsonWebTokens.JsonWebToken(token).GetClaim("role").Value.ShouldBe("ops");
+
+        using var anonymous = await client.PutAsJsonAsync(new Uri("/api/identity/dev/role", UriKind.Relative), new { role = "admin" }, Cancel);
+        anonymous.StatusCode.ShouldBe(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
     public async Task Outside_development_the_inbox_does_not_exist()
     {
         await using var staging = factory.WithWebHostBuilder(builder => builder
@@ -49,8 +77,10 @@ public class DevToolsTests(IdentityApiFactory factory)
         using var client = staging.CreateClient();
 
         using var response = await client.GetAsync(new Uri("/api/identity/dev/sms?phoneNumber=03007654321", UriKind.Relative), Cancel);
-
         response.StatusCode.ShouldBe(HttpStatusCode.NotFound);
+
+        using var role = await client.PutAsJsonAsync(new Uri("/api/identity/dev/role", UriKind.Relative), new { role = "admin" }, Cancel);
+        role.StatusCode.ShouldBe(HttpStatusCode.NotFound);
     }
 
     [Fact]

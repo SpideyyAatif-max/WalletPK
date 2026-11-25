@@ -21,6 +21,8 @@ type SessionContextValue = SessionState & {
   verifyDevice(challengeId: string, code: string): Promise<void>;
   logout(): Promise<void>;
   getAccessToken(): Promise<string | null>;
+  /** Gets a new access token now, so claims that changed (the KYC tier after verification) show at once. */
+  refresh(): Promise<void>;
 };
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -160,9 +162,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     signOutLocally();
   }, [signOutLocally]);
 
+  const refresh = useCallback(async () => {
+    adopt(await refreshSession());
+  }, [adopt]);
+
   const value = useMemo<SessionContextValue>(
-    () => ({ ...state, login, verifyDevice, logout, getAccessToken }),
-    [state, login, verifyDevice, logout, getAccessToken],
+    () => ({ ...state, login, verifyDevice, logout, getAccessToken, refresh }),
+    [state, login, verifyDevice, logout, getAccessToken, refresh],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

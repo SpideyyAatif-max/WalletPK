@@ -1,4 +1,5 @@
 import { api, newIdempotencyKey } from "./api";
+import { mpinHeaders } from "./mpin";
 
 // Shapes of the Payments service's JSON (M6) and the calls the wallet makes.
 
@@ -90,20 +91,21 @@ export const paymentsApi = {
   banks: () => api<Bank[]>("/api/payments/banks"),
   lookup: (target: { iban?: string; raastId?: string }) =>
     api<Beneficiary>("/api/payments/beneficiaries/lookup", { method: "POST", body: target }),
-  sendToBank: (body: { toIban: string; amountPaisa: number; beneficiaryTitle?: string; note?: string }, idempotencyKey: string) =>
-    api<BankTransfer>("/api/payments/bank-transfers", { method: "POST", body, idempotencyKey }),
+  sendToBank: (body: { toIban: string; amountPaisa: number; beneficiaryTitle?: string; note?: string }, idempotencyKey: string, confirmation: string) =>
+    api<BankTransfer>("/api/payments/bank-transfers", { method: "POST", body, idempotencyKey, headers: mpinHeaders(confirmation) }),
   bankTransfer: (id: string) => api<BankTransfer>(`/api/payments/bank-transfers/${id}`),
   bankTransfers: (limit = 10) => api<BankTransfer[]>(`/api/payments/bank-transfers?limit=${limit}`),
 
-  send: (body: { toWalletNumber: string; amountPaisa: number; note?: string }, idempotencyKey: string) =>
-    api<P2PTransfer>("/api/payments/p2p-transfers", { method: "POST", body, idempotencyKey }),
+  send: (body: { toWalletNumber: string; amountPaisa: number; note?: string }, idempotencyKey: string, confirmation: string) =>
+    api<P2PTransfer>("/api/payments/p2p-transfers", { method: "POST", body, idempotencyKey, headers: mpinHeaders(confirmation) }),
   p2pTransfer: (id: string) => api<P2PTransfer>(`/api/payments/p2p-transfers/${id}`),
 
   requests: (direction: "incoming" | "outgoing") => api<MoneyRequest[]>(`/api/payments/requests?direction=${direction}&limit=30`),
   request: (id: string) => api<MoneyRequest>(`/api/payments/requests/${id}`),
   ask: (body: { fromWalletNumber: string; amountPaisa: number; note?: string }) =>
     api<MoneyRequest>("/api/payments/requests", { method: "POST", body, idempotencyKey: newIdempotencyKey() }),
-  pay: (id: string) => api<MoneyRequest>(`/api/payments/requests/${id}/pay`, { method: "POST" }),
+  pay: (id: string, confirmation: string) =>
+    api<MoneyRequest>(`/api/payments/requests/${id}/pay`, { method: "POST", headers: mpinHeaders(confirmation) }),
   decline: (id: string, reason?: string) => api<MoneyRequest>(`/api/payments/requests/${id}/decline`, { method: "POST", body: { reason } }),
   cancel: (id: string) => api<MoneyRequest>(`/api/payments/requests/${id}/cancel`, { method: "POST" }),
 

@@ -1,0 +1,1127 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "WalletPK.Ledger",
+    "description": "WalletPK API. Errors are RFC 9457 ProblemDetails with a stable code. Money-moving calls need an Idempotency-Key header.",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5102/"
+    }
+  ],
+  "paths": {
+    "/api/wallets": {
+      "post": {
+        "tags": [
+          "Wallets"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/wallets/me": {
+      "get": {
+        "tags": [
+          "Wallets"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wallets/me/merchant": {
+      "get": {
+        "tags": [
+          "Wallets"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wallets/me/agent": {
+      "get": {
+        "tags": [
+          "Wallets"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletView"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wallets/me/balance": {
+      "get": {
+        "tags": [
+          "Wallets"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WalletBalance"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wallets/me/transactions": {
+      "get": {
+        "tags": [
+          "Wallets"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "before",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatementPage"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wallets/transfers/quote": {
+      "get": {
+        "tags": [
+          "Wallets"
+        ],
+        "parameters": [
+          {
+            "name": "amountPaisa",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeeQuote"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wallets/transfers": {
+      "post": {
+        "tags": [
+          "Wallets"
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ledger/invariants": {
+      "get": {
+        "tags": [
+          "Ledger operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvariantReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ledger/audit": {
+      "get": {
+        "tags": [
+          "Ledger operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditChainReport"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ledger/metrics": {
+      "get": {
+        "tags": [
+          "Ledger operations"
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/ledger/read-models": {
+      "get": {
+        "tags": [
+          "Ledger operations"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadModelStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ledger/read-models/rebuild": {
+      "post": {
+        "tags": [
+          "Ledger operations"
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnonymousTypeOflong"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wallets/me/dev/top-up": {
+      "post": {
+        "tags": [
+          "Development only"
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevTopUpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccountId": {
+        "type": "string",
+        "format": "uuid"
+      },
+      "AccountStatus": {
+        "enum": [
+          "Active",
+          "Frozen",
+          "Closed"
+        ]
+      },
+      "AccountType": {
+        "enum": [
+          "CustomerWallet",
+          "MerchantWallet",
+          "AgentWallet",
+          "System"
+        ]
+      },
+      "AnonymousTypeOflong": {
+        "required": [
+          "generation"
+        ],
+        "type": "object",
+        "properties": {
+          "generation": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "AuditChainReport": {
+        "required": [
+          "intact",
+          "sealedCount",
+          "pendingCount",
+          "oldestPendingAt",
+          "headSequence",
+          "headHash",
+          "firstBrokenSequence",
+          "problem"
+        ],
+        "type": "object",
+        "properties": {
+          "intact": {
+            "type": "boolean"
+          },
+          "sealedCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "pendingCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "oldestPendingAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "headSequence": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "headHash": {
+            "type": "string"
+          },
+          "firstBrokenSequence": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          },
+          "problem": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DevTopUpRequest": {
+        "required": [
+          "amountPaisa"
+        ],
+        "type": "object",
+        "properties": {
+          "amountPaisa": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "FeeQuote": {
+        "required": [
+          "amount",
+          "fee",
+          "tax",
+          "totalDebit",
+          "isFree"
+        ],
+        "type": "object",
+        "properties": {
+          "amount": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "fee": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "tax": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "totalDebit": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "isFree": {
+            "type": "boolean"
+          }
+        }
+      },
+      "InvariantCheck": {
+        "required": [
+          "name",
+          "description",
+          "passed",
+          "violations",
+          "detail"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "violations": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "detail": {
+            "type": "string"
+          }
+        }
+      },
+      "InvariantReport": {
+        "required": [
+          "checkedAt",
+          "healthy",
+          "durationMilliseconds",
+          "checks",
+          "failures"
+        ],
+        "type": "object",
+        "properties": {
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "healthy": {
+            "type": "boolean"
+          },
+          "durationMilliseconds": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InvariantCheck"
+            }
+          },
+          "failures": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/InvariantCheck"
+            }
+          }
+        }
+      },
+      "JournalType": {
+        "enum": [
+          "CashIn",
+          "CashOut",
+          "P2PTransfer",
+          "BankTransfer",
+          "BillPayment",
+          "MobileTopup",
+          "MerchantPayment",
+          "Reversal",
+          "Adjustment",
+          "CommissionPayout",
+          "FloatTransfer"
+        ]
+      },
+      "Money": {
+        "required": [
+          "minorUnits",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "minorUnits": {
+            "type": "integer",
+            "description": "Paisa (Rs. 1 = 100).",
+            "format": "int64"
+          },
+          "currency": {
+            "type": "string",
+            "description": "ISO 4217, for example PKR."
+          }
+        },
+        "description": "An exact amount of money, stored as a whole number of minor units (paisa for PKR).\nFloating point is never used: every operation is exact or rounds explicitly,\nand arithmetic overflow throws instead of wrapping around."
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ReadModelStatus": {
+        "required": [
+          "generation",
+          "rebuiltAt",
+          "wallets",
+          "historyRows",
+          "walletEntries",
+          "projectedJournals",
+          "journals",
+          "caughtUp"
+        ],
+        "type": "object",
+        "properties": {
+          "generation": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "rebuiltAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "wallets": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "historyRows": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "walletEntries": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "projectedJournals": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "journals": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "caughtUp": {
+            "type": "boolean"
+          }
+        }
+      },
+      "StatementLine": {
+        "required": [
+          "sequence",
+          "transactionId",
+          "type",
+          "title",
+          "direction",
+          "amount",
+          "balanceAfter",
+          "postedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "transactionId": {
+            "$ref": "#/components/schemas/TransactionId"
+          },
+          "type": {
+            "$ref": "#/components/schemas/JournalType"
+          },
+          "title": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string"
+          },
+          "amount": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "balanceAfter": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "postedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StatementPage": {
+        "required": [
+          "items",
+          "nextBefore"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatementLine"
+            }
+          },
+          "nextBefore": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "TransactionId": {
+        "type": "string",
+        "description": "Identifies one business transaction (a transfer, bill payment, top-up...) across all services.",
+        "format": "uuid"
+      },
+      "TransferRequest": {
+        "required": [
+          "toWalletNumber",
+          "amountPaisa"
+        ],
+        "type": "object",
+        "properties": {
+          "toWalletNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "amountPaisa": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "WalletBalance": {
+        "required": [
+          "walletId",
+          "walletNumber",
+          "balance",
+          "sequence",
+          "asOf"
+        ],
+        "type": "object",
+        "properties": {
+          "walletId": {
+            "$ref": "#/components/schemas/AccountId"
+          },
+          "walletNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "balance": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "sequence": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "WalletView": {
+        "required": [
+          "walletId",
+          "walletNumber",
+          "type",
+          "balance",
+          "held",
+          "available",
+          "status",
+          "openedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "walletId": {
+            "$ref": "#/components/schemas/AccountId"
+          },
+          "walletNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "type": {
+            "$ref": "#/components/schemas/AccountType"
+          },
+          "balance": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "held": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "available": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AccountStatus"
+          },
+          "openedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "The access token from Identity (POST /api/identity/auth/login).",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Wallets"
+    },
+    {
+      "name": "Ledger operations"
+    },
+    {
+      "name": "Development only"
+    }
+  ]
+}

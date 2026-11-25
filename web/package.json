@@ -11,7 +11,10 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "check": "npm run lint && npm run typecheck && npm run api:check && npm run test && npm run build",
+    "api:fetch": "node scripts/api-types.mjs fetch",
+    "api:types": "node scripts/api-types.mjs types",
+    "api:check": "node scripts/api-types.mjs check"
   },
   "engines": {
     "node": ">=22"
@@ -36,6 +39,7 @@
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
     "eslint-config-next": "16.4.6",
+    "openapi-typescript": "7.13.0",
     "tailwindcss": "4.3.5",
     "typescript": "5.9.3",
     "vitest": "5.1.0"

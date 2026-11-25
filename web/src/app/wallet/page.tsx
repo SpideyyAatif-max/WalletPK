@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ArrowUpRight, Banknote, Briefcase, Building2, FlaskConical, HandCoins, Receipt, ScanLine, Smartphone, Store } from "lucide-react";
+import { ArrowUpRight, Banknote, Briefcase, Building2, FlaskConical, HandCoins, IdCard, Receipt, ScanLine, Smartphone, Store, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { LiveBadge } from "@/components/live-badge";
@@ -10,12 +10,14 @@ import { Alert, Card } from "@/components/ui/card";
 import { devToolsEnabled } from "@/lib/config";
 import { formatMoney } from "@/lib/money";
 import { formatLocal } from "@/lib/phone";
+import { useSession } from "@/lib/session";
 import { useBalance, useHistory, useWallet, walletNotReady } from "@/lib/wallet-queries";
 import { devTools, queryKeys } from "@/lib/wallet-api";
 import { useWalletShell } from "./wallet-context";
 
 export default function WalletHome() {
   const { live, freshSequences } = useWalletShell();
+  const { user } = useSession();
   const balance = useBalance();
   const wallet = useWallet();
   const history = useHistory({}, 10);
@@ -41,6 +43,14 @@ export default function WalletHome() {
         <div aria-hidden className="pointer-events-none absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10" />
       </section>
 
+      {user?.kycTier === "L0" && (
+        <Link href="/wallet/account" className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 hover:bg-amber-100">
+          <IdCard className="h-6 w-6 shrink-0" aria-hidden />
+          <span>
+            <span className="font-semibold">Verify your CNIC</span> to raise your limits.
+          </span>
+        </Link>
+      )}
       {settingUp && <Alert tone="info">Your wallet is being opened. This takes a second after sign-up.</Alert>}
       {(balance.error && !settingUp) && <Alert>{balance.error.message}</Alert>}
 
@@ -54,6 +64,7 @@ export default function WalletHome() {
         <QuickAction href="/wallet/shop" label="My shop" icon={<Store className="h-5 w-5" />} />
         <QuickAction href="/wallet/cash-out" label="Cash out" icon={<Banknote className="h-5 w-5" />} />
         <QuickAction href="/wallet/agent" label="Agent mode" icon={<Briefcase className="h-5 w-5" />} />
+        <QuickAction href="/wallet/account" label="Account & limits" icon={<UserRound className="h-5 w-5" />} />
         {devToolsEnabled && <DevTopUp />}
       </div>
 

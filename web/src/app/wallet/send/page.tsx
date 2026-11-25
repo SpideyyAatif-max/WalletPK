@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
+import { MpinConfirm } from "@/components/mpin-confirm";
 import { StepUpPrompt } from "@/components/step-up-prompt";
 import { Button } from "@/components/ui/button";
 import { Alert, Card } from "@/components/ui/card";
@@ -17,13 +18,16 @@ import { isFinal, paymentKeys, paymentsApi } from "@/lib/payments";
 import { needsStepUp, queryKeys, walletApi } from "@/lib/wallet-api";
 import { useBalance } from "@/lib/wallet-queries";
 
-type Draft = { to: string; amountPaisa: number; note: string; idempotencyKey: string };
+/** `retryKey` is the key a step-up retry is sent with; its MPIN confirmation is taken together with the first. */
+type Draft = { to: string; amountPaisa: number; note: string; idempotencyKey: string; retryKey: string };
+type Attempt = Draft & { confirmation: string };
 
 /**
- * Send money to another WalletPK number: enter → review the fee → send → receipt. The send goes through
+ * Send money to another WalletPK number: enter → review the fee → MPIN → send → receipt. The send goes through
  * Payments (M6.1), which asks the Ledger to move the money in one journal; the answer comes back in a
  * moment, so the receipt waits for it. If the fraud engine wants it confirmed (step-up OTP), the user types the
- * code texted to them and the same transfer is sent again (with a new key: the refused one is final).
+ * code texted to them and the same transfer is sent again (with a new key: the refused one is final), using the
+ * second MPIN confirmation taken on the review screen, so the MPIN is not asked twice.
  */
 export default function SendMoney() {
   const { user } = useSession();
@@ -36,6 +40,8 @@ export default function SendMoney() {
   const [error, setError] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [sentId, setSentId] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [retry, setRetry] = useState<{ key: string; token: string } | null>(null);
 
   const quote = useQuery({
     queryKey: queryKeys.quote(draft?.amountPaisa ?? 0),
@@ -45,11 +51,16 @@ export default function SendMoney() {
 
   const send = useMutation({
     // The same key for every retry of this review screen: the server sends the money at most once.
-    mutationFn: (current: Draft) =>
-      paymentsApi.send({ toWalletNumber: current.to, amountPaisa: current.amountPaisa, note: current.note || undefined }, current.idempotencyKey),
+    mutationFn: (current: Attempt) =>
+      paymentsApi.send(
+        { toWalletNumber: current.to, amountPaisa: current.amountPaisa, note: current.note || undefined },
+        current.idempotencyKey,
+        current.confirmation,
+      ),
     onSuccess: (result) => {
       setSentId(result.id);
       setDraft(null);
+      setConfirming(false);
     },
   });
 
@@ -77,7 +88,8 @@ export default function SendMoney() {
     setError(null);
     send.reset();
     if (note.length > 140) return setError("The note is at most 140 characters.");
-    setDraft({ to: e164, amountPaisa: paisa, note: note.trim(), idempotencyKey: newIdempotencyKey() });
+    setConfirming(false);
+    setDraft({ to: e164, amountPaisa: paisa, note: note.trim(), idempotencyKey: newIdempotencyKey(), retryKey: newIdempotencyKey() });
   }
 
   if ((sentId && !receipt) || (send.isPending && !draft)) {
@@ -98,7 +110,14 @@ export default function SendMoney() {
         onCancel={() => setSentId(null)}
         onConfirmed={() => {
           setSentId(null);
-          send.mutate({ ...refused, idempotencyKey: newIdempotencyKey() });
+          if (retry) {
+            send.mutate({ ...refused, idempotencyKey: retry.key, confirmation: retry.token });
+            setRetry(null);
+          } else {
+            // Already retried once: confirm the next attempt with the MPIN again.
+            setDraft({ ...refused, idempotencyKey: newIdempotencyKey(), retryKey: newIdempotencyKey() });
+            setConfirming(true);
+          }
         }}
       />
     );
@@ -171,15 +190,28 @@ export default function SendMoney() {
         </dl>
         {quote.error && <Alert>{quote.error.message}</Alert>}
         {after !== undefined && after < 0 && <Alert>Not enough balance for this transfer.</Alert>}
-        {send.error && <Alert>{send.error.message}</Alert>}
-        <div className="grid grid-cols-2 gap-3">
-          <Button variant="outline" onClick={() => setDraft(null)} disabled={send.isPending}>
-            Edit
-          </Button>
-          <Button onClick={() => send.mutate(draft)} loading={send.isPending} disabled={!quote.data || (after !== undefined && after < 0)}>
-            Send {formatPaisa(draft.amountPaisa)}
-          </Button>
-        </div>
+        {confirming ? (
+          <MpinConfirm
+            bindings={[draft.idempotencyKey, draft.retryKey]}
+            action={`Send ${formatPaisa(draft.amountPaisa)}`}
+            busy={send.isPending}
+            error={send.error?.message}
+            onCancel={() => setConfirming(false)}
+            onConfirmed={([confirmation, retryToken]) => {
+              setRetry(retryToken ? { key: draft.retryKey, token: retryToken } : null);
+              send.mutate({ ...draft, confirmation });
+            }}
+          />
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="outline" onClick={() => setDraft(null)}>
+              Edit
+            </Button>
+            <Button onClick={() => setConfirming(true)} disabled={!quote.data || (after !== undefined && after < 0)}>
+              Confirm
+            </Button>
+          </div>
+        )}
       </Card>
     );
   }

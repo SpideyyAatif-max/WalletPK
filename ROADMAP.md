@@ -308,24 +308,24 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 ### M14 — Frontend Portals (built alongside the backend)
 **M14.A Shared**
 - [x] M14.A1 Next.js + TypeScript + Tailwind + shadcn/ui-style components (cva, tailwind-merge)
-- [ ] M14.A2 Typed API client from OpenAPI + TanStack Query
-- [ ] M14.A3 Auth flow and role-based route guards
+- [x] M14.A2 Typed API client from OpenAPI (openapi-typescript, `npm run api:types`) + TanStack Query
+- [x] M14.A3 Auth flow and role-based route guards (/wallet signed in; /ops staff; fraud pages compliance and admin)
 - [x] M14.A4 SignalR client hook (M11: /hubs/wallet, /hubs/ops)
 
 **M14.B Customer Wallet (/wallet)**
-- [ ] M14.B1 Onboarding: phone -> OTP -> MPIN -> CNIC
+- [x] M14.B1 Onboarding: phone -> OTP -> MPIN -> CNIC (CNIC verification under Account & limits)
 - [x] M14.B2 Home: live balance, quick actions, recent activity
 - [x] M14.B3 Send money (wallet / bank)
 - [x] M14.B4 Bills, top-up, QR pay
 - [x] M14.B5 Live Saga tracker
-- [ ] M14.B6 History, statements, limits, notifications (history and notifications done; limits with C2, statements with M12)
+- [ ] M14.B6 History, statements, limits, notifications (all but statements, which come with M12)
 - [x] M14.B7 Merchant mode and agent mode
 
 **M14.C Ops & Compliance (/ops)**
-- [ ] M14.C1 Live operations dashboard
-- [ ] M14.C2 Saga explorer with trace links (API done: /api/{payments,bills,topups,agents}/ops/sagas)
-- [ ] M14.C3 DLQ console (APIs done: bills, and top-ups FR-4.3)
-- [ ] M14.C4 Fraud queue, cases, rule editor
+- [x] M14.C1 Live operations dashboard
+- [x] M14.C2 Saga explorer with trace links
+- [x] M14.C3 DLQ console (bills and top-ups: replay, refund, confirm)
+- [x] M14.C4 Fraud queue, cases, rule editor
 - [ ] M14.C5 Customer 360
 - [ ] M14.C6 Reconciliation and invariant history
 - [ ] M14.C7 Audit log viewer

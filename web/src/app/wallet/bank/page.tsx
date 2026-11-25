@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Building2, ChevronRight } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { StatusPill, Timeline } from "@/components/payment-status";
+import { MpinConfirm } from "@/components/mpin-confirm";
 import { StepUpPrompt } from "@/components/step-up-prompt";
 import { Button } from "@/components/ui/button";
 import { Alert, Card } from "@/components/ui/card";
@@ -19,10 +20,11 @@ import { needsStepUp, queryKeys } from "@/lib/wallet-api";
 import { useBalance } from "@/lib/wallet-queries";
 
 type Draft = { beneficiary: Beneficiary; amountPaisa: number; note: string; idempotencyKey: string };
+type Attempt = Draft & { confirmation: string };
 
 /**
  * Send to a bank account over Raast (M6.4): look the account up (IBAN or Raast ID), check the name,
- * send, then watch the transfer move: reserved, sent, queued if the bank is down, delivered or returned.
+ * confirm with the MPIN, send, then watch the transfer move: reserved, sent, queued if the bank is down, delivered or returned.
  */
 export default function SendToBank() {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -40,6 +42,7 @@ function NewTransfer({ onSent }: { onSent: (id: string) => void }) {
   const [error, setError] = useState<string | null>(null);
   const [beneficiary, setBeneficiary] = useState<Beneficiary | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [confirming, setConfirming] = useState(false);
 
   const lookup = useMutation({
     mutationFn: (value: string) => {
@@ -53,10 +56,11 @@ function NewTransfer({ onSent }: { onSent: (id: string) => void }) {
   });
 
   const send = useMutation({
-    mutationFn: (current: Draft) =>
+    mutationFn: (current: Attempt) =>
       paymentsApi.sendToBank(
         { toIban: current.beneficiary.iban, amountPaisa: current.amountPaisa, beneficiaryTitle: current.beneficiary.title, note: current.note || undefined },
         current.idempotencyKey,
+        current.confirmation,
       ),
     onSuccess: (transfer) => onSent(transfer.id),
   });
@@ -79,6 +83,7 @@ function NewTransfer({ onSent }: { onSent: (id: string) => void }) {
     if (note.length > 140) return setError("The note is at most 140 characters.");
     setError(null);
     send.reset();
+    setConfirming(false);
     setDraft({ beneficiary: beneficiary!, amountPaisa: paisa, note: note.trim(), idempotencyKey: newIdempotencyKey() });
   }
 
@@ -105,15 +110,23 @@ function NewTransfer({ onSent }: { onSent: (id: string) => void }) {
             {bank.name} is {bank.status === "Down" ? "unavailable" : "recovering"} right now. Your transfer will be queued and sent automatically as soon as the bank is back; the money stays reserved in your wallet meanwhile.
           </Alert>
         )}
-        {send.error && <Alert>{send.error.message}</Alert>}
-        <div className="grid grid-cols-2 gap-3">
-          <Button variant="outline" onClick={() => setDraft(null)} disabled={send.isPending}>
-            Edit
-          </Button>
-          <Button onClick={() => send.mutate(draft)} loading={send.isPending}>
-            Send {formatPaisa(draft.amountPaisa)}
-          </Button>
-        </div>
+        {confirming ? (
+          <MpinConfirm
+            bindings={[draft.idempotencyKey]}
+            action={`Send ${formatPaisa(draft.amountPaisa)}`}
+            busy={send.isPending}
+            error={send.error?.message}
+            onCancel={() => setConfirming(false)}
+            onConfirmed={([confirmation]) => send.mutate({ ...draft, confirmation })}
+          />
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <Button variant="outline" onClick={() => setDraft(null)}>
+              Edit
+            </Button>
+            <Button onClick={() => setConfirming(true)}>Confirm</Button>
+          </div>
+        )}
       </Card>
     );
   }

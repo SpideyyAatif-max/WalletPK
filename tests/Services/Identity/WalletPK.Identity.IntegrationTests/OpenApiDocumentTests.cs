@@ -31,5 +31,10 @@ public class OpenApiDocumentTests(IdentityApiFactory factory)
         responses.GetProperty("200").GetProperty("content").GetProperty("application/json").TryGetProperty("schema", out _).ShouldBeTrue();
         responses.TryGetProperty("404", out var notFound).ShouldBeTrue();
         notFound.GetProperty("content").TryGetProperty("application/problem+json", out _).ShouldBeTrue();
+
+        // Numbers are numbers (the API never writes them as strings), so generated clients type them as numbers.
+        var minorUnits = document.GetProperty("components").GetProperty("schemas").GetProperty("Money").GetProperty("properties").GetProperty("minorUnits");
+        minorUnits.GetProperty("type").ValueKind.ShouldBe(JsonValueKind.String);
+        minorUnits.GetProperty("type").GetString().ShouldBe("integer");
     }
 }

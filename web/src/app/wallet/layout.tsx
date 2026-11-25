@@ -1,6 +1,6 @@
 "use client";
 
-import { History, Home, Loader2, LogOut, Receipt, ScanLine, Send, Smartphone } from "lucide-react";
+import { History, Home, LayoutDashboard, Loader2, LogOut, Receipt, ScanLine, Send, Smartphone } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -9,6 +9,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import { useToast } from "@/components/toast";
 import { worthAToast, type LiveNotification } from "@/lib/notifications";
 import { formatLocal } from "@/lib/phone";
+import { isStaff } from "@/lib/roles";
 import { useSession } from "@/lib/session";
 import type { LiveWalletEntry } from "@/lib/types";
 import { useWalletHub } from "@/lib/use-wallet-hub";
@@ -41,10 +42,14 @@ export default function WalletLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  return <WalletShell phoneNumber={session.user.phoneNumber} onLogout={session.logout}>{children}</WalletShell>;
+  return (
+    <WalletShell phoneNumber={session.user.phoneNumber} staff={isStaff(session.user)} onLogout={session.logout}>
+      {children}
+    </WalletShell>
+  );
 }
 
-function WalletShell({ children, phoneNumber, onLogout }: { children: ReactNode; phoneNumber: string | null; onLogout: () => Promise<void> }) {
+function WalletShell({ children, phoneNumber, staff, onLogout }: { children: ReactNode; phoneNumber: string | null; staff: boolean; onLogout: () => Promise<void> }) {
   const pathname = usePathname();
   const toast = useToast();
   const [fresh, setFresh] = useState<Set<number>>(new Set());
@@ -78,6 +83,11 @@ function WalletShell({ children, phoneNumber, onLogout }: { children: ReactNode;
           <div className="flex items-center gap-2">
             {phoneNumber && <span className="text-xs text-ink-500">{formatLocal(phoneNumber)}</span>}
             <NotificationBell active={pathname.startsWith("/wallet/notifications")} />
+            {staff && (
+              <Link href="/ops" className="grid h-9 w-9 place-items-center rounded-full text-ink-600 hover:bg-ink-100" aria-label="Operations portal" title="Operations portal">
+                <LayoutDashboard className="h-4.5 w-4.5" />
+              </Link>
+            )}
             <button onClick={() => void onLogout()} className="grid h-9 w-9 place-items-center rounded-full text-ink-600 hover:bg-ink-100" aria-label="Log out" title="Log out">
               <LogOut className="h-4.5 w-4.5" />
             </button>

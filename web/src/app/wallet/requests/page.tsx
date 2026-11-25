@@ -3,11 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, Users } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { MpinConfirm } from "@/components/mpin-confirm";
 import { StatusPill } from "@/components/payment-status";
 import { Button } from "@/components/ui/button";
 import { Alert, Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/input";
 import { formatDay } from "@/lib/dates";
+import { moneyRequestBinding } from "@/lib/mpin";
 import { formatPaisa, parseRupees } from "@/lib/money";
 import { equalShares, paymentKeys, paymentsApi, type MoneyRequest, type Split } from "@/lib/payments";
 import { formatLocal, toE164 } from "@/lib/phone";
@@ -88,9 +90,15 @@ function RequestCard({ request }: { request: MoneyRequest }) {
   const incoming = request.direction === "incoming";
   const other = incoming ? request.requesterWalletNumber : request.payerWalletNumber;
 
+  const [confirming, setConfirming] = useState(false);
   const act = useMutation({
-    mutationFn: (action: "pay" | "decline" | "cancel") =>
-      action === "pay" ? paymentsApi.pay(request.id) : action === "decline" ? paymentsApi.decline(request.id) : paymentsApi.cancel(request.id),
+    mutationFn: (action: { kind: "pay"; confirmation: string } | { kind: "decline" } | { kind: "cancel" }) =>
+      action.kind === "pay"
+        ? paymentsApi.pay(request.id, action.confirmation)
+        : action.kind === "decline"
+          ? paymentsApi.decline(request.id)
+          : paymentsApi.cancel(request.id),
+    onSuccess: () => setConfirming(false),
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: ["payments"] });
       void queryClient.invalidateQueries({ queryKey: queryKeys.wallet });
@@ -114,19 +122,29 @@ function RequestCard({ request }: { request: MoneyRequest }) {
         </div>
         {request.status === "Pending" && request.lastFailureReason && <Alert>Payment failed: {request.lastFailureReason}</Alert>}
         {request.status === "Declined" && request.declineReason && <p className="text-sm text-ink-600">“{request.declineReason}”</p>}
-        {act.error && <Alert>{act.error.message}</Alert>}
-        {request.status === "Pending" && incoming && (
+        {act.error && !confirming && <Alert>{act.error.message}</Alert>}
+        {request.status === "Pending" && incoming && confirming && (
+          <MpinConfirm
+            bindings={[moneyRequestBinding(request.id)]}
+            action={`Pay ${formatPaisa(request.amountPaisa)}`}
+            busy={act.isPending}
+            error={act.error?.message}
+            onCancel={() => setConfirming(false)}
+            onConfirmed={([confirmation]) => act.mutate({ kind: "pay", confirmation })}
+          />
+        )}
+        {request.status === "Pending" && incoming && !confirming && (
           <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" onClick={() => act.mutate("decline")} disabled={act.isPending}>
+            <Button variant="outline" onClick={() => act.mutate({ kind: "decline" })} disabled={act.isPending}>
               Decline
             </Button>
-            <Button onClick={() => act.mutate("pay")} loading={act.isPending && act.variables === "pay"}>
+            <Button onClick={() => { act.reset(); setConfirming(true); }} disabled={act.isPending}>
               Pay {formatPaisa(request.amountPaisa)}
             </Button>
           </div>
         )}
         {request.status === "Pending" && !incoming && (
-          <Button variant="ghost" size="sm" onClick={() => act.mutate("cancel")} disabled={act.isPending}>
+          <Button variant="ghost" size="sm" onClick={() => act.mutate({ kind: "cancel" })} disabled={act.isPending}>
             Cancel request
           </Button>
         )}

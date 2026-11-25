@@ -50,6 +50,8 @@ export type RequestOptions = {
   body?: unknown;
   /** Sent as Idempotency-Key: the server replays the first response for a repeated key. */
   idempotencyKey?: string;
+  /** Extra request headers (for example X-Mpin-Confirmation). */
+  headers?: Record<string, string>;
   /** Send the access token (default true). */
   authenticated?: boolean;
   signal?: AbortSignal;
@@ -57,10 +59,10 @@ export type RequestOptions = {
 
 /** Calls the gateway. Throws ApiError for problem responses; retries once with a fresh token after a 401. */
 export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body, idempotencyKey, authenticated = true, signal } = options;
+  const { method = "GET", body, idempotencyKey, headers: extraHeaders, authenticated = true, signal } = options;
 
   const send = async (token: string | null) => {
-    const headers: Record<string, string> = { Accept: "application/json" };
+    const headers: Record<string, string> = { Accept: "application/json", ...extraHeaders };
     if (body !== undefined) headers["Content-Type"] = "application/json";
     if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
     if (token) headers.Authorization = `Bearer ${token}`;

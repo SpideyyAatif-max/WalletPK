@@ -139,7 +139,12 @@ npm install
 npm run dev
 ```
 
-Try it with two browsers (or one normal and one private window): sign up as two users. No phone is needed, because in Development the yellow **Dev SMS inbox** shows each code. Tap **Add Rs. 5,000** for test money, then send money from one to the other. The other screen updates by itself within a second. See [web/README.md](web/README.md) for how it works.
+Try it with two browsers (or one normal and one private window): sign up as two users. No phone is needed, because in Development the yellow **Dev SMS inbox** shows each code. Tap **Add Rs. 5,000** for test money, then send money from one to the other, confirming with your MPIN. The other screen updates by itself within a second. **Account & limits** verifies your CNIC (L0 → L1) and shows your limits. See [web/README.md](web/README.md) for how it works.
+
+**Operations portal** (http://localhost:3000/ops): staff only. In Development, open **Account & limits** and use
+**Developer: role** to make yourself *Admin* (or *Operations*, *Compliance*, *Finance*). The portal has a live
+dashboard, the Saga explorer with Jaeger trace links, the dead-letter console (replay, refund, confirm), and for
+compliance and admin the fraud alerts, cases and rule editor.
 
 ## Simulating the Outside World
 
@@ -345,7 +350,7 @@ Without it, `POST /api/payments/p2p-transfers`, `POST /api/payments/bank-transfe
 `POST /api/wallets/transfers` answer 403 `auth.mpin_confirmation_required`. A refusal is not stored against the
 Idempotency-Key, so the same payment can be sent again once confirmed. Wrong MPINs count towards the same
 lockout as at login (5 in a row: 30 minutes). Set `MpinConfirmation__Required=false` to turn it off, for
-example for load tests.
+example for load tests. The web app asks for the MPIN on the confirmation screen.
 
 ## Operations APIs
 

@@ -24,9 +24,13 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Back where the user was going (only paths on this site), or the wallet.
+  const next = params.get("next");
+  const destination = next && next.startsWith("/") && !next.startsWith("//") ? next : "/wallet";
+
   useEffect(() => {
-    if (status === "signedIn") router.replace("/wallet");
-  }, [status, router]);
+    if (status === "signedIn") router.replace(destination);
+  }, [status, router, destination]);
 
   const e164 = toE164(phone);
 

@@ -118,6 +118,21 @@ public sealed class User : AggregateRoot<UserId>
         return true;
     }
 
+    /// <summary>Gives the user another role (staff are set up this way; development tools use it too).</summary>
+    public void AssignRole(UserRole role, DateTimeOffset now)
+    {
+        if (!Enum.IsDefined(role))
+        {
+            throw new ArgumentOutOfRangeException(nameof(role), role, "Unknown role.");
+        }
+
+        if (Role != role)
+        {
+            Role = role;
+            UpdatedAt = now;
+        }
+    }
+
     /// <summary>A correct MPIN outside login (a payment confirmation): the count of wrong ones starts again.</summary>
     public void RecordCorrectMpin(DateTimeOffset now)
     {
