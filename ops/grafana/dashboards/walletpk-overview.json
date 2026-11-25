@@ -1,7 +1,7 @@
 {
   "uid": "walletpk-overview",
   "title": "WalletPK - Operations overview",
-  "description": "Live operations (proposal 12.2): TPS, success rate, p95 latency per service, active Sagas by state, fraud decisions and ledger health.",
+  "description": "Live operations (proposal 12.2): TPS, success rate, p95 latency per service, active Sagas by state, fraud decisions, ledger health and reconciliation breaks.",
   "tags": [
     "walletpk"
   ],
@@ -1086,6 +1086,125 @@
         }
       ],
       "id": 23
+    },
+    {
+      "type": "row",
+      "title": "Reconciliation",
+      "collapsed": false,
+      "gridPos": {
+        "w": 24,
+        "h": 1,
+        "x": 0,
+        "y": 65
+      },
+      "panels": [],
+      "id": 24
+    },
+    {
+      "type": "timeseries",
+      "title": "Open reconciliation breaks by kind",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "w": 12,
+        "h": 8,
+        "x": 0,
+        "y": 66
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 15,
+            "stacking": {
+              "mode": "normal"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (kind) (max by (job, kind) (walletpk_recon_breaks_open))",
+          "legendFormat": "{{kind}}",
+          "refId": "A"
+        }
+      ],
+      "id": 25
+    },
+    {
+      "type": "timeseries",
+      "title": "Reconciliation runs per day by party and outcome",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "w": 12,
+        "h": 8,
+        "x": 12,
+        "y": 66
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 1,
+            "fillOpacity": 5,
+            "stacking": {
+              "mode": "none"
+            }
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "calcs": [
+            "lastNotNull",
+            "max"
+          ]
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum by (party, status) (increase(walletpk_recon_runs_total[1d]))",
+          "legendFormat": "{{party}} {{status}}",
+          "refId": "A"
+        }
+      ],
+      "id": 26
     }
   ]
 }

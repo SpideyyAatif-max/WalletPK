@@ -92,6 +92,7 @@
     "fields": {
       "amountPaisa": "integer",
       "biller": "string",
+      "billerReference": "string?",
       "changedAt": "date-time",
       "consumerNumber": "string",
       "detail": "string",
@@ -769,6 +770,7 @@
       "detail": "string",
       "eventId": "uuid",
       "occurredAt": "date-time",
+      "raastReference": "string?",
       "status": "string",
       "step": "string",
       "toBank": "string",
@@ -866,6 +868,7 @@
       "occurredAt": "date-time",
       "status": "string",
       "step": "string",
+      "telcoReference": "string?",
       "topUpId": "uuid",
       "userId": "uuid"
     },

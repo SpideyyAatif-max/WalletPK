@@ -1,0 +1,1539 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "WalletPK.Reconciliation",
+    "description": "WalletPK API. Errors are RFC 9457 ProblemDetails with a stable code. Money-moving calls need an Idempotency-Key header.",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5109/"
+    }
+  ],
+  "paths": {
+    "/api/reconciliation/parties": {
+      "get": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/days": {
+      "get": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DayOverview"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/summary": {
+      "get": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DaySummary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/runs": {
+      "get": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "date",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "party",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReconRun"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReconRun"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/runs/{id}": {
+      "get": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/runs/{id}/file": {
+      "get": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/reconciliation/payments/{id}": {
+      "get": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExternalPayment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/breaks": {
+      "get": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "party",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReconBreak"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/breaks/{id}": {
+      "get": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BreakDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/audit": {
+      "get": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEntry"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/audit/recent": {
+      "get": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "before",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEntry"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/audit/verify": {
+      "get": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditVerification"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/breaks/{id}/dispute": {
+      "post": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BreakNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconBreak"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/breaks/{id}/resolve": {
+      "post": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveBreakRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconBreak"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/reconciliation/breaks/{id}/reopen": {
+      "post": {
+        "tags": [
+          "Reconciliation"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BreakNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReconBreak"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuditEntry": {
+        "required": [
+          "sequence",
+          "actor",
+          "action",
+          "subject",
+          "details",
+          "at",
+          "previousHash",
+          "hash"
+        ],
+        "type": "object",
+        "properties": {
+          "sequence": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "actor": {
+            "type": "string"
+          },
+          "action": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "previousHash": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string"
+          }
+        }
+      },
+      "AuditVerification": {
+        "required": [
+          "intact",
+          "entries",
+          "brokenAt",
+          "headHash"
+        ],
+        "type": "object",
+        "properties": {
+          "intact": {
+            "type": "boolean"
+          },
+          "entries": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "brokenAt": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          },
+          "headHash": {
+            "type": "string"
+          }
+        }
+      },
+      "BreakDetail": {
+        "required": [
+          "break",
+          "payment",
+          "history"
+        ],
+        "type": "object",
+        "properties": {
+          "break": {
+            "$ref": "#/components/schemas/ReconBreak"
+          },
+          "payment": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ExternalPayment"
+              }
+            ]
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditEntry"
+            }
+          }
+        }
+      },
+      "BreakNoteRequest": {
+        "required": [
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DayOverview": {
+        "required": [
+          "date",
+          "reconciled",
+          "failed",
+          "lines",
+          "matched",
+          "breaks",
+          "providerTotalPaisa",
+          "ourTotalPaisa"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "reconciled": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lines": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "matched": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "breaks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "providerTotalPaisa": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ourTotalPaisa": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "DaySummary": {
+        "required": [
+          "date",
+          "parties",
+          "lines",
+          "matched",
+          "breaks",
+          "openBreaks",
+          "providerTotalPaisa",
+          "ourTotalPaisa"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "parties": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PartyDay"
+            }
+          },
+          "lines": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "matched": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "breaks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "openBreaks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "providerTotalPaisa": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ourTotalPaisa": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ExternalPayment": {
+        "required": [
+          "id",
+          "kind",
+          "party",
+          "userId",
+          "providerReference",
+          "amountPaisa",
+          "status",
+          "serviceStatus",
+          "completedAt",
+          "completedOn",
+          "updatedAt",
+          "firstSeenAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "party": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "amountPaisa": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "status": {
+            "type": "string"
+          },
+          "serviceStatus": {
+            "type": "string"
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "completedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "firstSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PartyDay": {
+        "required": [
+          "party",
+          "run",
+          "openBreaks"
+        ],
+        "type": "object",
+        "properties": {
+          "party": {
+            "type": "string"
+          },
+          "run": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ReconRun"
+              }
+            ]
+          },
+          "openBreaks": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ReconBreak": {
+        "required": [
+          "id",
+          "party",
+          "businessDate",
+          "kind",
+          "key",
+          "ourId",
+          "providerReference",
+          "clientReference",
+          "ourAmountPaisa",
+          "providerAmountPaisa",
+          "linesInFile",
+          "ourStatus",
+          "description",
+          "status",
+          "resolution",
+          "note",
+          "updatedBy",
+          "firstRunId",
+          "lastRunId",
+          "foundAt",
+          "updatedAt",
+          "closedAt",
+          "atStakePaisa"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "party": {
+            "type": "string"
+          },
+          "businessDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "ourId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "providerReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "clientReference": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ourAmountPaisa": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          },
+          "providerAmountPaisa": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          },
+          "linesInFile": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ourStatus": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "resolution": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "updatedBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "firstRunId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lastRunId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "foundAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "closedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "atStakePaisa": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "ReconRun": {
+        "required": [
+          "id",
+          "party",
+          "businessDate",
+          "status",
+          "problem",
+          "fileId",
+          "lines",
+          "matched",
+          "providerTotalPaisa",
+          "ourCount",
+          "ourTotalPaisa",
+          "missingAtProvider",
+          "unknownToUs",
+          "duplicate",
+          "amountMismatch",
+          "settledButFailedHere",
+          "settledButPendingHere",
+          "breaks",
+          "triggeredBy",
+          "startedAt",
+          "finishedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "party": {
+            "type": "string"
+          },
+          "businessDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "status": {
+            "type": "string"
+          },
+          "problem": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "fileId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "lines": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "matched": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "providerTotalPaisa": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ourCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "ourTotalPaisa": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "missingAtProvider": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "unknownToUs": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "duplicate": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "amountMismatch": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "settledButFailedHere": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "settledButPendingHere": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "breaks": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "triggeredBy": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ResolveBreakRequest": {
+        "required": [
+          "resolution",
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "resolution": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "note": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "RunDetail": {
+        "required": [
+          "run",
+          "breaks"
+        ],
+        "type": "object",
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/ReconRun"
+          },
+          "breaks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReconBreak"
+            }
+          }
+        }
+      },
+      "StartRunRequest": {
+        "required": [
+          "date",
+          "parties"
+        ],
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "parties": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "Bearer": {
+        "type": "http",
+        "description": "The access token from Identity (POST /api/identity/auth/login).",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "Bearer": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Reconciliation"
+    }
+  ]
+}

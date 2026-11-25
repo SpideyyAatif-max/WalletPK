@@ -1,6 +1,6 @@
 "use client";
 
-import { Activity, ArrowLeft, Inbox, ListTree, Loader2, LogOut, ShieldAlert, SlidersHorizontal, Workflow } from "lucide-react";
+import { Activity, ArrowLeft, FileBarChart, Inbox, ListTree, Loader2, LogOut, Scale, ShieldAlert, ShieldCheck, SlidersHorizontal, Workflow } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
@@ -16,6 +16,9 @@ const sections = [
   { href: "/ops", label: "Live dashboard", icon: Activity, compliance: false },
   { href: "/ops/sagas", label: "Saga explorer", icon: Workflow, compliance: false },
   { href: "/ops/dead-letters", label: "Dead letters", icon: Inbox, compliance: false },
+  { href: "/ops/recon", label: "Reconciliation", icon: Scale, compliance: false },
+  { href: "/ops/reports", label: "Reports", icon: FileBarChart, compliance: false },
+  { href: "/ops/audit", label: "Audit log", icon: ShieldCheck, compliance: false },
   { href: "/ops/fraud", label: "Fraud alerts", icon: ShieldAlert, compliance: true },
   { href: "/ops/fraud/cases", label: "Cases", icon: ListTree, compliance: true },
   { href: "/ops/fraud/rules", label: "Rules", icon: SlidersHorizontal, compliance: true },

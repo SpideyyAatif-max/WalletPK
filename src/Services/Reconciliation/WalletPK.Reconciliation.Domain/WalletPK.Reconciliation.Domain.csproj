@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Reconciliation.Domain</RootNamespace>
+    <Description>Reconciliation domain: settlement file parsing, matching a provider's file against WalletPK's own records and classifying every break, and the audit hash chain. No infrastructure dependencies.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Reconciliation.UnitTests" />
+  </ItemGroup>
+</Project>

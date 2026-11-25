@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { StatementDownload } from "@/components/statement-download";
 import { TransactionList } from "@/components/transaction-list";
 import { Button } from "@/components/ui/button";
 import { Alert, Card } from "@/components/ui/card";
@@ -82,6 +83,8 @@ export default function HistoryPage() {
           Load older
         </Button>
       )}
+
+      <StatementDownload />
     </div>
   );
 }

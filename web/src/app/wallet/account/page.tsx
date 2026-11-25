@@ -89,7 +89,7 @@ function DevRole() {
     <Card className="space-y-3 border-dashed">
       <div>
         <h2 className="font-semibold">Developer: role</h2>
-        <p className="text-sm text-ink-600">Staff roles open the operations portal at /ops. Compliance and admin also see fraud.</p>
+        <p className="text-sm text-ink-600">Staff roles open the operations portal at /ops. Compliance and admin also see fraud; finance and admin work reconciliation breaks.</p>
       </div>
       <div className="flex gap-2">
         <select value={role} onChange={(event) => setRole(event.target.value)} aria-label="Role" className="h-11 flex-1 rounded-xl border border-ink-200 bg-white px-3 text-sm">

@@ -6,7 +6,7 @@ namespace WalletPK.ArchitectureTests;
 /// <summary>The services and their layers, loaded from the referenced projects.</summary>
 public static class Layers
 {
-    public static readonly string[] Services = ["Identity", "Ledger", "Payments", "Bills", "TopupMerchant", "Agents", "Fraud", "Notifications"];
+    public static readonly string[] Services = ["Identity", "Ledger", "Payments", "Bills", "TopupMerchant", "Agents", "Fraud", "Notifications", "Reconciliation"];
 
     public static readonly string[] BuildingBlocks =
         ["Common", "Contracts", "Messaging", "Messaging.Kafka", "Observability", "Persistence", "Resilience", "Sagas", "Web"];

@@ -288,13 +288,13 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M11.5 Idempotent sends (one notification per subject; the delivery ID is the gateway's idempotency key; retries with backoff)
 
 ### M12 — Reconciliation & Reporting (week 14)
-- [ ] M12.1 Settlement file ingestion
-- [ ] M12.2 Matching engine and mismatch classes
-- [ ] M12.3 Resolution workflow
-- [ ] M12.4 Daily invariant report
-- [ ] M12.5 PDF statements (QuestPDF)
-- [ ] M12.6 Audit chain verification
-- [ ] M12.7 Business and suspicious-activity reports
+- [x] M12.1 Settlement file ingestion (new Reconciliation service, port 5109: payments tracked from payments, bills and top-up events, which now carry the provider's reference; every party's file fetched nightly at 00:30 Pakistan time, checked whole, kept as evidence)
+- [x] M12.2 Matching engine and mismatch classes (missing at provider, unknown to us, duplicate, amount mismatch, settled but failed here, settled but pending here; items settled either side of midnight are not breaks; S8 proven against the mock's answer key)
+- [x] M12.3 Resolution workflow (finance role: dispute, resolve as adjusted / recovered / written off / no action, reopen, each with a note; a rerun keeps a break's history and clears what is gone; hash-chained audit log)
+- [x] M12.4 Daily invariant report (`/api/ledger/reports/daily`: the day's figures, balances by account, every invariant check and the audit chain)
+- [x] M12.5 PDF statements (QuestPDF; `/api/wallets/me/statements/{yyyy-MM}.pdf`, Pakistan months, opening and closing balances)
+- [x] M12.6 Audit chain verification (audit viewer for the Ledger, compliance and reconciliation chains, newest first, each with a badge that recomputes the chain)
+- [x] M12.7 Business and suspicious-activity reports (business figures per day as JSON or CSV; alerts of a period as CSV and a case written up for filing, each export audited)
 
 ### M13 — Simulation & Chaos Engine (weeks 12–13)
 - [ ] M13.1 Virtual user engine through the real gateway
@@ -318,7 +318,7 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M14.B3 Send money (wallet / bank)
 - [x] M14.B4 Bills, top-up, QR pay
 - [x] M14.B5 Live Saga tracker
-- [ ] M14.B6 History, statements, limits, notifications (all but statements, which come with M12)
+- [x] M14.B6 History, statements, limits, notifications (monthly PDF statements on the history page)
 - [x] M14.B7 Merchant mode and agent mode
 
 **M14.C Ops & Compliance (/ops)**
@@ -327,7 +327,7 @@ Each service uses Clean Architecture: Domain, Application, Infrastructure, Api.
 - [x] M14.C3 DLQ console (bills and top-ups: replay, refund, confirm)
 - [x] M14.C4 Fraud queue, cases, rule editor
 - [ ] M14.C5 Customer 360
-- [ ] M14.C6 Reconciliation and invariant history
+- [ ] M14.C6 Reconciliation and invariant history (reconciliation, reports and the audit viewer are done with M12; a stored history of invariant runs is still to come)
 - [ ] M14.C7 Audit log viewer
 
 **M14.D Simulation Control Center (/sim)**

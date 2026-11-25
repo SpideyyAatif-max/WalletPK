@@ -388,7 +388,7 @@ public sealed class BankTransferSaga : SagaDefinition<BankTransferData>
     {
         var data = saga.Data;
         data.Status = status ?? data.Status;
-        saga.Send(new BankTransferChanged(saga.Id, data.UserId, data.Status, saga.State, data.AmountPaisa, data.ToBank, detail, saga.Now));
+        saga.Send(new BankTransferChanged(saga.Id, data.UserId, data.Status, saga.State, data.AmountPaisa, data.ToBank, detail, saga.Now, data.RaastReference));
     }
 
     // ---- Helpers ----

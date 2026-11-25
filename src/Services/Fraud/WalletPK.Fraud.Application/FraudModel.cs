@@ -261,6 +261,14 @@ public interface IFraudStore
 
     Task<IReadOnlyList<AuditEntry>> AuditTrailAsync(long? after, int limit, CancellationToken cancellationToken);
 
+    /// <summary>The audit log newest first, before <paramref name="before"/> (M12.6, the audit viewer).</summary>
+    Task<IReadOnlyList<AuditEntry>> AuditRecentAsync(long? before, int limit, CancellationToken cancellationToken);
+
+    /// <summary>Alerts raised in [<paramref name="from"/>, <paramref name="to"/>) with one of <paramref name="severities"/>, oldest first.</summary>
+    Task<IReadOnlyList<FraudAlert>> AlertsBetweenAsync(DateTimeOffset from, DateTimeOffset to, IReadOnlyCollection<string> severities, int limit, CancellationToken cancellationToken);
+
+    Task<IReadOnlyList<FraudCase>> CasesByIdAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken);
+
     /// <summary>Queues a message in the outbox: it is sent if, and only if, the next save commits.</summary>
     void Publish(IntegrationEvent message, string? correlationId);
 

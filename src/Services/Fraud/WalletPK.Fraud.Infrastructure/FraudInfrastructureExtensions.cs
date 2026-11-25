@@ -86,6 +86,7 @@ public static class FraudInfrastructureExtensions
         services.AddScoped<CaseService>();
         services.AddScoped<RuleService>();
         services.AddScoped<AuditService>();
+        services.AddScoped<SuspiciousActivityService>();
 
         services.AddHealthChecks()
             .AddDbContextCheck<FraudDbContext>("postgres", tags: [HealthCheckTags.Ready])

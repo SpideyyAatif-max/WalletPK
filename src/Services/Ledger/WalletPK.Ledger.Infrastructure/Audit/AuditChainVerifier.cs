@@ -77,3 +77,36 @@ public sealed class AuditChainVerifier(LedgerDbContext db)
         return new AuditChainReport(true, expectedSequence - 1, pendingCount, oldestPendingAt, expectedSequence - 1, previousHash, null, null);
     }
 }
+
+/// <summary>One audit row as the audit viewer shows it (M12.6).</summary>
+/// <param name="Id">Insert order.</param>
+/// <param name="ChainSequence">Position in the chain, once sealed.</param>
+/// <param name="OccurredAt">When the change happened.</param>
+/// <param name="EventType">e.g. "journal.posted".</param>
+/// <param name="SubjectType">"journal", "hold" or "account".</param>
+/// <param name="SubjectId">Which one.</param>
+/// <param name="Actor">"user:{id}" or "system".</param>
+/// <param name="Payload">What happened, as JSON.</param>
+/// <param name="PreviousHash">The hash of the row before it in the chain.</param>
+/// <param name="Hash">Its own hash, once sealed.</param>
+/// <param name="SealedAt">When it was chained.</param>
+public sealed record AuditRow(
+    long Id, long? ChainSequence, DateTimeOffset OccurredAt, string EventType, string SubjectType, string SubjectId,
+    string Actor, string Payload, string? PreviousHash, string? Hash, DateTimeOffset? SealedAt);
+
+/// <summary>The audit log, newest first, for the audit viewer.</summary>
+public sealed class AuditTrail(LedgerDbContext db)
+{
+    public async Task<IReadOnlyList<AuditRow>> RecentAsync(long? before, int? limit, CancellationToken cancellationToken)
+    {
+        var take = Math.Clamp(limit ?? 50, 1, 500);
+        return await db.Set<AuditRecord>().AsNoTracking()
+            .Where(record => before == null || record.Id < before)
+            .OrderByDescending(record => record.Id)
+            .Take(take)
+            .Select(record => new AuditRow(
+                record.Id, record.ChainSequence, record.OccurredAt, record.EventType, record.SubjectType, record.SubjectId,
+                record.Actor, record.Payload, record.PreviousHash, record.Hash, record.SealedAt))
+            .ToListAsync(cancellationToken);
+    }
+}

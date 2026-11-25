@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Reconciliation.Api</RootNamespace>
+    <Description>WalletPK Reconciliation service: daily matching of WalletPK's bank transfers, bill payments and top-ups against the providers' settlement files, the break resolution workflow and its hash-chained audit log.</Description>
+    <UserSecretsId>walletpk-reconciliation</UserSecretsId>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Needed only by the dotnet-ef tool (migrations); not shipped with the app. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Reconciliation.Infrastructure\WalletPK.Reconciliation.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Web\WalletPK.Web.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Observability\WalletPK.Observability.csproj" />
+  </ItemGroup>
+</Project>

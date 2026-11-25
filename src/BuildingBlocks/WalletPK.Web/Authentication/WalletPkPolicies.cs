@@ -19,7 +19,12 @@ public static class WalletPkPolicies
 
     public static IReadOnlyList<string> ComplianceRoles { get; } = ["compliance", "admin"];
 
-    /// <summary>Adds <see cref="Authenticated"/>, <see cref="Operations"/> and <see cref="Compliance"/>.</summary>
+    /// <summary>Finance (reconciliation runs and breaks, M12) and admins.</summary>
+    public const string Finance = "finance";
+
+    public static IReadOnlyList<string> FinanceRoles { get; } = ["finance", "admin"];
+
+    /// <summary>Adds <see cref="Authenticated"/>, <see cref="Operations"/>, <see cref="Compliance"/> and <see cref="Finance"/>.</summary>
     public static AuthorizationBuilder AddWalletPkPolicies(this AuthorizationBuilder builder)
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -30,6 +35,9 @@ public static class WalletPkPolicies
                 .RequireClaim(WalletPkClaimTypes.Role, OperationsRoles))
             .AddPolicy(Compliance, policy => policy
                 .RequireAuthenticatedUser()
-                .RequireClaim(WalletPkClaimTypes.Role, ComplianceRoles));
+                .RequireClaim(WalletPkClaimTypes.Role, ComplianceRoles))
+            .AddPolicy(Finance, policy => policy
+                .RequireAuthenticatedUser()
+                .RequireClaim(WalletPkClaimTypes.Role, FinanceRoles));
     }
 }

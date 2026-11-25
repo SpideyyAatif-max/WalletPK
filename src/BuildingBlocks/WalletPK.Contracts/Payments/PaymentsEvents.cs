@@ -17,6 +17,7 @@ namespace WalletPK.Contracts.Payments;
 /// <param name="ToBank">Beneficiary bank code, e.g. "HBL".</param>
 /// <param name="Detail">What just happened, in words.</param>
 /// <param name="ChangedAt">When.</param>
+/// <param name="RaastReference">Raast's reference once it has one (M12: matched against the bank's settlement file).</param>
 [IntegrationEvent("payments.bank_transfer_changed", KafkaTopics.PaymentsEvents)]
 public sealed record BankTransferChanged(
     Guid TransferId,
@@ -26,7 +27,8 @@ public sealed record BankTransferChanged(
     long AmountPaisa,
     string ToBank,
     string Detail,
-    DateTimeOffset ChangedAt) : IntegrationEvent
+    DateTimeOffset ChangedAt,
+    string? RaastReference = null) : IntegrationEvent
 {
     public override string GetPartitionKey() => UserId.ToString();
 }

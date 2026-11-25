@@ -490,7 +490,7 @@ public sealed class BillPaymentSaga : SagaDefinition<BillPaymentData>
     {
         var data = saga.Data;
         data.Status = status ?? data.Status;
-        saga.Send(new BillPaymentChanged(saga.Id, data.UserId, data.Biller, data.ConsumerNumber, data.Status, saga.State, data.AmountPaisa, detail, saga.Now));
+        saga.Send(new BillPaymentChanged(saga.Id, data.UserId, data.Biller, data.ConsumerNumber, data.Status, saga.State, data.AmountPaisa, detail, saga.Now, data.BillerReference));
     }
 
     // ---- Helpers ----

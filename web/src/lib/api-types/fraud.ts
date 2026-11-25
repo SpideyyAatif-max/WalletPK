@@ -269,6 +269,44 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/fraud/audit/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    before?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuditEntry"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/fraud/audit/verify": {
         parameters: {
             query?: never;
@@ -663,6 +701,79 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/fraud/cases/{id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["SuspiciousActivityReport"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Unprocessable Entity */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/fraud/features": {
         parameters: {
             query?: never;
@@ -687,6 +798,43 @@ export type paths = {
                     content: {
                         "application/json": components["schemas"]["AnonymousTypeOfstringAndstringAndstring"][];
                     };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/fraud/reports/suspicious.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    from?: string;
+                    minSeverity?: string;
+                    to?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
                 };
             };
         };
@@ -1066,6 +1214,12 @@ export type components = {
         ReasonRequest: {
             reason: null | string;
         };
+        ReportSubject: {
+            freezeReason: null | string;
+            frozen: boolean;
+            /** Format: uuid */
+            userId: string;
+        };
         RuleView: {
             builtIn: boolean;
             definition: string;
@@ -1078,6 +1232,23 @@ export type components = {
             updatedBy: string;
             /** Format: int32 */
             version: number;
+        };
+        SuspiciousActivityReport: {
+            alerts: components["schemas"]["FraudAlert"][];
+            case: components["schemas"]["FraudCase"];
+            /** Format: date-time */
+            firstActivityAt: null | string;
+            /** Format: date-time */
+            generatedAt: string;
+            generatedBy: string;
+            /** Format: date-time */
+            lastActivityAt: null | string;
+            notes: components["schemas"]["CaseNote"][];
+            /** Format: uuid */
+            reportId: string;
+            subjects: components["schemas"]["ReportSubject"][];
+            /** Format: int64 */
+            totalAmountPaisa: number;
         };
         TestRuleRequest: {
             features: null | Record<string, never>;

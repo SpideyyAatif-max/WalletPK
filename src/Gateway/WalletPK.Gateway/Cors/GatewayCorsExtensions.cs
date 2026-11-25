@@ -33,7 +33,8 @@ public static class GatewayCorsExtensions
                     .AllowAnyHeader()
                     .AllowAnyMethod()
                     .AllowCredentials()
-                    .WithExposedHeaders(CorrelationIdMiddleware.HeaderName, "Retry-After")
+                    // Content-Disposition: the file name of a download (statements, reports).
+                    .WithExposedHeaders(CorrelationIdMiddleware.HeaderName, "Retry-After", "Content-Disposition")
                     .SetPreflightMaxAge(TimeSpan.FromMinutes(10))));
 
         return services;

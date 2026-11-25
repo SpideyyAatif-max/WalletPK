@@ -13,6 +13,7 @@ namespace WalletPK.Contracts.Bills;
 /// <param name="AmountPaisa">How much.</param>
 /// <param name="Detail">What happened, in words.</param>
 /// <param name="ChangedAt">When.</param>
+/// <param name="BillerReference">The biller's reference once it has one (M12: matched against the biller's settlement file).</param>
 [IntegrationEvent("bills.payment_changed", KafkaTopics.BillsEvents)]
 public sealed record BillPaymentChanged(
     Guid PaymentId,
@@ -23,7 +24,8 @@ public sealed record BillPaymentChanged(
     string Step,
     long AmountPaisa,
     string Detail,
-    DateTimeOffset ChangedAt) : IntegrationEvent
+    DateTimeOffset ChangedAt,
+    string? BillerReference = null) : IntegrationEvent
 {
     public override string GetPartitionKey() => UserId.ToString();
 }

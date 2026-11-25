@@ -57,12 +57,12 @@ export type RequestOptions = {
   signal?: AbortSignal;
 };
 
-/** Calls the gateway. Throws ApiError for problem responses; retries once with a fresh token after a 401. */
-export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+/** Sends a request to the gateway with the access token; retries once with a fresh token after a 401. */
+async function send(path: string, options: RequestOptions, accept: string): Promise<Response> {
   const { method = "GET", body, idempotencyKey, headers: extraHeaders, authenticated = true, signal } = options;
 
-  const send = async (token: string | null) => {
-    const headers: Record<string, string> = { Accept: "application/json", ...extraHeaders };
+  const attempt = async (token: string | null) => {
+    const headers: Record<string, string> = { Accept: accept, ...extraHeaders };
     if (body !== undefined) headers["Content-Type"] = "application/json";
     if (idempotencyKey) headers["Idempotency-Key"] = idempotencyKey;
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -75,16 +75,47 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     });
   };
 
-  let response = await send(authenticated ? ((await tokens?.getAccessToken()) ?? null) : null);
+  let response = await attempt(authenticated ? ((await tokens?.getAccessToken()) ?? null) : null);
   if (response.status === 401 && authenticated && tokens) {
     const fresh = await tokens.refreshAccessToken();
-    if (fresh) response = await send(fresh);
+    if (fresh) response = await attempt(fresh);
   }
 
   if (!response.ok) throw await toApiError(response);
+  return response;
+}
+
+/** Calls the gateway. Throws ApiError for problem responses; retries once with a fresh token after a 401. */
+export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const response = await send(path, options, "application/json");
   if (response.status === 204) return undefined as T;
   const text = await response.text();
   return (text ? JSON.parse(text) : undefined) as T;
+}
+
+/** The file name a response asks to be saved as (Content-Disposition), or `fallback`. */
+export function fileNameOf(disposition: string | null, fallback: string): string {
+  const match = disposition?.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+  const name = match?.[1] ? decodeURIComponent(match[1]) : match?.[2];
+  return name?.trim() || fallback;
+}
+
+/** Downloads a file (a PDF statement, a CSV report) with the access token and saves it in the browser. */
+export async function downloadFile(path: string, fallbackName: string): Promise<string> {
+  const response = await send(path, {}, "*/*");
+  const name = fileNameOf(response.headers.get("Content-Disposition"), fallbackName);
+  const url = URL.createObjectURL(await response.blob());
+  try {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  }
+  return name;
 }
 
 /** A fresh Idempotency-Key for one user action (one tap of "Send"). */

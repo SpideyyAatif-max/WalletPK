@@ -879,6 +879,153 @@
         }
       }
     },
+    "/api/fraud/audit/recent": {
+      "get": {
+        "tags": [
+          "Fraud & compliance"
+        ],
+        "parameters": [
+          {
+            "name": "before",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEntry"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/fraud/reports/suspicious.csv": {
+      "get": {
+        "tags": [
+          "Fraud & compliance"
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "minSeverity",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/fraud/cases/{id}/report": {
+      "get": {
+        "tags": [
+          "Fraud & compliance"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuspiciousActivityReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/fraud/audit/verify": {
       "get": {
         "tags": [
@@ -1459,6 +1606,29 @@
           }
         }
       },
+      "ReportSubject": {
+        "required": [
+          "userId",
+          "frozen",
+          "freezeReason"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "frozen": {
+            "type": "boolean"
+          },
+          "freezeReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "RuleView": {
         "required": [
           "id",
@@ -1501,6 +1671,73 @@
           },
           "updatedBy": {
             "type": "string"
+          }
+        }
+      },
+      "SuspiciousActivityReport": {
+        "required": [
+          "reportId",
+          "generatedAt",
+          "generatedBy",
+          "case",
+          "subjects",
+          "alerts",
+          "notes",
+          "totalAmountPaisa",
+          "firstActivityAt",
+          "lastActivityAt"
+        ],
+        "type": "object",
+        "properties": {
+          "reportId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "generatedBy": {
+            "type": "string"
+          },
+          "case": {
+            "$ref": "#/components/schemas/FraudCase"
+          },
+          "subjects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReportSubject"
+            }
+          },
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FraudAlert"
+            }
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CaseNote"
+            }
+          },
+          "totalAmountPaisa": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "firstActivityAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "lastActivityAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },

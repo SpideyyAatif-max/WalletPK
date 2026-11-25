@@ -419,7 +419,7 @@ public sealed class TopUpSaga : SagaDefinition<TopUpData>
     private static void Publish(SagaContext<TopUpData> saga, string detail)
     {
         var data = saga.Data;
-        saga.Send(new TopUpChanged(saga.Id, data.UserId, data.Network, data.Msisdn, data.BundleCode, data.AmountPaisa, data.Status, saga.State, detail, saga.Now));
+        saga.Send(new TopUpChanged(saga.Id, data.UserId, data.Network, data.Msisdn, data.BundleCode, data.AmountPaisa, data.Status, saga.State, detail, saga.Now, data.TelcoReference));
     }
 
     private PlaceHold PlaceHoldFor(SagaContext<TopUpData> saga)

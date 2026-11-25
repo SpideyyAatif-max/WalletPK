@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\..\src\Services\Agents\WalletPK.Agents.Api\WalletPK.Agents.Api.csproj" />
     <ProjectReference Include="..\..\..\src\Services\Fraud\WalletPK.Fraud.Api\WalletPK.Fraud.Api.csproj" />
     <ProjectReference Include="..\..\..\src\Services\Notifications\WalletPK.Notifications.Api\WalletPK.Notifications.Api.csproj" />
+    <ProjectReference Include="..\..\..\src\Services\Reconciliation\WalletPK.Reconciliation.Api\WalletPK.Reconciliation.Api.csproj" />
     <ProjectReference Include="..\..\..\src\Gateway\WalletPK.Gateway\WalletPK.Gateway.csproj" />
   </ItemGroup>
 

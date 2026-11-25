@@ -43,6 +43,7 @@ services:
       ReverseProxy__Clusters__agents__Destinations__d1__Address: http://agents:8080/
       ReverseProxy__Clusters__fraud__Destinations__d1__Address: http://fraud:8080/
       ReverseProxy__Clusters__notifications__Destinations__d1__Address: http://notifications:8080/
+      ReverseProxy__Clusters__reconciliation__Destinations__d1__Address: http://reconciliation:8080/
     ports:
       - "${GATEWAY_PORT:-5000}:8080"
     depends_on:
@@ -316,6 +317,37 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+      mock-providers:
+        condition: service_started
+
+  # Reconciliation (M12): every night (00:30 Pakistan time) each bank's, biller's and network's settlement file
+  # for the day before is matched against what WalletPK sent them; Finance works the breaks in /ops/recon.
+  reconciliation:
+    <<: *dotnet-service
+    profiles: [apps]
+    build:
+      context: .
+      dockerfile: src/Services/Reconciliation/WalletPK.Reconciliation.Api/Dockerfile
+    image: walletpk/reconciliation:dev
+    container_name: walletpk-reconciliation
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__ReconciliationDb: Host=postgres;Port=5432;Database=walletpk_reconciliation;Username=${POSTGRES_USER:-walletpk};Password=${POSTGRES_PASSWORD:-walletpk_dev}
+      Kestrel__Endpoints__Http__Url: http://+:8080
+      Jwt__Authority: http://identity:8080/
+      Kafka__BootstrapServers: kafka:9092
+      Providers__Settlement__BaseUrl: http://mock-providers:8080/
+      Providers__Settlement__ApiKey: dev-only-provider-client-key
+      Observability__SeqUrl: http://seq:5341
+      Observability__OtlpTracesEndpoint: http://jaeger:4317
+      Observability__OtlpMetricsEndpoint: http://prometheus:9090/api/v1/otlp/v1/metrics
+    ports:
+      - "${RECONCILIATION_PORT:-5109}:8080"
+    depends_on:
+      postgres:
         condition: service_healthy
       kafka-init:
         condition: service_completed_successfully

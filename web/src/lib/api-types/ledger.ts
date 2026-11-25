@@ -36,6 +36,44 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/ledger/audit/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    before?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AuditRow"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/ledger/invariants": {
         parameters: {
             query?: never;
@@ -172,6 +210,117 @@ export type paths = {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ledger/reports/business": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    from?: string;
+                    to?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DayTotals"][];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ledger/reports/business.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    from?: string;
+                    to?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ledger/reports/daily": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    date?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DailyReport"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -534,6 +683,114 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/wallets/me/statements/{month}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    month: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MonthlyStatement"];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+                /** @description Unprocessable Entity */
+                422: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/problem+json": components["schemas"]["ProblemDetails"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/wallets/me/statements/{month}.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    month: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/wallets/me/transactions": {
         parameters: {
             query?: never;
@@ -755,6 +1012,59 @@ export type components = {
             /** Format: int64 */
             sealedCount: number;
         };
+        AuditRow: {
+            actor: string;
+            /** Format: int64 */
+            chainSequence: null | number;
+            eventType: string;
+            hash: null | string;
+            /** Format: int64 */
+            id: number;
+            /** Format: date-time */
+            occurredAt: string;
+            payload: string;
+            previousHash: null | string;
+            /** Format: date-time */
+            sealedAt: null | string;
+            subjectId: string;
+            subjectType: string;
+        };
+        BalanceTotal: {
+            /** Format: int64 */
+            accounts: number;
+            /** Format: int64 */
+            balancePaisa: number;
+            type: string;
+        };
+        DailyReport: {
+            auditChain: components["schemas"]["AuditChainReport"];
+            balances: components["schemas"]["BalanceTotal"][];
+            /** Format: date */
+            date: string;
+            /** Format: date-time */
+            generatedAt: string;
+            invariants: components["schemas"]["InvariantReport"];
+            totals: components["schemas"]["DayTotals"];
+        };
+        DayTotals: {
+            /** Format: int64 */
+            activeWallets: number;
+            /** Format: int64 */
+            commissionPaisa: number;
+            /** Format: date */
+            date: string;
+            /** Format: int64 */
+            feeIncomePaisa: number;
+            /** Format: int64 */
+            journalCount: number;
+            journals: components["schemas"]["JournalTotal"][];
+            /** Format: int64 */
+            taxCollectedPaisa: number;
+            /** Format: int64 */
+            volumePaisa: number;
+            /** Format: int64 */
+            walletsOpened: number;
+        };
         DevTopUpRequest: {
             /** Format: int64 */
             amountPaisa: null | number;
@@ -783,6 +1093,13 @@ export type components = {
             failures: null | components["schemas"]["InvariantCheck"][];
             healthy: boolean;
         };
+        JournalTotal: {
+            /** Format: int64 */
+            count: number;
+            type: string;
+            /** Format: int64 */
+            volumePaisa: number;
+        };
         /** @enum {unknown} */
         JournalType: "CashIn" | "CashOut" | "P2PTransfer" | "BankTransfer" | "BillPayment" | "MobileTopup" | "MerchantPayment" | "Reversal" | "Adjustment" | "CommissionPayout" | "FloatTransfer";
         /**
@@ -798,6 +1115,22 @@ export type components = {
              * @description Paisa (Rs. 1 = 100).
              */
             minorUnits: number;
+        };
+        MonthlyStatement: {
+            closing: components["schemas"]["Money"];
+            complete: boolean;
+            entries: components["schemas"]["StatementEntry"][];
+            /** Format: date-time */
+            from: string;
+            /** Format: date-time */
+            generatedAt: string;
+            moneyIn: components["schemas"]["Money"];
+            moneyOut: components["schemas"]["Money"];
+            month: components["schemas"]["StatementMonth"];
+            opening: components["schemas"]["Money"];
+            /** Format: date-time */
+            to: string;
+            walletNumber: null | string;
         };
         ProblemDetails: {
             detail?: null | string;
@@ -824,6 +1157,17 @@ export type components = {
             /** Format: int64 */
             wallets: number;
         };
+        StatementEntry: {
+            balanceAfter: components["schemas"]["Money"];
+            credit: null | components["schemas"]["Money"];
+            debit: null | components["schemas"]["Money"];
+            /** Format: date-time */
+            postedAt: string;
+            title: string;
+            /** Format: uuid */
+            transactionId: string;
+            type: components["schemas"]["JournalType"];
+        };
         StatementLine: {
             amount: components["schemas"]["Money"];
             balanceAfter: components["schemas"]["Money"];
@@ -835,6 +1179,17 @@ export type components = {
             title: string;
             transactionId: components["schemas"]["TransactionId"];
             type: components["schemas"]["JournalType"];
+        };
+        StatementMonth: {
+            /** Format: date-time */
+            end: string;
+            /** Format: int32 */
+            month: number;
+            name: null | string;
+            /** Format: date-time */
+            start: string;
+            /** Format: int32 */
+            year: number;
         };
         StatementPage: {
             items: components["schemas"]["StatementLine"][];

@@ -181,6 +181,16 @@ internal sealed class FraudStore(FraudDbContext db, JsonEventSerializer serializ
             .Take(limit)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<FraudAlert>> AlertsBetweenAsync(DateTimeOffset from, DateTimeOffset to, IReadOnlyCollection<string> severities, int limit, CancellationToken cancellationToken) =>
+        await db.Set<FraudAlert>().AsNoTracking()
+            .Where(alert => alert.CreatedAt >= from && alert.CreatedAt < to && severities.Contains(alert.Severity))
+            .OrderBy(alert => alert.CreatedAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<FraudCase>> CasesByIdAsync(IReadOnlyCollection<Guid> ids, CancellationToken cancellationToken) =>
+        ids.Count == 0 ? [] : await db.Set<FraudCase>().AsNoTracking().Where(fraudCase => ids.Contains(fraudCase.Id)).ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<CaseNote>> NotesAsync(Guid caseId, CancellationToken cancellationToken) =>
         await db.Set<CaseNote>().AsNoTracking().Where(note => note.CaseId == caseId).OrderBy(note => note.CreatedAt).ToListAsync(cancellationToken);
 
@@ -259,6 +269,13 @@ internal sealed class FraudStore(FraudDbContext db, JsonEventSerializer serializ
         await db.Set<AuditEntry>().AsNoTracking()
             .Where(entry => after == null || entry.Sequence > after)
             .OrderBy(entry => entry.Sequence)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<AuditEntry>> AuditRecentAsync(long? before, int limit, CancellationToken cancellationToken) =>
+        await db.Set<AuditEntry>().AsNoTracking()
+            .Where(entry => before == null || entry.Sequence < before)
+            .OrderByDescending(entry => entry.Sequence)
             .Take(limit)
             .ToListAsync(cancellationToken);
 

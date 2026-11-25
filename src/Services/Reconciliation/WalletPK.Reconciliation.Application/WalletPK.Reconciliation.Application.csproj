@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>WalletPK.Reconciliation.Application</RootNamespace>
+    <Description>Reconciliation use cases: tracking external payments from events, daily runs against settlement files, the break resolution workflow and the audit log, written against ports.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WalletPK.Reconciliation.Domain\WalletPK.Reconciliation.Domain.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Contracts\WalletPK.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\BuildingBlocks\WalletPK.Common\WalletPK.Common.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="WalletPK.Reconciliation.UnitTests" />
+    <InternalsVisibleTo Include="WalletPK.Reconciliation.IntegrationTests" />
+  </ItemGroup>
+</Project>

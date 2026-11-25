@@ -365,6 +365,44 @@ For the `ops`, `compliance`, `finance` and `admin` roles:
   (only if the network is not known to have applied it) or **confirmed** with the network's reference from its
   settlement file.
 
+## Reconciliation, Reports and Statements
+
+The Reconciliation service (port 5109, `/api/reconciliation/*`) checks every night that what the banks, billers
+and mobile networks say they settled is what WalletPK sent them (M12):
+
+1. **What WalletPK sent:** it follows `payments.events`, `bills.events` and `topup.events`, so it knows every bank
+   transfer, bill payment and top-up, its amount, its status and the provider's reference.
+2. **Settlement files:** at 00:30 Pakistan time it fetches the day before's file from each party (4 banks,
+   4 billers, 4 networks; the mock providers serve them) and checks it whole: header, every line, trailer count
+   and total. Files are kept as fetched (`GET /runs/{id}/file`). A party whose file is not there is tried again
+   every 15 minutes.
+3. **Matching:** every file line is matched by WalletPK's ID (the client reference) or the provider's reference.
+   Breaks are *missing at provider*, *unknown to us*, *duplicate*, *amount mismatch*, *settled but failed here*
+   (the customer was refunded) and *settled but pending here*. A payment settled on the other side of midnight
+   is found in the neighbouring day's file and is not a break.
+4. **Resolution:** the `finance` and `admin` roles dispute a break with the provider, resolve it (adjusted,
+   recovered, written off, no action needed) or reopen it, always with a note. Running a day again keeps each
+   break's history; breaks that are gone are cleared. Every run and decision is on a hash-chained audit log
+   (`/api/reconciliation/audit`, `/audit/verify`).
+
+Scenario S8 is an integration test: mismatches of every kind are planted in a network's file through the mock
+providers' admin API, and reconciliation must find exactly the ones in the answer key, each classified correctly.
+
+Reports (staff roles):
+
+- **Daily report:** `GET /api/ledger/reports/daily?date=` gives the day's journals by type, money moved, fee
+  income, tax, wallets opened and active, the balances by kind of account, every invariant check and the Ledger
+  audit chain. `GET /api/ledger/reports/business[.csv]?from=&to=` gives the figures per day (at most 92 days).
+- **Suspicious activity** (compliance): `GET /api/fraud/reports/suspicious.csv?from=&to=&minSeverity=` exports
+  the period's alerts with their cases; `GET /api/fraud/cases/{id}/report` writes one case up for filing. Every
+  export is on the compliance audit log.
+- **Audit viewer:** `/audit/recent?before=` on the Ledger, Fraud and Reconciliation services lists each chain
+  newest first.
+
+Customers download a month's statement as a PDF (`GET /api/wallets/me/statements/{yyyy-MM}.pdf`, rendered with
+QuestPDF under its Community license) from the history page. In the operations portal, `/ops/recon`,
+`/ops/reports` and `/ops/audit` show the same.
+
 ## Observability
 
 - **Traces:** one trace follows a payment from the gateway through every service, across Kafka (each event
@@ -374,7 +412,7 @@ For the `ops`, `compliance`, `finance` and `admin` roles:
   states, timers and transitions, Ledger postings, fraud decisions, provider calls and circuit breakers.
 - **Dashboards:** Grafana (http://localhost:3001, admin / walletpk_dev) loads three from `ops/grafana/dashboards`:
   *Operations overview* (transactions per second, success rate, p95 latency per service, active Sagas by state,
-  fraud decisions, Ledger health), *Sagas* and *Providers*.
+  fraud decisions, Ledger health, open reconciliation breaks), *Sagas* and *Providers*.
 - **API documents:** every service serves its OpenAPI document at `/openapi/v1.json` (for example
   http://localhost:5103/openapi/v1.json), with response and error schemas and the bearer token.
 

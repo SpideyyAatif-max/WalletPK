@@ -16,6 +16,7 @@ using WalletPK.Ledger.Application.Merchants;
 using WalletPK.Ledger.Application.Invariants;
 using WalletPK.Ledger.Application.Posting;
 using WalletPK.Ledger.Application.ReadModels;
+using WalletPK.Ledger.Application.Reports;
 using WalletPK.Ledger.Application.Risk;
 using WalletPK.Ledger.Application.Wallets;
 using WalletPK.Ledger.Infrastructure.Audit;
@@ -25,6 +26,7 @@ using WalletPK.Ledger.Infrastructure.Limits;
 using WalletPK.Ledger.Infrastructure.Maintenance;
 using WalletPK.Ledger.Infrastructure.Persistence;
 using WalletPK.Ledger.Infrastructure.ReadModels;
+using WalletPK.Ledger.Infrastructure.Reports;
 using WalletPK.Ledger.Infrastructure.Redis;
 using WalletPK.Ledger.Infrastructure.Risk;
 using WalletPK.Messaging;
@@ -145,6 +147,10 @@ public static class LedgerInfrastructureExtensions
         services.AddScoped<LedgerProjector>();
         services.AddScoped<IReadModelQueries, ReadModelQueries>();
         services.AddScoped<IReadModelMaintenance, ReadModelMaintenance>();
+
+        // ---- Reports and statements (M12.4, M12.5, M12.7) ----
+        services.AddScoped<IBusinessReportQueries, BusinessReportQueries>();
+        services.AddSingleton<IStatementRenderer, StatementPdf>();
         services.AddHostedService<ReadModelProjectionHost>();
 
         // ---- Audit log: a row for every money-relevant change, in the same transaction (M3.10) ----
@@ -206,6 +212,7 @@ public static class LedgerInfrastructureExtensions
         // ---- Audit chain and invariants (M3.10, M3.11) ----
         services.AddScoped<AuditSealer>();
         services.AddScoped<AuditChainVerifier>();
+        services.AddScoped<AuditTrail>();
         services.AddScoped<ILedgerInvariantChecker, LedgerInvariantChecker>();
         services.AddMetrics();
         services.AddSingleton<LedgerMetrics>();

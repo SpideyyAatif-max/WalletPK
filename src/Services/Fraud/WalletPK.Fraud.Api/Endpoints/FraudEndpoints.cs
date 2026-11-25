@@ -1,4 +1,6 @@
+using System.Text;
 using System.Text.Json;
+using WalletPK.Common.Time;
 using WalletPK.Fraud.Application;
 using WalletPK.Fraud.Domain;
 using WalletPK.Web.Authentication;
@@ -40,7 +42,9 @@ public sealed record ReasonRequest(string? Reason);
 /// <item>GET  /api/fraud/alerts?userId=&amp;severity=   the newest alerts</item>
 /// <item>GET  /api/fraud/cases?status=               cases; POST to open one; GET /{id}; POST /{id}/assign, /notes, /close</item>
 /// <item>GET  /api/fraud/accounts/{userId}           freeze status and alerts; POST /freeze, /unfreeze with a reason</item>
-/// <item>GET  /api/fraud/audit[?after=]              the audit log; GET /api/fraud/audit/verify checks its hash chain</item>
+/// <item>GET  /api/fraud/audit[?after=]              the audit log; /audit/recent?before= newest first; /audit/verify checks its hash chain</item>
+/// <item>GET  /api/fraud/reports/suspicious.csv?from=&amp;to=&amp;minSeverity=   the period's alerts for review (M12.7)</item>
+/// <item>GET  /api/fraud/cases/{id}/report           a case written up as a suspicious-activity report (M12.7)</item>
 /// </list>
 /// </summary>
 public static class FraudEndpoints
@@ -115,6 +119,21 @@ public static class FraudEndpoints
         // ---- Audit log (FR-5.3) ----
         group.MapGet("/audit", async (long? after, int? limit, AuditService audit, CancellationToken cancellationToken) =>
             TypedResults.Ok(await audit.ListAsync(after, limit, cancellationToken)));
+
+        group.MapGet("/audit/recent", async (long? before, int? limit, IFraudStore store, CancellationToken cancellationToken) =>
+            TypedResults.Ok(await store.AuditRecentAsync(before, Math.Clamp(limit ?? 50, 1, 500), cancellationToken)));
+
+        // ---- Suspicious-activity reports (M12.7); every export is audited ----
+        group.MapGet("/reports/suspicious.csv", async (DateOnly? from, DateOnly? to, string? minSeverity, ICurrentUser user, SuspiciousActivityService reports, TimeProvider timeProvider, CancellationToken cancellationToken) =>
+        {
+            var last = to ?? timeProvider.GetBusinessDate();
+            var first = from ?? last.AddDays(-29);
+            return (await reports.AlertsCsvAsync(first, last, minSeverity, Actor(user), cancellationToken))
+                .ToHttpResult(csv => Results.File(Encoding.UTF8.GetBytes(csv), "text/csv; charset=utf-8", $"walletpk-suspicious-activity-{first:yyyyMMdd}-{last:yyyyMMdd}.csv"));
+        });
+
+        group.MapGet("/cases/{id:guid}/report", async (Guid id, ICurrentUser user, SuspiciousActivityService reports, CancellationToken cancellationToken) =>
+            (await reports.CaseReportAsync(id, Actor(user), cancellationToken)).ToHttpResult());
 
         group.MapGet("/audit/verify", async (AuditService audit, CancellationToken cancellationToken) =>
         {

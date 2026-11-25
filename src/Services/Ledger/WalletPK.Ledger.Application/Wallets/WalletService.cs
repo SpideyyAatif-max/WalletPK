@@ -7,6 +7,7 @@ using WalletPK.Ledger.Application.Abstractions;
 using WalletPK.Ledger.Application.Fees;
 using WalletPK.Ledger.Application.Posting;
 using WalletPK.Ledger.Application.ReadModels;
+using WalletPK.Ledger.Application.Reports;
 using WalletPK.Ledger.Domain.Accounts;
 using WalletPK.Ledger.Domain.Journals;
 
@@ -34,6 +35,12 @@ public static class WalletErrors
 
     public static Error RecipientUnavailable { get; } =
         Error.BusinessRule("wallet.recipient_unavailable", "This wallet cannot receive money right now.");
+
+    public static Error StatementMonthInvalid { get; } =
+        Error.Validation("wallet.statement_month_invalid", "Ask for a month that has started, as yyyy-MM (for example 2026-11).");
+
+    public static Error StatementTooLong { get; } =
+        Error.BusinessRule("wallet.statement_too_long", "This month has too many entries for one statement; download the history instead.");
 
     public static Error StatementFilterInvalid(string detail) =>
         Error.Validation("wallet.statement_filter_invalid", detail);
@@ -310,6 +317,55 @@ public sealed class WalletService(
         return await accounts.GetWalletByOwnerAsync(ownerId, AccountType.CustomerWallet, cancellationToken) is { } wallet
             ? new WalletBalance(wallet.Id, wallet.Alias, Money.FromPaisa(wallet.Balance), wallet.EntrySequence, wallet.UpdatedAt)
             : WalletErrors.WalletNotFound;
+    }
+
+    /// <summary>The most entries one statement holds (a month of a very busy wallet).</summary>
+    public const int MaxStatementEntries = 20_000;
+
+    /// <summary>
+    /// The customer's statement for a calendar month, Pakistan time (M12.5): the opening balance, every entry
+    /// oldest first, and the closing balance. The month in progress is "to date".
+    /// </summary>
+    public async Task<Result<MonthlyStatement>> StatementAsync(UserId ownerId, string? month, CancellationToken cancellationToken)
+    {
+        var now = timeProvider.GetUtcNow();
+        if (StatementMonth.Parse(month) is not { } period || period.Start > now || period.Year < 2000)
+        {
+            return WalletErrors.StatementMonthInvalid;
+        }
+
+        var wallet = await readModels.GetWalletAsync(ownerId, AccountType.CustomerWallet, cancellationToken);
+        var walletId = wallet?.WalletId ?? (await accounts.GetWalletByOwnerAsync(ownerId, AccountType.CustomerWallet, cancellationToken))?.Id;
+        if (walletId is null)
+        {
+            return WalletErrors.WalletNotFound;
+        }
+
+        var to = period.End < now ? period.End : now;
+        var before = await readModels.GetHistoryAsync(new HistoryQuery(walletId.Value, 1, To: period.Start), cancellationToken);
+        var opening = before.Count > 0 ? before[0].BalanceAfter : Money.Zero();
+        // Up to the month's end even when it is in progress: an entry posted this very instant belongs in it.
+        var rows = await readModels.GetHistoryAsync(new HistoryQuery(walletId.Value, MaxStatementEntries + 1, From: period.Start, To: period.End), cancellationToken);
+        if (rows.Count > MaxStatementEntries)
+        {
+            return WalletErrors.StatementTooLong;
+        }
+
+        StatementEntry[] entries =
+        [
+            .. rows.OrderBy(row => row.Sequence).Select(row => new StatementEntry(
+                row.PostedAt,
+                StatementTitles.For(row.Type, row.Description, row.Direction, row.CounterpartyWalletNumber),
+                row.Type,
+                row.TransactionId.Value,
+                row.Direction == EntryDirection.Credit ? row.Amount : null,
+                row.Direction == EntryDirection.Debit ? row.Amount : null,
+                row.BalanceAfter)),
+        ];
+        var moneyIn = Money.FromPaisa(entries.Sum(entry => entry.Credit?.MinorUnits ?? 0));
+        var moneyOut = Money.FromPaisa(entries.Sum(entry => entry.Debit?.MinorUnits ?? 0));
+        var closing = entries.Length > 0 ? entries[^1].BalanceAfter : opening;
+        return new MonthlyStatement(wallet?.WalletNumber, period, period.Start, to, opening, closing, moneyIn, moneyOut, entries, now, period.End <= now);
     }
 
     private async Task<AccountId?> CustomerWalletIdAsync(UserId ownerId, CancellationToken cancellationToken) =>

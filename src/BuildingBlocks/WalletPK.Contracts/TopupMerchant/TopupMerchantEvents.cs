@@ -4,6 +4,7 @@ using WalletPK.Messaging.Events;
 namespace WalletPK.Contracts.TopupMerchant;
 
 /// <summary>A mobile top-up finished, or needs a person (M8.1). Keyed by the customer.</summary>
+/// <remarks>TelcoReference: the network's reference once it has one (M12: matched against its settlement file).</remarks>
 [IntegrationEvent("topup.topup_changed", KafkaTopics.TopupEvents)]
 public sealed record TopUpChanged(
     Guid TopUpId,
@@ -15,7 +16,8 @@ public sealed record TopUpChanged(
     string Status,
     string Step,
     string Detail,
-    DateTimeOffset ChangedAt) : IntegrationEvent
+    DateTimeOffset ChangedAt,
+    string? TelcoReference = null) : IntegrationEvent
 {
     public override string GetPartitionKey() => UserId.ToString();
 }
