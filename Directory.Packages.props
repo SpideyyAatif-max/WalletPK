@@ -28,7 +28,7 @@
     <!-- SignalR backplane (M11.1): live pushes reach a browser whichever instance it is connected to. -->
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="10.0.15" />
     <!-- Read-side SQL (M4.5): hand-written queries against the read models. -->
-    <PackageVersion Include="Dapper" Version="2.1.89" />
+    <PackageVersion Include="Dapper" Version="2.1.100" />
     <!-- PDF statements (M12.5); the Community license is free for organisations under USD 1M revenue. -->
     <PackageVersion Include="QuestPDF" Version="2026.9.2" />
     <PackageVersion Include="Npgsql" Version="10.0.3" />
